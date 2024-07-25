@@ -1,0 +1,16 @@
+{
+  "deno.enable": true,
+  "deno.lint": false,
+  "prettier.enable": false,
+  "eslint.nodePath": "./.eslint/node_modules",
+  "eslint.options": {
+    "overrideConfigFile": "./.eslint/eslint.config.mjs"
+  },
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "[typescript]": { 
+    "editor.defaultFormatter": "denoland.vscode-deno" 
+  }
+}

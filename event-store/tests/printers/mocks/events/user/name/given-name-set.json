@@ -1,0 +1,10 @@
+{
+  "event": {
+    "type": "user:name:given-set",
+    "data": {
+      "given": {
+        "type": "string"
+      }
+    }
+  }
+}

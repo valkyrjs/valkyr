@@ -1,0 +1,15 @@
+{
+  "event": {
+    "type": "user:email-set",
+    "data": {
+      "email": {
+        "type": "string"
+      }
+    },
+    "meta": {
+      "auditor": {
+        "type": "string"
+      }
+    }
+  }  
+}

@@ -1,0 +1,28 @@
+name: "💡 Feature Request"
+description: "Suggest an idea"
+body:
+  - type: textarea
+    id: suggestion_summary
+    attributes:
+      label: "⭐ Suggestion"
+      description: "A summary of what you'd like to see added or changed"
+    validations:
+      required: true
+  - type: textarea
+    id: motivating_example
+    attributes:
+      label: "📃 Motivating Example"
+      description: |
+        If you were announcing this feature in a blog post, what's a short explanation that shows a developer why this feature improves the language?
+    validations:
+      required: true
+  - type: textarea
+    id: use_cases
+    attributes:
+      label: "💻 Use Cases"
+      value: |
+        1. What do you want to use this for?
+        2. What shortcomings exist with current approaches?
+        3. What workarounds are you using in the meantime?
+    validations:
+      required: true

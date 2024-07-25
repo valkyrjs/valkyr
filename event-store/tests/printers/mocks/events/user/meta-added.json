@@ -1,0 +1,12 @@
+{
+  "event": {
+    "type": "user:meta-added",
+    "data": {
+      "meta": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    }
+  }
+}

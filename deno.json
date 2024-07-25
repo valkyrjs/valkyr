@@ -1,0 +1,45 @@
+{
+  "workspace": [
+    "./api",
+    "./auth", 
+    "./drizzle",
+    "./event-store",
+    "./fs",
+    "./inverse",
+    "./json-rpc"
+  ],
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1.0.0",
+    "@std/testing": "jsr:@std/testing@0.225.3",
+    "drizzle-kit": "npm:drizzle-kit@0.23.0",
+    "drizzle-orm": "npm:drizzle-orm@0.32.1"
+  },
+  "exclude": [
+    ".vscode"
+  ],
+  "lint": {
+    "rules": {
+      "exclude": [
+        "ban-types",
+        "no-explicit-any",
+        "require-await"
+      ]
+    }
+  },
+  "fmt": {
+    "lineWidth": 165
+  },
+  "publish": {
+    "exclude": [
+      ".eslint",
+      ".github",
+      ".vscode",
+      ".gitignore",
+      "tests"
+    ]
+  },
+  "tasks": {
+    "lint": "npx eslint -c .eslint/eslint.config.mjs .",
+    "generate": "deno run -A .tasks/generate.ts"
+  }
+}

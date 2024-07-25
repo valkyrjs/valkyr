@@ -1,0 +1,9 @@
+{
+  "name": "@valkyr/json-rpc",
+  "version": "1.0.1",
+  "exports": "./mod.ts",
+  "imports": {
+    "~libraries/": "./libraries/",
+    "~types/": "./types/"
+  }
+}

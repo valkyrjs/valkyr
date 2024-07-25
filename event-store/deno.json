@@ -1,0 +1,35 @@
+{
+  "name": "@valkyr/event-store",
+  "version": "1.7.3",
+  "exports": {
+    ".": "./mod.ts",
+    "./pg": "./stores/pg/event-store.ts",
+    "./sqlite": "./stores/sqlite/event-store.ts",
+    "./valkyr": "./stores/valkyr/event-store.ts"
+  },
+  "imports": {
+    "@valkyr/db": "npm:@valkyr/db@1.0.1",
+    "@valkyr/testcontainers": "jsr:@valkyr/testcontainers@1.0.0",
+    "ajv": "npm:ajv@8.14.0",
+    "json-refs": "npm:json-refs@3.0.15",
+    "json-schema": "npm:json-schema@0.4.0",
+    "json-schema-to-zod": "npm:json-schema-to-zod@2.1.0",
+    "nanoid": "npm:nanoid@5.0.7",
+    "pascalcase": "npm:pascalcase@2.0.0",
+    "postgres": "npm:postgres@3.4.4",
+    "prettier": "npm:prettier@3.2.5",
+    "sqlite": "jsr:@db/sqlite@0.11",
+    "zod": "npm:zod@3.23.8",
+    "~libraries/": "./libraries/",
+    "~stores/": "./stores/",
+    "~types/": "./types/",
+    "~utilities/": "./utilities/"
+  },
+  "tasks": {
+    "test": "deno test --allow-all --unstable-ffi",
+    "lint": "deno lint && npx eslint -c .eslint/eslint.config.mjs .",
+    "db:setup": "deno cache -r --node-modules-dir npm:drizzle-orm npm:drizzle-kit npm:postgres",
+    "db:sqlite": "deno run -A --node-modules-dir npm:drizzle-kit generate --config=stores/sqlite/migrations/config.ts",
+    "db:pg": "deno run -A --node-modules-dir npm:drizzle-kit generate --config=stores/pg/migrations/config.ts"
+  }
+}

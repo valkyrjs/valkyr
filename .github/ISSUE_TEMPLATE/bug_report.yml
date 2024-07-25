@@ -1,0 +1,21 @@
+name: "🐛 Bug Report"
+description: "Create a report to help us improve @valkyr/api"
+body:
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: 🙁 Actual behavior
+      description: "What happened, and why it was wrong."
+    validations:
+      required: true
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: 🙂 Expected behavior
+      description: What you expected to happen instead, and why
+    validations:
+      required: true
+  - type: textarea
+    id: additional_info
+    attributes:
+      label: Additional information about the issue
