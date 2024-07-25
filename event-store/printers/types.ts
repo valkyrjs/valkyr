@@ -1,4 +1,4 @@
-import { pascalcase } from "pascalcase";
+import { pascalCase } from "change-case";
 
 import type { Config } from "./asserts/events.ts";
 import { jsonSchema } from "./utilities/json-schema.ts";
@@ -23,7 +23,7 @@ export function getEventType(event: Config["event"]) {
       properties: event.meta,
     });
   }
-  return `export type ${pascalcase(event.type)} = TEvent<"${event.type}", ${data}, ${meta}>;`;
+  return `export type ${pascalCase(event.type)} = TEvent<"${event.type}", ${data}, ${meta}>;`;
 }
 
 /**

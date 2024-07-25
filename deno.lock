@@ -7,33 +7,30 @@
       "jsr:@std/assert@1.0.0": "jsr:@std/assert@1.0.0",
       "jsr:@std/assert@^0.217.0": "jsr:@std/assert@0.217.0",
       "jsr:@std/assert@^0.221.0": "jsr:@std/assert@0.221.0",
+      "jsr:@std/async@1.0.0": "jsr:@std/async@1.0.0",
       "jsr:@std/encoding@^0.221.0": "jsr:@std/encoding@0.221.0",
       "jsr:@std/fmt@^0.221.0": "jsr:@std/fmt@0.221.0",
       "jsr:@std/fs@^0.221.0": "jsr:@std/fs@0.221.0",
       "jsr:@std/internal@^1.0.1": "jsr:@std/internal@1.0.1",
+      "jsr:@std/net@0.224.5": "jsr:@std/net@0.224.5",
       "jsr:@std/path@0.217": "jsr:@std/path@0.217.0",
       "jsr:@std/path@^0.221.0": "jsr:@std/path@0.221.0",
       "jsr:@std/testing@0.225.3": "jsr:@std/testing@0.225.3",
-      "jsr:@valkyr/testcontainers@1.0.0": "jsr:@valkyr/testcontainers@1.0.0",
       "npm:@types/node": "npm:@types/node@18.16.19",
       "npm:@valkyr/db@1.0.1": "npm:@valkyr/db@1.0.1",
       "npm:ajv@8.14.0": "npm:ajv@8.14.0",
       "npm:change-case@5.4.4": "npm:change-case@5.4.4",
-      "npm:delay@6.0.0": "npm:delay@6.0.0",
       "npm:dot-prop@9.0.0": "npm:dot-prop@9.0.0",
       "npm:drizzle-kit": "npm:drizzle-kit@0.23.0_esbuild@0.19.12",
       "npm:drizzle-kit@0.23.0": "npm:drizzle-kit@0.23.0_esbuild@0.19.12",
       "npm:drizzle-orm": "npm:drizzle-orm@0.32.1_postgres@3.4.4",
       "npm:drizzle-orm@0.32.1": "npm:drizzle-orm@0.32.1_postgres@3.4.4",
-      "npm:get-port@7.1.0": "npm:get-port@7.1.0",
       "npm:jose@5.4.1": "npm:jose@5.4.1",
       "npm:json-refs@3.0.15": "npm:json-refs@3.0.15",
       "npm:json-schema-to-zod@2.1.0": "npm:json-schema-to-zod@2.1.0",
       "npm:json-schema@0.4.0": "npm:json-schema@0.4.0",
       "npm:nanoid@5.0.7": "npm:nanoid@5.0.7",
-      "npm:pascalcase@2.0.0": "npm:pascalcase@2.0.0",
       "npm:postgres@3.4.4": "npm:postgres@3.4.4",
-      "npm:prettier@3.2.5": "npm:prettier@3.2.5",
       "npm:prettier@3.3.3": "npm:prettier@3.3.3",
       "npm:zod-to-ts@1.2.0": "npm:zod-to-ts@1.2.0_typescript@5.5.4_zod@3.23.8",
       "npm:zod@3.23.8": "npm:zod@3.23.8"
@@ -67,6 +64,9 @@
           "jsr:@std/internal@^1.0.1"
         ]
       },
+      "@std/async@1.0.0": {
+        "integrity": "19891d4540cd3af5efd1d7b1f0e92f6ca365e51edc263fbc077334173878e528"
+      },
       "@std/encoding@0.221.0": {
         "integrity": "d1dd76ef0dc5d14088411e6dc1dede53bf8308c95d1537df1214c97137208e45"
       },
@@ -83,6 +83,9 @@
       "@std/internal@1.0.1": {
         "integrity": "6f8c7544d06a11dd256c8d6ba54b11ed870aac6c5aeafff499892662c57673e6"
       },
+      "@std/net@0.224.5": {
+        "integrity": "9c2ae90a5c3dc7771da5ae5e13b6f7d5d0b316c1954c5d53f2bfc1129fb757ff"
+      },
       "@std/path@0.217.0": {
         "integrity": "1217cc25534bca9a2f672d7fe7c6f356e4027df400c0e85c0ef3e4343bc67d11",
         "dependencies": [
@@ -97,14 +100,6 @@
       },
       "@std/testing@0.225.3": {
         "integrity": "348c24d0479d44ab3dbb4f26170f242e19f24051b45935d4a9e7ca0ab7e37780"
-      },
-      "@valkyr/testcontainers@1.0.0": {
-        "integrity": "45f37d88c081d10f7e583af8ddcbbecd1bbb89a432049226cec24e5bdfae8a02",
-        "dependencies": [
-          "npm:delay@6.0.0",
-          "npm:get-port@7.1.0",
-          "npm:postgres@3.4.4"
-        ]
       }
     },
     "npm": {
@@ -355,10 +350,6 @@
           "set-function-length": "set-function-length@1.2.2"
         }
       },
-      "camelcase@6.3.0": {
-        "integrity": "sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==",
-        "dependencies": {}
-      },
       "change-case@5.4.4": {
         "integrity": "sha512-HRQyTk2/YPEkt9TnUPbOpr64Uw3KOicFWPVBb+xiHvd6eBx/qPr9xqfBFDT8P2vWsvvz4jbEkfDe71W3VyNu2w==",
         "dependencies": {}
@@ -394,10 +385,6 @@
           "es-errors": "es-errors@1.3.0",
           "gopd": "gopd@1.0.1"
         }
-      },
-      "delay@6.0.0": {
-        "integrity": "sha512-2NJozoOHQ4NuZuVIr5CWd0iiLVIRSDepakaovIN+9eIDHEhdCAEvSy2cuf1DCrPPQLvHmbqTHODlhHg8UCy4zw==",
-        "dependencies": {}
       },
       "delayed-stream@1.0.0": {
         "integrity": "sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==",
@@ -555,10 +542,6 @@
           "hasown": "hasown@2.0.2"
         }
       },
-      "get-port@7.1.0": {
-        "integrity": "sha512-QB9NKEeDg3xxVwCCwJQ9+xycaz6pBB6iQ76wiWMl1927n0Kir6alPiP+yuiICLLU4jpMe08dXfpebuQppFA2zw==",
-        "dependencies": {}
-      },
       "get-tsconfig@4.7.6": {
         "integrity": "sha512-ZAqrLlu18NbDdRaHq+AKXzAmqIUPswPWKUchfytdAjiRFnCe5ojG2bstg6mRiZabkKfCoL/e98pbBELIV/YCeA==",
         "dependencies": {
@@ -697,12 +680,6 @@
           "wrappy": "wrappy@1.0.2"
         }
       },
-      "pascalcase@2.0.0": {
-        "integrity": "sha512-DHpENy5Qm/FaX+x3iBLoMLG/XHNCTgL+yErm1TwuVaj6u4fiOSkYkf60vGtITk7hrKHOO4uCl9vRrD4hqjNKjg==",
-        "dependencies": {
-          "camelcase": "camelcase@6.3.0"
-        }
-      },
       "path-loader@1.0.12": {
         "integrity": "sha512-n7oDG8B+k/p818uweWrOixY9/Dsr89o2TkCm6tOTex3fpdo2+BFDgR+KpB37mGKBRsBAlR8CIJMFN0OEy/7hIQ==",
         "dependencies": {
@@ -712,10 +689,6 @@
       },
       "postgres@3.4.4": {
         "integrity": "sha512-IbyN+9KslkqcXa8AO9fxpk97PA4pzewvpi2B3Dwy9u4zpV32QicaEdgmF3eSQUzdRk7ttDHQejNgAEr4XoeH4A==",
-        "dependencies": {}
-      },
-      "prettier@3.2.5": {
-        "integrity": "sha512-3/GWa9aOC0YeD7LUfvOG2NiDyhOWRvt1k+rcKhOuYnMY24iiCphgneUfJDyFXd6rZCAnuLBv6UeAULtrhT/F4A==",
         "dependencies": {}
       },
       "prettier@3.3.3": {
@@ -873,45 +846,38 @@
   "remote": {},
   "workspace": {
     "dependencies": [
+      "jsr:@db/sqlite@0.11",
       "jsr:@std/assert@1.0.0",
       "jsr:@std/testing@0.225.3",
+      "npm:change-case@5.4.4",
+      "npm:dot-prop@9.0.0",
       "npm:drizzle-kit@0.23.0",
-      "npm:drizzle-orm@0.32.1"
+      "npm:drizzle-orm@0.32.1",
+      "npm:nanoid@5.0.7",
+      "npm:postgres@3.4.4",
+      "npm:prettier@3.3.3",
+      "npm:zod-to-ts@1.2.0",
+      "npm:zod@3.23.8"
     ],
     "members": {
-      "api": {
-        "dependencies": [
-          "jsr:@valkyr/json-rpc@1.0.1",
-          "npm:change-case@5.4.4",
-          "npm:dot-prop@9.0.0",
-          "npm:prettier@3.3.3",
-          "npm:zod-to-ts@1.2.0",
-          "npm:zod@3.23.8"
-        ]
-      },
       "auth": {
         "dependencies": [
-          "jsr:@db/sqlite@0.11",
-          "npm:dot-prop@9.0.0",
-          "npm:jose@5.4.1",
-          "npm:nanoid@5.0.7",
-          "npm:zod@3.23.8"
+          "npm:jose@5.4.1"
         ]
       },
       "event-store": {
         "dependencies": [
-          "jsr:@db/sqlite@0.11",
-          "jsr:@valkyr/testcontainers@1.0.0",
           "npm:@valkyr/db@1.0.1",
           "npm:ajv@8.14.0",
           "npm:json-refs@3.0.15",
           "npm:json-schema-to-zod@2.1.0",
-          "npm:json-schema@0.4.0",
-          "npm:nanoid@5.0.7",
-          "npm:pascalcase@2.0.0",
-          "npm:postgres@3.4.4",
-          "npm:prettier@3.2.5",
-          "npm:zod@3.23.8"
+          "npm:json-schema@0.4.0"
+        ]
+      },
+      "testcontainers": {
+        "dependencies": [
+          "jsr:@std/async@1.0.0",
+          "jsr:@std/net@0.224.5"
         ]
       }
     }

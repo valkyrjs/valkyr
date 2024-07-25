@@ -2,9 +2,9 @@ import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { ensureDir } from "@valkyr/toolkit/fs";
+import { pascalCase } from "change-case";
 import { resolveRefs } from "json-refs";
 import { jsonSchemaToZod } from "json-schema-to-zod";
-import { pascalcase } from "pascalcase";
 import { format } from "prettier";
 
 import { assertConfig, type Config } from "./asserts/events.ts";
@@ -61,7 +61,7 @@ export async function printEvents({ paths, output, modules = [] }: Options) {
 
         export type EventRecord = EventToRecord<Event>;
 
-        export type Event = ${names.sort().map((name) => pascalcase(name)).join(" | ")};
+        export type Event = ${names.sort().map((name) => pascalCase(name)).join(" | ")};
 
         ${types.sort().join("\n\n")}
       `,
