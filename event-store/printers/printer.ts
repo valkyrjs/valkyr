@@ -1,7 +1,7 @@
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { ensureDir } from "@valkyr/fs";
+import { ensureDir } from "@valkyr/toolkit/fs";
 import { resolveRefs } from "json-refs";
 import { jsonSchemaToZod } from "json-schema-to-zod";
 import { pascalcase } from "pascalcase";

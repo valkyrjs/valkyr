@@ -1,4 +1,4 @@
-import { type Database, takeOne } from "@valkyr/drizzle";
+import { type Database, takeOne } from "@valkyr/toolkit/drizzle";
 import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
 import type { EventRecord } from "~types/event.ts";

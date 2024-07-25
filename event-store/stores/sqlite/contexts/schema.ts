@@ -20,8 +20,12 @@ type Table = SQLiteTableWithColumns<{
       driverParam: string;
       notNull: true;
       hasDefault: false;
+      isPrimaryKey: false;
+      isAutoincrement: false;
+      hasRuntimeDefault: false;
       enumValues: [string, ...string[]];
       baseColumn: never;
+      generated: undefined;
     }>;
     stream: SQLiteColumn<{
       name: "stream";
@@ -32,8 +36,12 @@ type Table = SQLiteTableWithColumns<{
       driverParam: string;
       notNull: true;
       hasDefault: false;
+      isPrimaryKey: false;
+      isAutoincrement: false;
+      hasRuntimeDefault: false;
       enumValues: [string, ...string[]];
       baseColumn: never;
+      generated: undefined;
     }>;
   };
   dialect: "sqlite";

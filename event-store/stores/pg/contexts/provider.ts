@@ -1,4 +1,4 @@
-import type { Database } from "@valkyr/drizzle";
+import type { Database } from "@valkyr/toolkit/drizzle";
 import { and, eq } from "drizzle-orm";
 
 import type { Context } from "~types/context.ts";

@@ -1,7 +1,0 @@
-{
-  "name": "@valkyr/fs",
-  "version": "1.0.0",
-  "exports": {
-    ".": "./mod.ts"
-  }
-}

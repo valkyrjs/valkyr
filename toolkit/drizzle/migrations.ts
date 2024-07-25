@@ -1,8 +1,7 @@
 import fs from "node:fs/promises";
 import { join } from "node:path";
 
-import { ensureDir, hasFolder } from "@valkyr/fs";
-
+import { ensureDir, hasFolder } from "../fs/mod.ts";
 import { getModuleMeta } from "../utilities/jsr.ts";
 
 /**
@@ -13,7 +12,7 @@ import { getModuleMeta } from "../utilities/jsr.ts";
  * @param output - Location to place the migration files.
  * @param name   - Name of the module being migrated.
  */
-export async function prepareMigrationFiles(meta: ImportMeta, output: string, name: string) {
+export async function prepareMigrationFiles(meta: ImportMeta, output: string, name: string): Promise<void> {
   if (await hasFolder(output)) {
     await fs.rm(output, { recursive: true });
   }

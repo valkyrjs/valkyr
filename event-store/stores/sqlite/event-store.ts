@@ -29,7 +29,7 @@
  * ```
  */
 
-import { Database } from "@valkyr/drizzle";
+import { Database } from "@valkyr/toolkit/drizzle";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import type { Database as SQLiteDatabase } from "sqlite";
 import type { AnyZodObject } from "zod";

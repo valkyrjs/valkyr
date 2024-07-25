@@ -1,7 +1,6 @@
 {
   "deno.enable": true,
   "deno.lint": false,
-  "prettier.enable": false,
   "eslint.nodePath": "./.eslint/node_modules",
   "eslint.options": {
     "overrideConfigFile": "./.eslint/eslint.config.mjs"
@@ -10,7 +9,16 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
-  "[typescript]": { 
-    "editor.defaultFormatter": "denoland.vscode-deno" 
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/node_modules": true
   }
 }

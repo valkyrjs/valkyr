@@ -1,4 +1,4 @@
-import { prepareMigrationFiles } from "@valkyr/drizzle";
+import { prepareMigrationFiles } from "@valkyr/toolkit/drizzle";
 import { type BunSQLiteDatabase, drizzle } from "drizzle-orm/bun-sqlite";
 import { migrate as runMigration } from "drizzle-orm/bun-sqlite/migrator";
 import type { Database as SQLiteDatabase } from "sqlite";

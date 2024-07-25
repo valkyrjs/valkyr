@@ -28,8 +28,12 @@ type Table = SQLiteTableWithColumns<{
       driverParam: string;
       notNull: true;
       hasDefault: false;
+      isPrimaryKey: true;
+      isAutoincrement: false;
+      hasRuntimeDefault: false;
       enumValues: [string, ...string[]];
       baseColumn: never;
+      generated: undefined;
     }>;
     stream: SQLiteColumn<{
       name: "stream";
@@ -40,8 +44,12 @@ type Table = SQLiteTableWithColumns<{
       driverParam: string;
       notNull: true;
       hasDefault: false;
+      isPrimaryKey: false;
+      isAutoincrement: false;
+      hasRuntimeDefault: false;
       enumValues: [string, ...string[]];
       baseColumn: never;
+      generated: undefined;
     }>;
     type: SQLiteColumn<{
       name: "type";
@@ -52,8 +60,12 @@ type Table = SQLiteTableWithColumns<{
       driverParam: string;
       notNull: true;
       hasDefault: false;
+      isPrimaryKey: false;
+      isAutoincrement: false;
+      hasRuntimeDefault: false;
       enumValues: [string, ...string[]];
       baseColumn: never;
+      generated: undefined;
     }>;
     data: SQLiteColumn<{
       name: "data";
@@ -61,11 +73,15 @@ type Table = SQLiteTableWithColumns<{
       dataType: "json";
       columnType: "SQLiteTextJson";
       data: Record<string, any>;
-      driverParam: unknown;
+      driverParam: string;
       notNull: true;
       hasDefault: false;
+      isPrimaryKey: false;
+      isAutoincrement: false;
+      hasRuntimeDefault: false;
       enumValues: undefined;
       baseColumn: never;
+      generated: undefined;
     }>;
     meta: SQLiteColumn<{
       name: "meta";
@@ -73,11 +89,15 @@ type Table = SQLiteTableWithColumns<{
       dataType: "json";
       columnType: "SQLiteTextJson";
       data: Record<string, any>;
-      driverParam: unknown;
+      driverParam: string;
       notNull: true;
       hasDefault: false;
+      isPrimaryKey: false;
+      isAutoincrement: false;
+      hasRuntimeDefault: false;
       enumValues: undefined;
       baseColumn: never;
+      generated: undefined;
     }>;
     recorded: SQLiteColumn<{
       name: "recorded";
@@ -88,8 +108,12 @@ type Table = SQLiteTableWithColumns<{
       driverParam: string;
       notNull: true;
       hasDefault: false;
+      isPrimaryKey: false;
+      isAutoincrement: false;
+      hasRuntimeDefault: false;
       enumValues: [string, ...string[]];
       baseColumn: never;
+      generated: undefined;
     }>;
     created: SQLiteColumn<{
       name: "created";
@@ -100,8 +124,12 @@ type Table = SQLiteTableWithColumns<{
       driverParam: string;
       notNull: true;
       hasDefault: false;
+      isPrimaryKey: false;
+      isAutoincrement: false;
+      hasRuntimeDefault: false;
       enumValues: [string, ...string[]];
       baseColumn: never;
+      generated: undefined;
     }>;
   };
   dialect: "sqlite";

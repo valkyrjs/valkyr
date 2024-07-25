@@ -18,54 +18,96 @@ type Table = PgTableWithColumns<{
   name: "snapshots";
   schema: "event_store";
   columns: {
-    name: PgColumn<{
-      name: "name";
-      tableName: "snapshots";
-      dataType: "string";
-      columnType: "PgVarchar";
-      data: string;
-      driverParam: string;
-      notNull: true;
-      hasDefault: false;
-      enumValues: [string, ...string[]];
-      baseColumn: never;
-    }>;
-    stream: PgColumn<{
-      name: "stream";
-      tableName: "snapshots";
-      dataType: "string";
-      columnType: "PgVarchar";
-      data: string;
-      driverParam: string;
-      notNull: true;
-      hasDefault: false;
-      enumValues: [string, ...string[]];
-      baseColumn: never;
-    }>;
-    cursor: PgColumn<{
-      name: "cursor";
-      tableName: "snapshots";
-      dataType: "string";
-      columnType: "PgVarchar";
-      data: string;
-      driverParam: string;
-      notNull: true;
-      hasDefault: false;
-      enumValues: [string, ...string[]];
-      baseColumn: never;
-    }>;
-    state: PgColumn<{
-      name: "state";
-      tableName: "snapshots";
-      dataType: "json";
-      columnType: "PgJsonb";
-      data: Record<string, any>;
-      driverParam: unknown;
-      notNull: true;
-      hasDefault: false;
-      enumValues: undefined;
-      baseColumn: never;
-    }>;
+    id: PgColumn<
+      {
+        name: "id";
+        tableName: "snapshots";
+        dataType: "number";
+        columnType: "PgSerial";
+        data: number;
+        driverParam: number;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: true;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        generated: undefined;
+      }
+    >;
+    name: PgColumn<
+      {
+        name: "name";
+        tableName: "snapshots";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        generated: undefined;
+      }
+    >;
+    stream: PgColumn<
+      {
+        name: "stream";
+        tableName: "snapshots";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        generated: undefined;
+      }
+    >;
+    cursor: PgColumn<
+      {
+        name: "cursor";
+        tableName: "snapshots";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        generated: undefined;
+      }
+    >;
+    state: PgColumn<
+      {
+        name: "state";
+        tableName: "snapshots";
+        dataType: "json";
+        columnType: "PgJsonb";
+        data: Record<string, any>;
+        driverParam: unknown;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        generated: undefined;
+      }
+    >;
   };
   dialect: "pg";
 }>;

@@ -29,7 +29,7 @@
  * ```
  */
 
-import { Database } from "@valkyr/drizzle";
+import { Database } from "@valkyr/toolkit/drizzle";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { Sql as PostgreSQL } from "postgres";
 import type { AnyZodObject } from "zod";

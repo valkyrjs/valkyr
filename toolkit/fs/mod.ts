@@ -5,7 +5,7 @@ import { lstat, mkdir, readdir } from "node:fs/promises";
  *
  * @param path - Path to check.
  */
-export async function hasFolder(path: string) {
+export async function hasFolder(path: string): Promise<boolean> {
   return lstat(path).then(() => true).catch(() => false);
 }
 

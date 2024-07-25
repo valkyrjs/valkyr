@@ -1,4 +1,4 @@
-import { prepareMigrationFiles } from "@valkyr/drizzle";
+import { prepareMigrationFiles } from "@valkyr/toolkit/drizzle";
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { migrate as runMigration } from "drizzle-orm/postgres-js/migrator";
 import type { Sql } from "postgres";

@@ -8,6 +8,7 @@ export default defineConfig({
     resolve(__dirname, "..", "contexts", "schema.ts"),
     resolve(__dirname, "..", "events", "schema.ts"),
     resolve(__dirname, "..", "snapshots", "schema.ts"),
+    resolve(__dirname, "..", "schema.ts"),
   ],
   out: resolve(__dirname, "out"),
 });

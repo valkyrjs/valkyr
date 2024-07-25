@@ -1,3 +1,5 @@
+CREATE SCHEMA "event_store";
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "event_store"."contexts" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"key" varchar NOT NULL,

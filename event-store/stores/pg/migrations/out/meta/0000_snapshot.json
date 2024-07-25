@@ -1,5 +1,5 @@
 {
-  "id": "5f7b01b0-f857-4b96-b0bc-12bb77b51534",
+  "id": "4b1d96fd-3827-4139-8446-28fa7cd70ee8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -231,7 +231,9 @@
     }
   },
   "enums": {},
-  "schemas": {},
+  "schemas": {
+    "event_store": "event_store"
+  },
   "sequences": {},
   "_meta": {
     "columns": {},

@@ -23,90 +23,132 @@ type Table = PgTableWithColumns<{
   name: "events";
   schema: "event_store";
   columns: {
-    id: PgColumn<{
-      name: "id";
-      tableName: "events";
-      dataType: "string";
-      columnType: "PgVarchar";
-      data: string;
-      driverParam: string;
-      notNull: true;
-      hasDefault: false;
-      enumValues: [string, ...string[]];
-      baseColumn: never;
-    }>;
-    stream: PgColumn<{
-      name: "stream";
-      tableName: "events";
-      dataType: "string";
-      columnType: "PgVarchar";
-      data: string;
-      driverParam: string;
-      notNull: true;
-      hasDefault: false;
-      enumValues: [string, ...string[]];
-      baseColumn: never;
-    }>;
-    type: PgColumn<{
-      name: "type";
-      tableName: "events";
-      dataType: "string";
-      columnType: "PgVarchar";
-      data: string;
-      driverParam: string;
-      notNull: true;
-      hasDefault: false;
-      enumValues: [string, ...string[]];
-      baseColumn: never;
-    }>;
-    data: PgColumn<{
-      name: "data";
-      tableName: "events";
-      dataType: "json";
-      columnType: "PgJsonb";
-      data: EventRecord["data"];
-      driverParam: unknown;
-      notNull: true;
-      hasDefault: false;
-      enumValues: undefined;
-      baseColumn: never;
-    }>;
-    meta: PgColumn<{
-      name: "meta";
-      tableName: "events";
-      dataType: "json";
-      columnType: "PgJsonb";
-      data: EventRecord["meta"];
-      driverParam: unknown;
-      notNull: true;
-      hasDefault: false;
-      enumValues: undefined;
-      baseColumn: never;
-    }>;
-    recorded: PgColumn<{
-      name: "recorded";
-      tableName: "events";
-      dataType: "string";
-      columnType: "PgVarchar";
-      data: string;
-      driverParam: string;
-      notNull: true;
-      hasDefault: false;
-      enumValues: [string, ...string[]];
-      baseColumn: never;
-    }>;
-    created: PgColumn<{
-      name: "created";
-      tableName: "events";
-      dataType: "string";
-      columnType: "PgVarchar";
-      data: string;
-      driverParam: string;
-      notNull: true;
-      hasDefault: false;
-      enumValues: [string, ...string[]];
-      baseColumn: never;
-    }>;
+    id: PgColumn<
+      {
+        name: "id";
+        tableName: "events";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: true;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        generated: undefined;
+      }
+    >;
+    stream: PgColumn<
+      {
+        name: "stream";
+        tableName: "events";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        generated: undefined;
+      }
+    >;
+    type: PgColumn<
+      {
+        name: "type";
+        tableName: "events";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        generated: undefined;
+      }
+    >;
+    data: PgColumn<
+      {
+        name: "data";
+        tableName: "events";
+        dataType: "json";
+        columnType: "PgJsonb";
+        data: Record<string, unknown>;
+        driverParam: unknown;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        generated: undefined;
+      }
+    >;
+    meta: PgColumn<
+      {
+        name: "meta";
+        tableName: "events";
+        dataType: "json";
+        columnType: "PgJsonb";
+        data: Record<string, unknown>;
+        driverParam: unknown;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        generated: undefined;
+      }
+    >;
+    recorded: PgColumn<
+      {
+        name: "recorded";
+        tableName: "events";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        generated: undefined;
+      }
+    >;
+    created: PgColumn<
+      {
+        name: "created";
+        tableName: "events";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        generated: undefined;
+      }
+    >;
   };
   dialect: "pg";
 }>;

@@ -27,7 +27,7 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-  await container.client(DB_NAME)`TRUNCATE "event_store"."contexts","event_store"."events" CASCADE`;
+  await container.client(DB_NAME)`TRUNCATE "event_store"."contexts","event_store"."events","event_store"."snapshots" CASCADE`;
 });
 
 afterAll(async () => {

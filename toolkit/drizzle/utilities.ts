@@ -5,7 +5,7 @@
  *
  * @example
  * ```ts
- * import { takeOne } from "@valkyr/drizzle";
+ * import { takeOne } from "@valkyr/toolkit/drizzle";
  *
  * const user = await db.select().from(schema).where(eq(schema.id, "xyz")).then(takeOne);
  * ```

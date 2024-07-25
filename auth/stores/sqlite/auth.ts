@@ -38,7 +38,7 @@
  */
 
 import type { Database as SQLiteDatabase } from "@db/sqlite";
-import { Database } from "@valkyr/drizzle";
+import { Database } from "@valkyr/toolkit/drizzle";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { importPKCS8, importSPKI, jwtVerify, type KeyLike, SignJWT } from "jose";
 
