@@ -43,8 +43,8 @@ async function copyRemoteMigrationFiles(url: string, destination: string, name: 
   const [version, , target] = url.replace(`https://jsr.io/@valkyr/${name}/`, "").split("/");
   const { manifest } = await getModuleMeta(name, version);
   for (const key in manifest) {
-    if (key.includes(`stores/${target}/migrations`) === true && key.endsWith(".ts") === false) {
-      const dest = join(destination, key.replace(`/stores/${target}/migrations`, ""));
+    if (key.includes(`stores/${target}/migrations/out`) === true && key.endsWith(".ts") === false) {
+      const dest = join(destination, key.replace(`/stores/${target}/migrations/out`, ""));
       const file = await getRemoteFile(`https://jsr.io/@valkyr/${name}/${version}${key}`);
       await ensureDir(dest);
       await fs.writeFile(dest, file, "utf-8");

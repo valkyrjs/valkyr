@@ -1,6 +1,6 @@
 {
   "name": "@valkyr/toolkit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "exports": {
     "./drizzle": "./drizzle/mod.ts",
     "./fs": "./fs/mod.ts"
