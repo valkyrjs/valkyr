@@ -43,11 +43,14 @@ export class Container {
    *
    * @see https://docs.docker.com/engine/api/v1.45/#tag/Container/operation/ContainerDelete
    *
-   * @param query.v     - Remove the volumes associated with the container.
+   * @param query.v     - Remove the volumes associated with the container. Default: true
    * @param query.force - Kill the container if it is running.
    * @param query.link  - Remove the specified link and not the underlying container.
    */
   async remove(query: { v?: boolean; force?: boolean; link?: boolean } = {}) {
+    if (query.v === undefined) {
+      query.v = true;
+    }
     await modem.del({ path: `/containers/${this.id}`, query });
   }
 
