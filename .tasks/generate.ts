@@ -1,11 +1,11 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
+import { execute } from "@valkyr/toolkit/sub-process";
+
 // ### Run Setup
 
-await Deno.run({
-  cmd: ["deno", "cache", "-r", "--allow-scripts", "--node-modules-dir", "npm:drizzle-orm", "npm:drizzle-kit"],
-}).status();
+await execute("deno", "cache", "-r", "--allow-scripts", "--node-modules-dir", "npm:drizzle-orm", "npm:drizzle-kit");
 
 // ### Patch Drizzle Kit
 // We need to patch a bug in the drizzle-kit/bin.cjs as it prefixes a ./ onto the
@@ -25,6 +25,6 @@ if (file.includes(line) === true) {
 
 // ### Generate Migrations
 
-await Deno.run({ cmd: ["npx", "drizzle-kit", "generate", "--config", "auth/stores/sqlite/migrations/config.ts"] }).status();
-await Deno.run({ cmd: ["npx", "drizzle-kit", "generate", "--config", "event-store/stores/pg/migrations/config.ts"] }).status();
-await Deno.run({ cmd: ["npx", "drizzle-kit", "generate", "--config", "event-store/stores/sqlite/migrations/config.ts"] }).status();
+await execute("npx", "drizzle-kit", "generate", "--config", "auth/stores/sqlite/migrations/config.ts");
+await execute("npx", "drizzle-kit", "generate", "--config", "event-store/stores/pg/migrations/config.ts");
+await execute("npx", "drizzle-kit", "generate", "--config", "event-store/stores/sqlite/migrations/config.ts");
