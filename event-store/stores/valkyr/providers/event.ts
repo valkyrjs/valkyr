@@ -3,7 +3,7 @@ import type { Collection } from "@valkyr/db";
 import type { EventRecord } from "~types/event.ts";
 import type { EventReadOptions } from "~types/event-store.ts";
 
-export class EventProvider<TEventRecord extends EventRecord> {
+export class EventProvider<TRecord extends EventRecord> {
   constructor(readonly events: Collection<EventRecord>) {}
 
   /**
@@ -12,7 +12,7 @@ export class EventProvider<TEventRecord extends EventRecord> {
    * @param record - Event record to insert.
    * @param tx     - Transaction to insert the record within. (Optional)
    */
-  async insert(record: TEventRecord): Promise<void> {
+  async insert(record: TRecord): Promise<void> {
     await this.events.insertOne(record);
   }
 
@@ -22,14 +22,15 @@ export class EventProvider<TEventRecord extends EventRecord> {
    *
    * @param options - Find options.
    */
-  async get({ cursor, direction }: EventReadOptions = {}): Promise<TEventRecord[]> {
-    const filter: any = {};
-    if (cursor !== undefined) {
-      filter.created = {
-        [direction === "desc" ? "$lt" : "$gt"]: cursor,
-      };
+  async get({ filter, cursor, direction }: EventReadOptions<TRecord> = {}): Promise<TRecord[]> {
+    const query: any = {};
+    if (filter?.types !== undefined) {
+      withTypes(query, filter.types);
     }
-    return await this.events.find(filter, { sort: { created: 1 } }) as TEventRecord[];
+    if (cursor !== undefined) {
+      withCursor(query, cursor, direction);
+    }
+    return await this.events.find(query, { sort: { created: 1 } }) as TRecord[];
   }
 
   /**
@@ -38,17 +39,15 @@ export class EventProvider<TEventRecord extends EventRecord> {
    * @param stream  - Stream to fetch events for.
    * @param options - Read options for modifying the result.
    */
-  async getByStream(stream: string, { cursor, direction }: EventReadOptions = {}): Promise<TEventRecord[]> {
-    const filter: any = {};
-    if (stream !== undefined) {
-      filter.stream = stream;
+  async getByStream(stream: string, { filter, cursor, direction }: EventReadOptions<TRecord> = {}): Promise<TRecord[]> {
+    const query: any = { stream };
+    if (filter?.types !== undefined) {
+      withTypes(query, filter.types);
     }
     if (cursor !== undefined) {
-      filter.created = {
-        [direction === "desc" ? "$lt" : "$gt"]: cursor,
-      };
+      withCursor(query, cursor, direction);
     }
-    return await this.events.find(filter, { sort: { created: 1 } }) as TEventRecord[];
+    return await this.events.find(query, { sort: { created: 1 } }) as TRecord[];
   }
 
   /**
@@ -56,8 +55,15 @@ export class EventProvider<TEventRecord extends EventRecord> {
    *
    * @param streams - Stream to get events for.
    */
-  async getByStreams(streams: string[]): Promise<TEventRecord[]> {
-    return await this.events.find({ stream: { $in: streams } }, { sort: { created: 1 } }) as TEventRecord[];
+  async getByStreams(streams: string[], { filter, cursor, direction }: EventReadOptions<TRecord> = {}): Promise<TRecord[]> {
+    const query: any = { stream: { $in: streams } };
+    if (filter?.types !== undefined) {
+      withTypes(query, filter.types);
+    }
+    if (cursor !== undefined) {
+      withCursor(query, cursor, direction);
+    }
+    return await this.events.find(query, { sort: { created: 1 } }) as TRecord[];
   }
 
   /**
@@ -65,14 +71,14 @@ export class EventProvider<TEventRecord extends EventRecord> {
    *
    * @param id - Event id.
    */
-  async getById(id: string): Promise<TEventRecord | undefined> {
-    return await this.events.findById(id) as TEventRecord | undefined;
+  async getById(id: string): Promise<TRecord | undefined> {
+    return await this.events.findById(id) as TRecord | undefined;
   }
 
   /**
    * Check if the given event is outdated in relation to the local event data.
    */
-  async checkOutdated({ stream, type, created }: TEventRecord): Promise<boolean> {
+  async checkOutdated({ stream, type, created }: TRecord): Promise<boolean> {
     const count = await this.events.count({
       stream,
       type,
@@ -81,5 +87,23 @@ export class EventProvider<TEventRecord extends EventRecord> {
       },
     });
     return count > 0;
+  }
+}
+
+/*
+ |--------------------------------------------------------------------------------
+ | Query Builders
+ |--------------------------------------------------------------------------------
+ */
+
+function withTypes(filter: any, types: string[]): void {
+  filter.type = { $in: types };
+}
+
+function withCursor(filter: any, cursor: string, direction?: "asc" | "desc"): void {
+  if (cursor !== undefined) {
+    filter.created = {
+      [direction === "desc" ? "$lt" : "$gt"]: cursor,
+    };
   }
 }

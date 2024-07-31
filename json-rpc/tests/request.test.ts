@@ -16,6 +16,6 @@ describe("requests", () => {
   });
 
   it("should handle call of non-existent method", async () => {
-    assertRejects(async () => client.foobar(), Error, "Method not found");
+    await assertRejects(async () => client.foobar(), Error, "Method not found");
   });
 });

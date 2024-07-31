@@ -1,0 +1,18 @@
+{
+  "event": {
+    "type": "post:created",
+    "data": {
+      "title": {
+        "type": "string"
+      },
+      "body": {
+        "type": "string"
+      }
+    },
+    "meta": {
+      "auditor": {
+        "type": "string"
+      }
+    }
+  }
+}

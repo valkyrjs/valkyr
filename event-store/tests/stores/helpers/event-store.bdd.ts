@@ -10,7 +10,9 @@ import type { EventStoreHooks } from "~types/event-store.ts";
 
 import { CustomServiceError } from "../mocks/errors.ts";
 import type { Event, EventRecord } from "../mocks/events.ts";
-import { getUserReducer } from "../mocks/user-reducer.ts";
+import { userFilteredReducer } from "../mocks/user-filtered-reducer.ts";
+import { userPostReducer } from "../mocks/user-posts-reducer.ts";
+import { userReducer } from "../mocks/user-reducer.ts";
 
 export function testEventStoreMethods(
   getEventStore: (
@@ -22,7 +24,7 @@ export function testEventStoreMethods(
     it("should throw a 'EventValidationFailure' on data validation error", async () => {
       const store = await getEventStore();
 
-      assertRejects(
+      await assertRejects(
         async () =>
           store.addEvent({
             type: "user:created",
@@ -46,7 +48,7 @@ export function testEventStoreMethods(
         },
       });
 
-      assertRejects(
+      await assertRejects(
         async () =>
           store.addEvent({
             type: "user:created",
@@ -70,7 +72,7 @@ export function testEventStoreMethods(
         throw new Error("Test Failure");
       });
 
-      assertRejects(
+      await assertRejects(
         async () =>
           store.addEvent({
             type: "user:created",
@@ -98,7 +100,7 @@ export function testEventStoreMethods(
         throw new Error("Test Failure");
       });
 
-      assertRejects(
+      await assertRejects(
         async () =>
           store.addEvent({
             type: "user:created",
@@ -122,7 +124,7 @@ export function testEventStoreMethods(
         throw new Error("Fake Insert Error");
       };
 
-      assertRejects(
+      await assertRejects(
         async () =>
           store.addEvent({
             type: "user:created",
@@ -150,7 +152,7 @@ export function testEventStoreMethods(
         throw new Error("Fake Insert Error");
       };
 
-      assertRejects(
+      await assertRejects(
         async () =>
           store.addEvent({
             type: "user:created",
@@ -491,7 +493,7 @@ export function testEventStoreMethods(
           assertObjectMatch(record, events[index]);
         });
 
-        const state = await store.reduce(stream, getUserReducer(store));
+        const state = await store.reduce(stream, userReducer);
 
         assertEquals(state?.name.given, "John");
         assertEquals(state?.email, "john@doe.com");
@@ -532,7 +534,7 @@ export function testEventStoreMethods(
           } as const,
         ];
 
-        assertRejects(
+        await assertRejects(
           async () => store.addEventSequence(events),
           EventDataValidationFailure,
           new EventDataValidationFailure({}).message,
@@ -549,8 +551,6 @@ export function testEventStoreMethods(
     it("should create a 'user' reducer and reject a 'user:email-set' event", async () => {
       const store = await getEventStore();
       const stream = nanoid();
-
-      const userReducer = getUserReducer(store);
 
       store.validator.on("user:email-set", async (record) => {
         const user = await store.reduce(stream, userReducer);
@@ -574,7 +574,7 @@ export function testEventStoreMethods(
         },
       });
 
-      assertRejects(
+      await assertRejects(
         async () =>
           await store.addEvent({
             stream,
@@ -590,13 +590,113 @@ export function testEventStoreMethods(
         "Email has not changed",
       );
     });
+
+    it("should create a 'user' reducer and only reduce filtered events", async () => {
+      const store = await getEventStore();
+      const stream = nanoid();
+
+      await store.addEvent({
+        stream,
+        type: "user:created",
+        data: {
+          name: {
+            given: "John",
+            family: "Doe",
+          },
+          email: "john.doe@fixture.none",
+        },
+      });
+
+      await store.addEvent({
+        stream,
+        type: "user:name:given-set",
+        data: {
+          given: "Jane",
+        },
+      });
+
+      await store.addEvent({
+        stream,
+        type: "user:email-set",
+        data: {
+          email: "jane.doe@fixture.none",
+        },
+        meta: {
+          auditor: "system",
+        },
+      });
+
+      const state = await store.reduce(stream, userFilteredReducer);
+
+      assertEquals(state?.name, { given: "John", family: "Doe" });
+      assertEquals(state?.email, "jane.doe@fixture.none");
+    });
+
+    it("should create a 'post:count' reducer and retrieve post correct post count", async () => {
+      const store = await getEventStore();
+      const auditor = nanoid();
+
+      store.contextor.register("post:created", ({ meta: { auditor } }) => [{
+        key: `user:${auditor}:posts`,
+        op: "insert",
+      }]);
+
+      const post1 = await store.addEvent({ type: "post:created", data: { title: "Post #1", body: "Sample #1" }, meta: { auditor } });
+      const post2 = await store.addEvent({ type: "post:created", data: { title: "Post #2", body: "Sample #2" }, meta: { auditor } });
+      await store.addEvent({ stream: post2, type: "post:removed" });
+      const post3 = await store.addEvent({ type: "post:created", data: { title: "Post #3", body: "Sample #3" }, meta: { auditor } });
+
+      const events = await store.getEventsByContext(`user:${auditor}:posts`);
+
+      assertEquals(events.length, 4);
+
+      const state = await store.reduce(`user:${auditor}:posts`, userPostReducer);
+
+      assertEquals(state?.posts, [{ id: post1, author: auditor }, { id: post3, author: auditor }]);
+      assertEquals(state?.count, 2);
+    });
+
+    it("should throw error on adding more than a single post per user", async () => {
+      const store = await getEventStore();
+      const auditor1 = nanoid();
+      const auditor2 = nanoid();
+
+      store.contextor.register("post:created", ({ meta: { auditor } }) => [{
+        key: `user:${auditor}:posts`,
+        op: "insert",
+      }]);
+
+      store.validator.on("post:created", async ({ meta: { auditor } }) => {
+        const state = await store.reduce(`user:${auditor}:posts`, userPostReducer);
+        if (state && state.count > 0) {
+          throw new Error("Can only have 1 post per user");
+        }
+      });
+
+      const postId = await store.addEvent({ type: "post:created", data: { title: "Post #1", body: "Sample #1" }, meta: { auditor: auditor1 } });
+      await store.addEvent({ type: "post:created", data: { title: "Post #2", body: "Sample #2" }, meta: { auditor: auditor2 } });
+
+      await assertRejects(
+        async () => store.addEvent({ type: "post:created", data: { title: "Post #3", body: "Sample #3" }, meta: { auditor: auditor1 } }),
+        Error,
+        "Can only have 1 post per user",
+      );
+
+      const events = await store.getEventsByContext(`user:${auditor1}:posts`);
+
+      assertEquals(events.length, 1);
+
+      const state = await store.reduce(`user:${auditor1}:posts`, userPostReducer);
+
+      assertEquals(state?.posts, [{ id: postId, author: auditor1 }]);
+      assertEquals(state?.count, 1);
+    });
   });
 
   describe(".createSnapshot", () => {
     it("should create a new snapshot", async () => {
       const store = await getEventStore();
       const stream = nanoid();
-      const reducer = getUserReducer(store);
 
       await store.addEvent({
         stream,
@@ -626,9 +726,9 @@ export function testEventStoreMethods(
         type: "user:deactivated",
       });
 
-      await store.createSnapshot(stream, reducer);
+      await store.createSnapshot(stream, userReducer);
 
-      const snapshot = await store.snapshots.getByStream(reducer.name, stream);
+      const snapshot = await store.snapshots.getByStream(userReducer.name, stream);
 
       assertNotEquals(snapshot, undefined);
       assertObjectMatch(snapshot!.state, {
@@ -652,9 +752,9 @@ export function testEventStoreMethods(
 
       assertEquals(events.length, 1);
 
-      const state = await store.reduce(stream, reducer);
+      const state = await store.reduce(stream, userReducer);
 
-      assertObjectMatch(state, {
+      assertObjectMatch(state!, {
         name: {
           given: "John",
           family: "Doe",

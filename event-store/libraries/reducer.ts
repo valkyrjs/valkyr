@@ -1,6 +1,6 @@
 import type { Unknown } from "../types/common.ts";
 import type { EventRecord } from "../types/event.ts";
-import type { Reducer, ReducerLeftFold } from "../types/reducer.ts";
+import type { Reducer, ReducerConfig, ReducerLeftFold } from "../types/reducer.ts";
 
 const names = new Set<string>();
 
@@ -12,11 +12,13 @@ const names = new Set<string>();
  */
 export function makeReducer<TState extends Unknown, TRecord extends EventRecord>(
   fold: ReducerLeftFold<TState, TRecord>,
-  config: { name: string; state: () => Partial<TState> },
+  config: ReducerConfig<TState, TRecord>,
 ): Reducer<TState, TRecord> {
   reserveReducerName(config.name);
   return {
     name: config.name,
+    type: config.type,
+    filter: config.filter,
     reduce(events: TRecord[], state?: TState) {
       return events.reduce(fold, state ?? (config.state() as TState));
     },

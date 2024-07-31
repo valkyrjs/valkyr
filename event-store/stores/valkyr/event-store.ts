@@ -39,7 +39,7 @@ import { makeReducer } from "~libraries/reducer.ts";
 import { Validator } from "~libraries/validator.ts";
 import type { Unknown } from "~types/common.ts";
 import type { Event, EventRecord, EventStatus, EventToRecord } from "~types/event.ts";
-import type { EventReadOptions, EventStore, EventStoreHooks, Pagination } from "~types/event-store.ts";
+import type { EventReadOptions, EventStore, EventStoreHooks } from "~types/event-store.ts";
 import type { InferReducerState, Reducer, ReducerConfig, ReducerLeftFold } from "~types/reducer.ts";
 import type { ExcludeEmptyFields } from "~types/utilities.ts";
 import { pushEventRecord } from "~utilities/event-store/push-event-record.ts";
@@ -59,11 +59,11 @@ import { SnapshotProvider } from "./providers/snapshot.ts";
  * Provides a solution to easily validate, generate, and project events to a
  * valkyr database.
  */
-export class ValkyrEventStore<TEvent extends Event, TRecord extends EventRecord = EventToRecord<TEvent>>
-  implements EventStore<TEvent, TRecord> {
+export class ValkyrEventStore<TEvent extends Event, TRecord extends EventRecord = EventToRecord<TEvent>> implements EventStore<TEvent, TRecord> {
   readonly #database: IndexedDatabase<Collections>;
   readonly #events: EventList<TEvent>;
   readonly #validators: ValidatorConfig<TEvent>;
+  readonly #snapshot: "manual" | "auto";
 
   readonly hooks: EventStoreHooks<TRecord>;
 
@@ -79,6 +79,7 @@ export class ValkyrEventStore<TEvent extends Event, TRecord extends EventRecord 
     this.#database = getEventStoreDatabase(config.database) as IndexedDatabase<Collections>;
     this.#events = config.events;
     this.#validators = config.validators;
+    this.#snapshot = config.snapshot ?? "manual";
 
     this.hooks = config.hooks ?? {};
 
@@ -143,20 +144,20 @@ export class ValkyrEventStore<TEvent extends Event, TRecord extends EventRecord 
     return { exists: false, outdated: await this.events.checkOutdated(event) };
   }
 
-  async getEvents(options?: EventReadOptions): Promise<TRecord[]> {
+  async getEvents(options?: EventReadOptions<TRecord>): Promise<TRecord[]> {
     return (await this.events.get(options)) as TRecord[];
   }
 
-  async getEventsByStream(stream: string, options?: EventReadOptions): Promise<TRecord[]> {
+  async getEventsByStream(stream: string, options?: EventReadOptions<TRecord>): Promise<TRecord[]> {
     return (await this.events.getByStream(stream, options)) as TRecord[];
   }
 
-  async getEventsByContext(key: string, _?: Pagination): Promise<TRecord[]> {
+  async getEventsByContext(key: string, options?: EventReadOptions<TRecord>): Promise<TRecord[]> {
     const rows = await this.contexts.getByKey(key);
     if (rows.length === 0) {
       return [];
     }
-    return (await this.events.getByStreams(rows.map((row) => row.stream))) as TRecord[];
+    return (await this.events.getByStreams(rows.map((row) => row.stream), options)) as TRecord[];
   }
 
   async replayEvents(stream?: string): Promise<void> {
@@ -177,30 +178,36 @@ export class ValkyrEventStore<TEvent extends Event, TRecord extends EventRecord 
 
   makeReducer<TState extends Unknown>(
     folder: ReducerLeftFold<TState, TRecord>,
-    config: ReducerConfig<TState>,
+    config: ReducerConfig<TState, TRecord>,
   ): Reducer<TState, TRecord> {
     return makeReducer<TState, TRecord>(folder, config);
   }
 
   async reduce<TReducer extends Reducer>(
-    stream: string,
+    streamOrContext: string,
     reducer: TReducer,
   ): Promise<ReturnType<TReducer["reduce"]> | undefined> {
     let cursor: string | undefined;
     let state: InferReducerState<TReducer> | undefined;
 
-    const snapshot = await this.getSnapshot(stream, reducer);
+    const snapshot = await this.getSnapshot(streamOrContext, reducer);
     if (snapshot !== undefined) {
       cursor = snapshot.cursor;
       state = snapshot.state;
     }
 
-    const events = await this.getEventsByStream(stream, { cursor });
+    const events = reducer.type === "stream"
+      ? await this.getEventsByStream(streamOrContext, { cursor, filter: reducer.filter })
+      : await this.getEventsByContext(streamOrContext, { cursor, filter: reducer.filter });
     if (events.length === 0) {
       return undefined;
     }
 
-    return reducer.reduce(events, state);
+    const result = reducer.reduce(events, state);
+    if (this.#snapshot === "auto") {
+      await this.snapshots.insert(name, streamOrContext, events.at(-1)!.created, result);
+    }
+    return result;
   }
 
   /*
@@ -209,27 +216,27 @@ export class ValkyrEventStore<TEvent extends Event, TRecord extends EventRecord 
    |--------------------------------------------------------------------------------
    */
 
-  async createSnapshot<TReducer extends Reducer>(stream: string, { name, reduce }: TReducer): Promise<void> {
-    const events = await this.getEventsByStream(stream);
+  async createSnapshot<TReducer extends Reducer>(streamOrContext: string, { name, type, filter, reduce }: TReducer): Promise<void> {
+    const events = type === "stream" ? await this.getEventsByStream(streamOrContext, { filter }) : await this.getEventsByContext(streamOrContext, { filter });
     if (events.length === 0) {
       return undefined;
     }
-    await this.snapshots.insert(name, stream, events.at(-1)!.created, reduce(events));
+    await this.snapshots.insert(name, streamOrContext, events.at(-1)!.created, reduce(events));
   }
 
   async getSnapshot<TReducer extends Reducer, TState = InferReducerState<TReducer>>(
-    stream: string,
+    streamOrContext: string,
     reducer: TReducer,
   ): Promise<{ cursor: string; state: TState } | undefined> {
-    const snapshot = await this.snapshots.getByStream(reducer.name, stream);
+    const snapshot = await this.snapshots.getByStream(reducer.name, streamOrContext);
     if (snapshot === undefined) {
       return undefined;
     }
     return { cursor: snapshot.cursor, state: snapshot.state as TState };
   }
 
-  async deleteSnapshot<TReducer extends Reducer>(stream: string, reducer: TReducer): Promise<void> {
-    await this.snapshots.remove(reducer.name, stream);
+  async deleteSnapshot<TReducer extends Reducer>(streamOrContext: string, reducer: TReducer): Promise<void> {
+    await this.snapshots.remove(reducer.name, streamOrContext);
   }
 
   /*
@@ -265,6 +272,7 @@ type Config<TEvent extends Event, TRecord extends EventRecord> = {
   database: Adapter;
   events: EventList<TEvent>;
   validators: ValidatorConfig<TEvent>;
+  snapshot?: "manual" | "auto";
   hooks?: EventStoreHooks<TRecord>;
 };
 

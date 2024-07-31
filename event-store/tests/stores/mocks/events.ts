@@ -5,6 +5,8 @@ import type { Event as TEvent, EventToRecord } from "~types/event.ts";
 
 export const events = new Set(
   [
+    "post:created",
+    "post:removed",
     "user:activated",
     "user:created",
     "user:deactivated",
@@ -17,6 +19,7 @@ export const events = new Set(
 
 export const validators = {
   data: new Map<Event["type"], AnyZodObject>([
+    ["post:created", z.object({ title: z.string(), body: z.string() }).strict()],
     [
       "user:created",
       z
@@ -32,6 +35,7 @@ export const validators = {
     ["user:name:given-set", z.object({ given: z.string() }).strict()],
   ]),
   meta: new Map<Event["type"], AnyZodObject>([
+    ["post:created", z.object({ auditor: z.string() }).strict()],
     ["user:activated", z.object({ auditor: z.string() }).strict()],
     ["user:email-set", z.object({ auditor: z.string() }).strict()],
   ]),
@@ -40,6 +44,8 @@ export const validators = {
 export type EventRecord = EventToRecord<Event>;
 
 export type Event =
+  | PostCreated
+  | PostRemoved
   | UserActivated
   | UserCreated
   | UserDeactivated
@@ -47,6 +53,10 @@ export type Event =
   | UserMetaAdded
   | UserNameFamilySet
   | UserNameGivenSet;
+
+export type PostCreated = TEvent<"post:created", { title: string; body: string }, { auditor: string }>;
+
+export type PostRemoved = TEvent<"post:removed", Empty, Empty>;
 
 export type UserActivated = TEvent<"user:activated", Empty, { auditor: string }>;
 

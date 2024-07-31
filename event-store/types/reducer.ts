@@ -5,7 +5,19 @@ export type Reducer<TState extends Record<string, unknown> = any, TRecord extend
    * Name of the reducer, must be a unique identifier as its used by snapshotter
    * to store, and manage state snapshots for event streams.
    */
-  name: string;
+  name: ReducerConfig<TState, TRecord>["name"];
+
+  /**
+   * Reducer type which defines if events are pulled from multiple context streams,
+   * or a single stream. The type defines how the `.reduce` method retrieves events
+   * from the store.
+   */
+  type: ReducerConfig<TState, TRecord>["type"];
+
+  /**
+   * Filter options for how events are pulled from the store.
+   */
+  filter?: ReducerConfig<TState, TRecord>["filter"];
 
   /**
    * Take in a list of events, and return a state from the given events.
@@ -41,8 +53,33 @@ export type ReducerLeftFold<TState extends Record<string, unknown> = any, TRecor
 /**
  * Reducer configuration containing unique name, and initial state.
  */
-export type ReducerConfig<TState extends Record<string, unknown>> = {
+export type ReducerConfig<TState extends Record<string, unknown>, TRecord extends EventRecord> = {
+  /**
+   * Name of the reducer, must be a unique identifier as its used by snapshotter
+   * to store, and manage state snapshots for event streams.
+   */
   name: string;
+
+  /**
+   * Reducer type which defines if events are pulled from multiple context streams,
+   * or a single stream. The type defines how the `.reduce` method retrieves events
+   * from the store.
+   */
+  type: "stream" | "context";
+
+  /**
+   * Filter options for how events are pulled from the store.
+   */
+  filter?: {
+    /**
+     * Only include events of in the given type.
+     */
+    types?: TRecord["type"][];
+  };
+
+  /**
+   * Initial state to make for the reducer.
+   */
   state: () => TState;
 };
 

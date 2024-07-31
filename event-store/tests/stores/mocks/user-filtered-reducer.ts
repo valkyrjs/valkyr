@@ -2,7 +2,7 @@ import { makeReducer } from "~libraries/reducer.ts";
 
 import type { EventRecord } from "./events.ts";
 
-export const userReducer = makeReducer<UserState, EventRecord>((state, event) => {
+export const userFilteredReducer = makeReducer<UserState, EventRecord>((state, event) => {
   switch (event.type) {
     case "user:created": {
       state.name.given = event.data.name.given ?? "";
@@ -33,8 +33,11 @@ export const userReducer = makeReducer<UserState, EventRecord>((state, event) =>
   }
   return state;
 }, {
-  name: "user",
+  name: "user:filtered",
   type: "stream",
+  filter: {
+    types: ["user:created", "user:email-set"],
+  },
   state: () => ({
     name: {
       given: "",

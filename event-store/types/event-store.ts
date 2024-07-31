@@ -92,7 +92,7 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    *
    * @param options - Read options. (Optional)
    */
-  getEvents(options?: EventReadOptions): Promise<TRecord[]>;
+  getEvents(options?: EventReadOptions<TRecord>): Promise<TRecord[]>;
 
   /**
    * Retrieve events from the events table under the given stream.
@@ -100,14 +100,15 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    * @param stream  - Stream to retrieve events for.
    * @param options - Stream logic options. (Optional)
    */
-  getEventsByStream(stream: string, options?: EventReadOptions): Promise<TRecord[]>;
+  getEventsByStream(stream: string, options?: EventReadOptions<TRecord>): Promise<TRecord[]>;
 
   /**
    * Retrieve all events under the given context key.
    *
-   * @param key - Context key to retrieve events for.
+   * @param key     - Context key to retrieve events for.
+   * @param options - Context logic options. (Optional)
    */
-  getEventsByContext(key: string, _?: Pagination): Promise<TRecord[]>;
+  getEventsByContext(key: string, options?: EventReadOptions<TRecord>): Promise<TRecord[]>;
 
   /**
    * Retrieves a list of events, and runs them through context, and projection
@@ -148,29 +149,34 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    *
    * type FooState = { name: string };
    *
-   * const foo = await eventStore.reduce("stream-id", fooReducer);
+   * const state = await eventStore.reduce("stream-id", reducer);
    * ```
    */
   makeReducer<TState extends Unknown>(
     folder: ReducerLeftFold<TState, TRecord>,
-    config: ReducerConfig<TState>,
+    config: ReducerConfig<TState, TRecord>,
   ): Reducer<TState, TRecord>;
 
   /**
    * Reduce events in the given stream to a entity state.
    *
-   * @param stream - Stream to get events from.
-   * @param reduce - Reducer method to generate state from.
+   * @param streamOrContext - Stream, or Context to get events from.
+   * @param reducer         - Reducer method to generate state from.
    *
    * @example
    * ```ts
-   * const foo = await eventStore.reduce("stream-id", fooReducer);
+   * const state = await eventStore.reduce(stream, reducer);
+   * ```
+   *
+   * @example
+   * ```ts
+   * const state = await eventStore.reduce(`foo:${foo}:bars`, reducer);
    * ```
    *
    * Reducers are created through the `.makeReducer` method.
    */
   reduce<TReducer extends Reducer>(
-    stream: string,
+    streamOrContext: string,
     reducer: TReducer,
   ): Promise<ReturnType<TReducer["reduce"]> | undefined>;
 
@@ -181,20 +187,54 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    */
 
   /**
-   * Create a new snapshot for the given stream and reducer.
+   * Create a new snapshot for the given stream/context and reducer.
    *
-   * @param stream - Stream to create a snapshot from.
-   * @param reduce - Reducer method to create the snapshot state from.
+   * @param streamOrContext - Stream, or Context to create a snapshot from.
+   * @param reduce          - Reducer method to create the snapshot state from.
+   *
+   * @example
+   * ```ts
+   * await eventStore.createSnapshot(stream, reducer);
+   * ```
+   *
+   * @example
+   * ```ts
+   * await eventStore.createSnapshot(`foo:${foo}:bars`, reducer);
+   * ```
    */
-  createSnapshot<TReducer extends Reducer>(stream: string, reduce: TReducer): Promise<void>;
+  createSnapshot<TReducer extends Reducer>(streamOrContext: string, reduce: TReducer): Promise<void>;
 
   /**
    * Get an entity state snapshot from the database. These are useful for when we
    * want to reduce the amount of events that has to be processed when fetching
    * state history for a reducer.
    *
-   * @param name   - Name of the snapshot, unique to the reducer used.
-   * @param stream - Stream to get snapshot for.
+   * @param streamOrContext - Stream, or Context to get snapshot for.
+   * @param reducer         - Reducer to get snapshot for.
+   *
+   * @example
+   * ```ts
+   * const snapshot = await eventStore.getSnapshot(stream, reducer);
+   * console.log(snapshot);
+   * // {
+   * //   cursor: "jxubdY-0",
+   * //   state: {
+   * //     foo: "bar"
+   * //   }
+   * // }
+   * ```
+   *
+   * @example
+   * ```ts
+   * const snapshot = await eventStore.getSnapshot(`foo:${foo}:bars`, reducer);
+   * console.log(snapshot);
+   * // {
+   * //   cursor: "jxubdY-0",
+   * //   state: {
+   * //     count: 1
+   * //   }
+   * // }
+   * ```
    */
   getSnapshot<TReducer extends Reducer, TState = InferReducerState<TReducer>>(
     stream: string,
@@ -204,8 +244,18 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
   /**
    * Delete a snapshot.
    *
-   * @param reducer - Name of the snapshot, unique to the reducer used.
-   * @param stream  - Stream to delete snapshot for.
+   * @param streamOrContext - Stream, or Context to delete snapshot for.
+   * @param reducer         - Reducer to remove snapshot for.
+   *
+   * @example
+   * ```ts
+   * await eventStore.deleteSnapshot(stream, reducer);
+   * ```
+   *
+   * @example
+   * ```ts
+   * await eventStore.deleteSnapshot(`foo:${foo}:bars`, reducer);
+   * ```
    */
   deleteSnapshot<TReducer extends Reducer>(stream: string, reducer: TReducer): Promise<void>;
 };
@@ -285,7 +335,17 @@ export type EventStoreHooks<TRecord extends EventRecord> = Partial<{
  |--------------------------------------------------------------------------------
  */
 
-export type EventReadOptions = {
+export type EventReadOptions<TRecord extends EventRecord> = {
+  /**
+   * Filter options for how events are pulled from the store.
+   */
+  filter?: {
+    /**
+     * Only include events in the given types.
+     */
+    types?: TRecord["type"][];
+  };
+
   /**
    * Fetch events from a specific point in time. The direction of which
    * events are fetched is determined by the direction option.
