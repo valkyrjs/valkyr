@@ -46,9 +46,10 @@ import type { InferReducerState, Reducer, ReducerConfig, ReducerLeftFold } from 
 import type { ExcludeEmptyFields } from "~types/utilities.ts";
 import { pushEventRecord } from "~utilities/event-store/push-event-record.ts";
 import { pushEventRecordSequence } from "~utilities/event-store/push-event-record-sequence.ts";
+import { pushEventRecordUpdates } from "~utilities/event-store/push-event-record-updates.ts";
 
 import { ContextProvider } from "./contexts/provider.ts";
-import type { EventStoreDB } from "./database.ts";
+import type { EventStoreDB, Transaction } from "./database.ts";
 import { schema } from "./database.ts";
 import { EventProvider } from "./events/provider.ts";
 import { SnapshotProvider } from "./snapshots/provider.ts";
@@ -66,6 +67,8 @@ export { migrate } from "./database.ts";
  * postgres database.
  */
 export class PGEventStore<TEvent extends Event, TRecord extends EventRecord = EventToRecord<TEvent>> implements EventStore<TEvent, TRecord> {
+  readonly #config: Config<TEvent, TRecord>;
+
   readonly #database: Database<EventStoreDB>;
   readonly #events: EventList<TEvent>;
   readonly #validators: ValidatorConfig<TEvent>;
@@ -81,7 +84,8 @@ export class PGEventStore<TEvent extends Event, TRecord extends EventRecord = Ev
   readonly projector: Projector<TRecord>;
   readonly contextor: Contextor<TRecord>;
 
-  constructor(config: Config<TEvent, TRecord>) {
+  constructor(config: Config<TEvent, TRecord>, tx?: Transaction) {
+    this.#config = config;
     this.#database = new Database({
       getInstance() {
         return drizzle(config.database(), { schema });
@@ -93,9 +97,9 @@ export class PGEventStore<TEvent extends Event, TRecord extends EventRecord = Ev
 
     this.hooks = config.hooks ?? {};
 
-    this.contexts = new ContextProvider(this.#database);
-    this.events = new EventProvider(this.#database);
-    this.snapshots = new SnapshotProvider(this.#database);
+    this.contexts = new ContextProvider(tx ?? this.#database);
+    this.events = new EventProvider(tx ?? this.#database);
+    this.snapshots = new SnapshotProvider(tx ?? this.#database);
 
     this.validator = new Validator<TRecord>();
     this.projector = new Projector<TRecord>();
@@ -134,7 +138,7 @@ export class PGEventStore<TEvent extends Event, TRecord extends EventRecord = Ev
   }
 
   async addEventSequence<TEventType extends Event["type"]>(
-    events: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream?: string })[],
+    events: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream: string })[],
   ): Promise<void> {
     return this.pushEventSequence(
       events.map((event) => ({ record: createEventRecord(event as any) as TRecord, hydrated: false })),
@@ -146,13 +150,18 @@ export class PGEventStore<TEvent extends Event, TRecord extends EventRecord = Ev
   }
 
   async pushEventSequence(records: { record: TRecord; hydrated?: boolean }[]): Promise<void> {
-    return pushEventRecordSequence(
-      this as any,
-      records.map<{ record: TRecord; hydrated: boolean }>((record) => {
-        record.hydrated = record.hydrated === undefined ? true : record.hydrated;
-        return record as { record: TRecord; hydrated: boolean };
-      }),
-    );
+    const inserted = await this.#database.transaction(async (tx) => {
+      return pushEventRecordSequence(
+        new PGEventStore(this.#config, tx) as any,
+        records.map<{ record: TRecord; hydrated: boolean }>((record) => {
+          record.hydrated = record.hydrated === undefined ? true : record.hydrated;
+          return record as { record: TRecord; hydrated: boolean };
+        }),
+      );
+    });
+    for (const { record, hydrated, status } of inserted) {
+      await pushEventRecordUpdates(this as any, record, hydrated, status);
+    }
   }
 
   async getEventStatus(event: TRecord): Promise<EventStatus> {

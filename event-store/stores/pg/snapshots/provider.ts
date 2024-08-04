@@ -1,11 +1,11 @@
 import { type Database, takeOne } from "@valkyr/toolkit/drizzle";
 import { and, eq } from "drizzle-orm";
 
-import type { EventStoreDB } from "../database.ts";
+import type { EventStoreDB, Transaction } from "../database.ts";
 import { type Snapshot, snapshots as schema } from "./schema.ts";
 
 export class SnapshotProvider {
-  constructor(readonly db: Database<EventStoreDB>) {}
+  constructor(readonly db: Database<EventStoreDB> | Transaction) {}
 
   /**
    * Add snapshot state under given reducer stream.

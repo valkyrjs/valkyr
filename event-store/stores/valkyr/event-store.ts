@@ -123,9 +123,9 @@ export class ValkyrEventStore<TEvent extends Event, TRecord extends EventRecord 
   }
 
   async addEventSequence<TEventType extends Event["type"]>(
-    _events: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream?: string })[],
+    _events: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream: string })[],
   ): Promise<void> {
-    throw new Error("Method 'addSequence' not yet supported in @valkyr/db driver");
+    throw new Error("Method 'addEventSequence' not yet supported in @valkyr/db driver");
   }
 
   async pushEvent(record: TRecord, hydrated = true): Promise<string> {
@@ -133,7 +133,7 @@ export class ValkyrEventStore<TEvent extends Event, TRecord extends EventRecord 
   }
 
   async pushEventSequence(_records: { record: TRecord; hydrated?: boolean }[]): Promise<void> {
-    throw new Error("Method 'pushSequence' not yet supported in @valkyr/db driver");
+    throw new Error("Method 'pushEventSequence' not yet supported in @valkyr/db driver");
   }
 
   async getEventStatus(event: TRecord): Promise<EventStatus> {

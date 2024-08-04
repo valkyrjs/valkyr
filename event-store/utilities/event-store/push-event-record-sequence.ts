@@ -2,7 +2,7 @@ import { getLogicalTimestamp } from "~libraries/time.ts";
 import type { PGEventStore } from "~stores/pg/event-store.ts";
 import type { SQLiteEventStore } from "~stores/sqlite/event-store.ts";
 import type { EventStatus } from "~types/event.ts";
-import { pushEventRecordUpdates } from "~utilities/event-store/push-event-record-updates.ts";
+import { insertEventRecord } from "~utilities/event-store/insert-event-record.ts";
 import { validateEventRecord } from "~utilities/event-store/validate-event-record.ts";
 
 export async function pushEventRecordSequence(
@@ -11,13 +11,8 @@ export async function pushEventRecordSequence(
     record: any;
     hydrated: boolean;
   }[],
-): Promise<void> {
-  const inserts: {
-    record: any;
-    hydrated: boolean;
-    status: EventStatus;
-  }[] = [];
-
+): Promise<Insert[]> {
+  const inserts: Insert[] = [];
   for (const { record, hydrated } of records) {
     if (store.hasEvent(record.type) === false) {
       throw new Error(`Event '${record.type}' is not registered with the event store!`);
@@ -30,18 +25,14 @@ export async function pushEventRecordSequence(
       record.recorded = getLogicalTimestamp();
     }
     await validateEventRecord(store, record);
+    await insertEventRecord(store, record);
     inserts.push({ record, hydrated, status });
   }
-
-  await store.db.transaction(
-    (async (tx: any) => {
-      for (const { record } of inserts) {
-        await store.events.insert(record, tx as any);
-      }
-    }) as any,
-  );
-
-  for (const { record, hydrated, status } of inserts) {
-    await pushEventRecordUpdates(store, record, hydrated, status);
-  }
+  return inserts;
 }
+
+type Insert = {
+  record: any;
+  hydrated: boolean;
+  status: EventStatus;
+};

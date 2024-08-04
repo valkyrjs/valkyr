@@ -3,11 +3,11 @@ import { and, eq } from "drizzle-orm";
 
 import type { Context } from "~types/context.ts";
 
-import type { EventStoreDB } from "../database.ts";
+import type { EventStoreDB, Transaction } from "../database.ts";
 import { contexts as schema } from "./schema.ts";
 
 export class ContextProvider {
-  constructor(readonly db: Database<EventStoreDB>) {}
+  constructor(readonly db: Database<EventStoreDB> | Transaction) {}
 
   /**
    * Handle incoming context operations.

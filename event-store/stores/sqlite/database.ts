@@ -32,3 +32,5 @@ export type EventStoreDB = BunSQLiteDatabase<{
   contexts: typeof contexts;
   events: typeof events;
 }>;
+
+export type Transaction = Parameters<Parameters<EventStoreDB["transaction"]>[0]>[0];

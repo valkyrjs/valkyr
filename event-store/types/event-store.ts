@@ -38,7 +38,7 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    * @param events - List of events to process.
    */
   addEventSequence<TEventType extends Event["type"]>(
-    event: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream?: string })[],
+    event: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream: string })[],
   ): Promise<void>;
 
   /**

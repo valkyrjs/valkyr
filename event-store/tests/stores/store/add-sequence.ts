@@ -13,6 +13,16 @@ export default describe<Event, EventRecord>(".addSequence", (getEventStore) => {
     const store = await getEventStore();
     const stream = nanoid();
 
+    store.validator.on("user:email-set", async ({ stream }) => {
+      const state = await store.reduce(stream, userReducer);
+      if (state === undefined) {
+        throw new Error("State does not exist");
+      }
+      if (state.name.given !== "John") {
+        throw new Error("Cannot change 'email', given name is not 'John'");
+      }
+    });
+
     const events = [
       {
         stream,

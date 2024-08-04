@@ -8,7 +8,6 @@ import type { EventStoreHooks } from "~types/event-store.ts";
 
 import { type Event, type EventRecord, events, validators } from "./mocks/events.ts";
 import testAddEvent from "./store/add-event.ts";
-import testAddSequence from "./store/add-sequence.ts";
 import testCreateSnapshot from "./store/create-snapshot.ts";
 import testMakeReducer from "./store/make-reducer.ts";
 import testReduce from "./store/reduce.ts";
@@ -36,7 +35,6 @@ afterAll(async () => {
 
 describe("SQLiteEventStore", () => {
   testAddEvent(eventStoreFn);
-  testAddSequence(eventStoreFn);
   testCreateSnapshot(eventStoreFn);
   testMakeReducer(eventStoreFn);
   testReplayEvents(eventStoreFn);

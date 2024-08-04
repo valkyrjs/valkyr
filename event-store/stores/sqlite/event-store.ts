@@ -45,10 +45,9 @@ import type { EventReadOptions, EventStore, EventStoreHooks } from "~types/event
 import type { InferReducerState, Reducer, ReducerConfig, ReducerLeftFold } from "~types/reducer.ts";
 import type { ExcludeEmptyFields } from "~types/utilities.ts";
 import { pushEventRecord } from "~utilities/event-store/push-event-record.ts";
-import { pushEventRecordSequence } from "~utilities/event-store/push-event-record-sequence.ts";
 
 import { ContextProvider } from "./contexts/provider.ts";
-import { type EventStoreDB, schema } from "./database.ts";
+import { type EventStoreDB, schema, type Transaction } from "./database.ts";
 import { EventProvider } from "./events/provider.ts";
 import { SnapshotProvider } from "./snapshots/provider.ts";
 
@@ -65,6 +64,8 @@ export { migrate } from "./database.ts";
  * sqlite database.
  */
 export class SQLiteEventStore<TEvent extends Event, TRecord extends EventRecord = EventToRecord<TEvent>> implements EventStore<TEvent, TRecord> {
+  readonly #config: Config<TEvent, TRecord>;
+
   readonly #database: Database<EventStoreDB>;
   readonly #events: EventList<TEvent>;
   readonly #validators: ValidatorConfig<TEvent>;
@@ -80,7 +81,8 @@ export class SQLiteEventStore<TEvent extends Event, TRecord extends EventRecord 
   readonly projector: Projector<TRecord>;
   readonly contextor: Contextor<TRecord>;
 
-  constructor(config: Config<TEvent, TRecord>) {
+  constructor(config: Config<TEvent, TRecord>, tx?: Transaction) {
+    this.#config = config;
     this.#database = new Database({
       getInstance() {
         return drizzle(config.database(), { schema });
@@ -92,9 +94,9 @@ export class SQLiteEventStore<TEvent extends Event, TRecord extends EventRecord 
 
     this.hooks = config.hooks ?? {};
 
-    this.contexts = new ContextProvider(this.#database);
-    this.events = new EventProvider(this.#database);
-    this.snapshots = new SnapshotProvider(this.#database);
+    this.contexts = new ContextProvider(tx ?? this.#database);
+    this.events = new EventProvider(tx ?? this.#database);
+    this.snapshots = new SnapshotProvider(tx ?? this.#database);
 
     this.validator = new Validator<TRecord>();
     this.projector = new Projector<TRecord>();
@@ -133,25 +135,17 @@ export class SQLiteEventStore<TEvent extends Event, TRecord extends EventRecord 
   }
 
   async addEventSequence<TEventType extends Event["type"]>(
-    events: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream?: string })[],
+    _events: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream: string })[],
   ): Promise<void> {
-    return this.pushEventSequence(
-      events.map((event) => ({ record: createEventRecord(event as any) as TRecord, hydrated: false })),
-    );
+    throw new Error("Method 'addEventSequence' not yet supported in sqlite driver");
   }
 
   async pushEvent(record: TRecord, hydrated = true): Promise<string> {
     return pushEventRecord(this as any, record, hydrated);
   }
 
-  async pushEventSequence(records: { record: TRecord; hydrated?: boolean }[]): Promise<void> {
-    return pushEventRecordSequence(
-      this as any,
-      records.map<{ record: TRecord; hydrated: boolean }>((record) => {
-        record.hydrated = record.hydrated === undefined ? true : record.hydrated;
-        return record as { record: TRecord; hydrated: boolean };
-      }),
-    );
+  async pushEventSequence(_records: { record: TRecord; hydrated?: boolean }[]): Promise<void> {
+    throw new Error("Method 'pushEventSequence' not yet supported in sqlite driver");
   }
 
   async getEventStatus(event: TRecord): Promise<EventStatus> {

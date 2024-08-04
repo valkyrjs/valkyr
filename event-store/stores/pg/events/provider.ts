@@ -5,11 +5,11 @@ import type { PgSelectQueryBuilder } from "drizzle-orm/pg-core";
 import type { EventRecord } from "~types/event.ts";
 import type { EventReadOptions } from "~types/event-store.ts";
 
-import type { EventStoreDB } from "../database.ts";
+import type { EventStoreDB, Transaction } from "../database.ts";
 import { events as schema } from "./schema.ts";
 
 export class EventProvider<TRecord extends EventRecord> {
-  constructor(readonly db: Database<EventStoreDB>) {}
+  constructor(readonly db: Database<EventStoreDB> | Transaction) {}
 
   /**
    * Insert a new event record to the events table.
@@ -17,12 +17,8 @@ export class EventProvider<TRecord extends EventRecord> {
    * @param record - Event record to insert.
    * @param tx     - Transaction to insert the record within. (Optional)
    */
-  async insert(record: TRecord, tx?: Parameters<Parameters<EventStoreDB["transaction"]>[0]>[0]): Promise<void> {
-    if (tx !== undefined) {
-      await tx.insert(schema).values(record);
-    } else {
-      await this.db.insert(schema).values(record);
-    }
+  async insert(record: TRecord): Promise<void> {
+    await this.db.insert(schema).values(record);
   }
 
   /**
