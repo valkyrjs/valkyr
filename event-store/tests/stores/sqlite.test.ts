@@ -6,10 +6,17 @@ import { Database } from "sqlite";
 import { migrate, SQLiteEventStore } from "~stores/sqlite/event-store.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 
-import { testEventStoreMethods } from "./helpers/event-store.bdd.ts";
 import { type Event, type EventRecord, events, validators } from "./mocks/events.ts";
+import testAddEvent from "./store/add-event.ts";
+import testAddSequence from "./store/add-sequence.ts";
+import testCreateSnapshot from "./store/create-snapshot.ts";
+import testMakeReducer from "./store/make-reducer.ts";
+import testReduce from "./store/reduce.ts";
+import testReplayEvents from "./store/replay-events.ts";
 
 const DB_MIGRATE = resolve(import.meta.dirname!, "sqlite-migrate");
+
+const eventStoreFn = async (hooks?: EventStoreHooks<EventRecord>) => getEventStore(hooks);
 
 /*
  |--------------------------------------------------------------------------------
@@ -28,7 +35,12 @@ afterAll(async () => {
  */
 
 describe("SQLiteEventStore", () => {
-  testEventStoreMethods(async (hooks?: EventStoreHooks<EventRecord>) => getEventStore(hooks));
+  testAddEvent(eventStoreFn);
+  testAddSequence(eventStoreFn);
+  testCreateSnapshot(eventStoreFn);
+  testMakeReducer(eventStoreFn);
+  testReplayEvents(eventStoreFn);
+  testReduce(eventStoreFn);
 });
 
 /*

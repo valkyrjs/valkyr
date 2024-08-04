@@ -200,6 +200,9 @@ export class ValkyrEventStore<TEvent extends Event, TRecord extends EventRecord 
       ? await this.getEventsByStream(streamOrContext, { cursor, filter: reducer.filter })
       : await this.getEventsByContext(streamOrContext, { cursor, filter: reducer.filter });
     if (events.length === 0) {
+      if (snapshot !== undefined) {
+        return snapshot.state;
+      }
       return undefined;
     }
 

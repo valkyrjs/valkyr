@@ -7,13 +7,20 @@ import postgres from "postgres";
 import { migrate, PGEventStore } from "~stores/pg/event-store.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 
-import { testEventStoreMethods } from "./helpers/event-store.bdd.ts";
 import { type Event, type EventRecord, events, validators } from "./mocks/events.ts";
+import testAddEvent from "./store/add-event.ts";
+import testAddSequence from "./store/add-sequence.ts";
+import testCreateSnapshot from "./store/create-snapshot.ts";
+import testMakeReducer from "./store/make-reducer.ts";
+import testReduce from "./store/reduce.ts";
+import testReplayEvents from "./store/replay-events.ts";
 
 const DB_NAME = "sandbox";
 const DB_MIGRATE = resolve(import.meta.dirname!, "pg-migrate");
 
 const container = await PostgresTestContainer.start("postgres:14");
+
+const eventStoreFn = async (hooks?: EventStoreHooks<EventRecord>) => getEventStore(container.url(DB_NAME), hooks);
 
 /*
  |--------------------------------------------------------------------------------
@@ -42,7 +49,12 @@ afterAll(async () => {
  */
 
 describe("PGEventStore", () => {
-  testEventStoreMethods(async (hooks?: EventStoreHooks<EventRecord>) => getEventStore(container.url(DB_NAME), hooks));
+  testAddEvent(eventStoreFn);
+  testAddSequence(eventStoreFn);
+  testCreateSnapshot(eventStoreFn);
+  testMakeReducer(eventStoreFn);
+  testReplayEvents(eventStoreFn);
+  testReduce(eventStoreFn);
 });
 
 /*

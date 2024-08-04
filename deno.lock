@@ -21,8 +21,7 @@
       "npm:ajv@8.14.0": "npm:ajv@8.14.0",
       "npm:change-case@5.4.4": "npm:change-case@5.4.4",
       "npm:dot-prop@9.0.0": "npm:dot-prop@9.0.0",
-      "npm:drizzle-kit": "npm:drizzle-kit@0.23.0_esbuild@0.19.12",
-      "npm:drizzle-kit@0.23.0": "npm:drizzle-kit@0.23.0_esbuild@0.19.12",
+      "npm:drizzle-kit": "npm:drizzle-kit@0.23.1_esbuild@0.19.12",
       "npm:drizzle-orm": "npm:drizzle-orm@0.32.1_postgres@3.4.4",
       "npm:drizzle-orm@0.32.1": "npm:drizzle-orm@0.32.1_postgres@3.4.4",
       "npm:jose@5.4.1": "npm:jose@5.4.1",
@@ -103,6 +102,10 @@
       }
     },
     "npm": {
+      "@drizzle-team/brocli@0.8.2": {
+        "integrity": "sha512-zTrFENsqGvOkBOuHDC1pXCkDXNd2UhP4lI3gYGhQ1R1SPeAAfqzPsV1dcpMy4uNU6kB5VpU5NGhvwxVNETR02A==",
+        "dependencies": {}
+      },
       "@esbuild-kit/core-utils@3.3.2": {
         "integrity": "sha512-sPRAnw9CdSsRmEtnsl2WXWdyquogVpB3yZ3dgwJfe8zrOzTsV7cJvmwrKVa+0ma5BoiGJ+BoqkMvawbayKUsqQ==",
         "dependencies": {
@@ -409,12 +412,13 @@
           "type-fest": "type-fest@4.23.0"
         }
       },
-      "drizzle-kit@0.23.0_esbuild@0.19.12": {
-        "integrity": "sha512-w9jE97z193dd4jzAyj4Uv2SOh8Ydue70Ki6W0awy4bGM1aPXan6zD6Yv+nNTA6oGgNTDl2MJFxutjHG4fden5g==",
+      "drizzle-kit@0.23.1_esbuild@0.19.12": {
+        "integrity": "sha512-posGQhj8/K4S4CPhk7BO9+IcpNdIh96t0DvcAr/NvMKhPhe5D0MELzmpq9R2MpmSP3fd+Z3upwidtetrw7xnjg==",
         "dependencies": {
+          "@drizzle-team/brocli": "@drizzle-team/brocli@0.8.2",
           "@esbuild-kit/esm-loader": "@esbuild-kit/esm-loader@2.6.5",
           "esbuild": "esbuild@0.19.12",
-          "esbuild-register": "esbuild-register@3.5.0_esbuild@0.19.12"
+          "esbuild-register": "esbuild-register@3.6.0_esbuild@0.19.12"
         }
       },
       "drizzle-orm@0.32.1_postgres@3.4.4": {
@@ -433,8 +437,8 @@
         "integrity": "sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw==",
         "dependencies": {}
       },
-      "esbuild-register@3.5.0_esbuild@0.19.12": {
-        "integrity": "sha512-+4G/XmakeBAsvJuDugJvtyF1x+XJT4FMocynNpxrvEBViirpfUn2PgNpCHedfWhF4WokNsO/OvMKrmJOIJsI5A==",
+      "esbuild-register@3.6.0_esbuild@0.19.12": {
+        "integrity": "sha512-H2/S7Pm8a9CL1uhp9OvjwrBh5Pvx0H8qVOxNu8Wed9Y7qv56MPtq+GGM8RJpq6glYJn9Wspr8uw7l55uyinNeg==",
         "dependencies": {
           "debug": "debug@4.3.5",
           "esbuild": "esbuild@0.19.12"
@@ -851,7 +855,6 @@
       "jsr:@std/testing@0.225.3",
       "npm:change-case@5.4.4",
       "npm:dot-prop@9.0.0",
-      "npm:drizzle-kit@0.23.0",
       "npm:drizzle-orm@0.32.1",
       "npm:nanoid@5.0.7",
       "npm:postgres@3.4.4",

@@ -1,7 +1,7 @@
 {
   "workspace": [
     "./api",
-    "./auth", 
+    "./auth",
     "./event-store",
     "./inverse",
     "./json-rpc",
@@ -14,7 +14,6 @@
     "@std/testing": "jsr:@std/testing@0.225.3",
     "change-case": "npm:change-case@5.4.4",
     "dot-prop": "npm:dot-prop@9.0.0",
-    "drizzle-kit": "npm:drizzle-kit@0.23.0",
     "drizzle-orm": "npm:drizzle-orm@0.32.1",
     "nanoid": "npm:nanoid@5.0.7",
     "postgres": "npm:postgres@3.4.4",
