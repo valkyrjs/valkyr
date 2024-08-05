@@ -1,28 +1,22 @@
 name: "💡 Feature Request"
-description: "Suggest an idea"
+description: "Suggest a new feature or an idea"
 body:
   - type: textarea
-    id: suggestion_summary
+    id: what
     attributes:
-      label: "⭐ Suggestion"
-      description: "A summary of what you'd like to see added or changed"
+      label: "What is needed?"
+      description: "A summary of what you'd like to see added or changed."
     validations:
       required: true
   - type: textarea
-    id: motivating_example
+    id: why
     attributes:
-      label: "📃 Motivating Example"
-      description: |
-        If you were announcing this feature in a blog post, what's a short explanation that shows a developer why this feature improves the language?
+      label: "Why is this needed?"
+      description: "A quick sales pitch for why this feature or idea is needed/valuable."
     validations:
       required: true
   - type: textarea
-    id: use_cases
+    id: how
     attributes:
-      label: "💻 Use Cases"
-      value: |
-        1. What do you want to use this for?
-        2. What shortcomings exist with current approaches?
-        3. What workarounds are you using in the meantime?
-    validations:
-      required: true
+      label: "How can this be done?"
+      description: "Provide some ideas on how we can achieve this, examples, resources etc. that can help progress the work."

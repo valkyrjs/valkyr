@@ -1,21 +1,22 @@
 name: "🐛 Bug Report"
-description: "Create a report to help us improve @valkyr/api"
+description: "Report an issue with functionality or unexpected behavior"
 body:
   - type: textarea
     id: actual_behavior
     attributes:
-      label: 🙁 Actual behavior
+      label: "Actual Behavior"
       description: "What happened, and why it was wrong."
     validations:
       required: true
   - type: textarea
     id: expected_behavior
     attributes:
-      label: 🙂 Expected behavior
-      description: What you expected to happen instead, and why
+      label: "Expected behavior"
+      description: "What you expected to happen instead, and why."
     validations:
       required: true
   - type: textarea
     id: additional_info
     attributes:
-      label: Additional information about the issue
+      label: "Additional information about the issue"
+      description: "Provide some additional information such as environment, reproducible examples etc."
