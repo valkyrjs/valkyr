@@ -24,7 +24,7 @@ export function getEventStoreDatabase(name: string, adapter: Adapter): EventStor
             ],
           },
           {
-            name: "snaphots",
+            name: "snapshots",
             indexes: [
               ["name", { unique: true }],
               ["stream", { unique: false }],
