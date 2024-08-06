@@ -2,7 +2,7 @@ import { IndexedDatabase, MemoryDatabase } from "@valkyr/db";
 
 import type { EventRecord } from "~types/event.ts";
 
-export function getEventStoreDatabase(adapter: Adapter): EventStoreDB {
+export function getEventStoreDatabase(name: string, adapter: Adapter): EventStoreDB {
   switch (adapter) {
     case "indexedb": {
       return new IndexedDatabase<Collections>({

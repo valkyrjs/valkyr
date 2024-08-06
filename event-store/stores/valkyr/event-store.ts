@@ -76,7 +76,7 @@ export class ValkyrEventStore<TEvent extends Event, TRecord extends EventRecord 
   readonly contextor: Contextor<TRecord>;
 
   constructor(config: Config<TEvent, TRecord>) {
-    this.#database = getEventStoreDatabase(config.database) as IndexedDatabase<Collections>;
+    this.#database = getEventStoreDatabase(config.name ?? "valkyr:event-store", config.database) as IndexedDatabase<Collections>;
     this.#events = config.events;
     this.#validators = config.validators;
     this.#snapshot = config.snapshot ?? "manual";
@@ -272,6 +272,7 @@ export class ValkyrEventStore<TEvent extends Event, TRecord extends EventRecord 
  */
 
 type Config<TEvent extends Event, TRecord extends EventRecord> = {
+  name?: string;
   database: Adapter;
   events: EventList<TEvent>;
   validators: ValidatorConfig<TEvent>;
