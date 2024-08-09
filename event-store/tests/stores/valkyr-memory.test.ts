@@ -1,3 +1,5 @@
+import "fake-indexeddb/auto";
+
 import { describe } from "@std/testing/bdd";
 
 import { ValkyrEventStore } from "~stores/valkyr/event-store.ts";
@@ -18,7 +20,7 @@ const eventStoreFn = async (hooks?: EventStoreHooks<EventRecord>) => getEventSto
  |--------------------------------------------------------------------------------
  */
 
-describe("Valkyr Event Store", () => {
+describe("Valkyr Event Store (Memory)", () => {
   testAddEvent(eventStoreFn);
   testCreateSnapshot(eventStoreFn);
   testMakeReducer(eventStoreFn);

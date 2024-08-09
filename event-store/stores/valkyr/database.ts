@@ -26,7 +26,7 @@ export function getEventStoreDatabase(name: string, adapter: Adapter): EventStor
           {
             name: "snapshots",
             indexes: [
-              ["name", { unique: true }],
+              ["name", { unique: false }],
               ["stream", { unique: false }],
               ["cursor", { unique: false }],
             ],
