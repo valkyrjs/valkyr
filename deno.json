@@ -6,6 +6,7 @@
     "./event-store",
     "./inverse",
     "./json-rpc",
+    "./router",
     "./testcontainers",
     "./toolkit"
   ],
