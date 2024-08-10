@@ -8,7 +8,6 @@
     "./valkyr": "./stores/valkyr/event-store.ts"
   },
   "imports": {
-    "@valkyr/db": "npm:@valkyr/db@1.0.1",
     "ajv": "npm:ajv@8.14.0",
     "fake-indexeddb": "npm:fake-indexeddb@6.0.0",
     "json-refs": "npm:json-refs@3.0.15",

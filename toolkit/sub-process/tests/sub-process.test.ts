@@ -1,6 +1,6 @@
 import { assertEquals, assertRejects } from "@std/assert";
 
-import { command } from "../sub-process/mod.ts";
+import { command } from "../mod.ts";
 
 Deno.test("Sub Process > Handle 'Hello World' evaluation", async () => {
   const output = await command(Deno.execPath(), "eval", "console.log('Hello World')");

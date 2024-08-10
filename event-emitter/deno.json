@@ -1,0 +1,10 @@
+{
+  "name": "@valkyr/event-emitter",
+  "version": "1.0.0",
+  "exports": {
+    ".": "./mod.ts"
+  },
+  "imports": {
+    "eventemitter3": "npm:eventemitter3@5.0.1"
+  }
+}
