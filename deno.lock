@@ -23,6 +23,7 @@
       "npm:change-case@5.4.4": "npm:change-case@5.4.4",
       "npm:dot-prop@9.0.0": "npm:dot-prop@9.0.0",
       "npm:drizzle-orm@0.32.1": "npm:drizzle-orm@0.32.1_postgres@3.4.4_react@18.3.1",
+      "npm:eventemitter3@5.0.1": "npm:eventemitter3@5.0.1",
       "npm:fake-indexeddb@6.0.0": "npm:fake-indexeddb@6.0.0",
       "npm:fast-equals@5.0.1": "npm:fast-equals@5.0.1",
       "npm:history@5.3.0": "npm:history@5.3.0",
@@ -242,6 +243,10 @@
       },
       "esprima@4.0.1": {
         "integrity": "sha512-eGuFFw7Upda+g4p+QHvnW0RyTX/SVeJBDM/gCtMARO0cLuT2HcEKnTPvhjV6aGeqrCB/sbNop0Kszm0jsaWU4A==",
+        "dependencies": {}
+      },
+      "eventemitter3@5.0.1": {
+        "integrity": "sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==",
         "dependencies": {}
       },
       "fake-indexeddb@6.0.0": {
@@ -636,6 +641,12 @@
           "npm:json-refs@3.0.15",
           "npm:json-schema-to-zod@2.1.0",
           "npm:json-schema@0.4.0"
+        ]
+      },
+      "router": {
+        "dependencies": [
+          "npm:history@5.3.0",
+          "npm:urlpattern-polyfill@10.0.0"
         ]
       },
       "testcontainers": {
