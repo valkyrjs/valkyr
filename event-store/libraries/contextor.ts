@@ -12,7 +12,7 @@ export class Contextor<Record extends EventRecord> {
     this.#queue = new Queue(async (event) => {
       const handler = this.#handlers.get(event.type);
       if (handler !== undefined) {
-        const contexts = handler(event);
+        const contexts = await handler(event);
         await handle(contexts.map((context) => ({ ...context, stream: event.stream })));
       }
     });

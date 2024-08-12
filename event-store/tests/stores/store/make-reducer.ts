@@ -99,7 +99,7 @@ export default describe<Event, EventRecord>(".makeReducer", (getEventStore) => {
     const store = await getEventStore();
     const auditor = nanoid();
 
-    store.contextor.register("post:created", ({ meta: { auditor } }) => [{
+    store.contextor.register("post:created", async ({ meta: { auditor } }) => [{
       key: `user:${auditor}:posts`,
       op: "insert",
     }]);
@@ -124,7 +124,7 @@ export default describe<Event, EventRecord>(".makeReducer", (getEventStore) => {
     const auditor1 = nanoid();
     const auditor2 = nanoid();
 
-    store.contextor.register("post:created", ({ meta: { auditor } }) => [{
+    store.contextor.register("post:created", async ({ meta: { auditor } }) => [{
       key: `user:${auditor}:posts`,
       op: "insert",
     }]);

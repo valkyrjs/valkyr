@@ -262,7 +262,7 @@ export default describe<Event, EventRecord>(".addEvent", (getEventStore) => {
   it("should insert 'user:created' and add it to 'tenant:xyz' context", async () => {
     const store = await getEventStore();
 
-    store.contextor.register("user:created", () => [
+    store.contextor.register("user:created", async () => [
       {
         key: "tenant:xyz",
         op: "insert",
@@ -303,14 +303,14 @@ export default describe<Event, EventRecord>(".addEvent", (getEventStore) => {
   it("should insert 'user:email-set' and remove it from 'tenant:xyz' context", async () => {
     const store = await getEventStore();
 
-    store.contextor.register("user:created", () => [
+    store.contextor.register("user:created", async () => [
       {
         key: "tenant:zyx",
         op: "insert",
       },
     ]);
 
-    store.contextor.register("user:email-set", () => [
+    store.contextor.register("user:email-set", async () => [
       {
         key: "tenant:zyx",
         op: "remove",

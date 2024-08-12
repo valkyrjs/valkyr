@@ -83,45 +83,28 @@ store.
 import { Database } from "sqlite";
 
 import { SQLiteEventStore } from "@valkyr/event-store/sqlite";
-import { z } from "@valkyr/event-store";
 
-const eventStore = new SQLiteEventStore<UserEvent>({
+import { type Event, events, validators } from "./generated/events.ts";
+
+const eventStore = new SQLiteEventStore<Event>({
   database: new Database(":memory:"),
-  events: new Set(
-    [
-      "UserCreated",
-      "UserGivenNameSet",
-      "UserFamilyNameSet",
-      "UserEmailSet",
-    ] as const,
-  ),
-  validators: new Map<UserEvent["type"], any>([
-    [
-      "UserCreated",
-      z.object({ name: z.object({ given: z.string(), family: z.string() }).strict(), email: z.string() }).strict(),
-    ],
-    ["UserEmailSet", z.object({ email: z.string() }).strict()],
-    ["UserFamilyNameSet", z.object({ family: z.string() }).strict()],
-    ["UserGivenNameSet", z.object({ given: z.string() }).strict()],
-  ]),
-});
-
-type UserEvent = UserCreated | UserGivenNameSet | UserFamilyNameSet | UserEmailSet;
-
-type UserCreated = Event<
-  "UserCreated",
-  {
-    name: {
-      given: string;
-      family: string;
-    };
-    email: string;
+  events,
+  validators,
+  hooks: {
+    async beforeEventError(error) {
+      if (error.step === "validate") {
+        return new Error("Custom Event Error");
+      }
+      return error;
+    },
+    async afterEventError(error) {
+      // good place to inform the business to investigate failing projections ...
+    },
+    async afterEventInsert(record, hydrated) {
+      // good place to emit events to a distributed queue ...
+    },
   },
-  { auditor: string }
->;
-type UserGivenNameSet = Event<"UserGivenNameSet", { given: string }, { auditor: string }>;
-type UserFamilyNameSet = Event<"UserFamilyNameSet", { family: string }, { auditor: string }>;
-type UserEmailSet = Event<"UserEmailSet", { email: string }, { auditor: string }>;
+});
 ```
 
 ### Reducers
@@ -154,8 +137,11 @@ const userReducer = eventStore.reducer<{
   }
   return state;
 }, {
-  name: "",
-  email: "",
+  name: "user",
+  state: () => ({
+    name: "",
+    email: "",
+  }),
 });
 ```
 
@@ -200,14 +186,14 @@ eventStore.projector.on("UserCreated", async (record) => {
 });
 ```
 
-#### Once
+#### `.once("UserCreated", (event) => Promise<void>)`
 
 This handler tells the projection that an event is only ever processed when the event is originating directly from the
 local event store. A useful pattern for when you want the event handler to submit data to a third party service such as
 sending an email or submitting third party orders. We disallow `hydrate` and `outdated` as these events represents
 events that has already been processed.
 
-#### On
+#### `.on("UserCreated", (event) => Promise<void>)`
 
 This method tells the projection to allow events directly from the event store as well as events coming through
 hydration via sync, manual or automatic stream rehydration operations. This is the default pattern used for most events.
@@ -221,7 +207,7 @@ NOTE! The nature of this pattern means that outdated events are never run by thi
 `outdated` events if you have processing requirements that needs to know about every unknown events that has occurred in
 the event stream.
 
-#### All
+#### `.all("UserCreated", (event) => Promise<void>)`
 
 This method is a catch all for events that does not fall under the stricter definitions of once and on patterns. This is
 a good place to deal with data that does not depend on a strict order of events.
