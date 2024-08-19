@@ -3,8 +3,8 @@ import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { migrate as runMigration } from "drizzle-orm/postgres-js/migrator";
 import type { Sql } from "postgres";
 
-import { contexts } from "~stores/pg/contexts/schema.ts";
-import { events } from "~stores/pg/events/schema.ts";
+import { contexts } from "./contexts.ts";
+import { events } from "./events.ts";
 
 export const schema = { contexts, events };
 

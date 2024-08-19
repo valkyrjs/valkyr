@@ -1,6 +1,6 @@
 import { index, type SQLiteColumn, sqliteTable, type SQLiteTableWithColumns, text } from "drizzle-orm/sqlite-core";
 
-export const snapshots: Table = sqliteTable("valkyr_snapshots", {
+export const snapshots: SQLiteSnapshotTable = sqliteTable("valkyr_snapshots", {
   name: text("name").notNull(),
   stream: text("stream").notNull(),
   cursor: text("cursor").notNull(),
@@ -11,7 +11,7 @@ export const snapshots: Table = sqliteTable("valkyr_snapshots", {
 
 export type Snapshot = typeof snapshots.$inferSelect;
 
-type Table = SQLiteTableWithColumns<{
+export type SQLiteSnapshotTable = SQLiteTableWithColumns<{
   name: "valkyr_snapshots";
   schema: undefined;
   columns: {

@@ -44,12 +44,15 @@ import type { Event, EventRecord, EventStatus, EventToRecord } from "~types/even
 import type { EventReadOptions, EventStore, EventStoreHooks } from "~types/event-store.ts";
 import type { InferReducerState, Reducer, ReducerConfig, ReducerLeftFold } from "~types/reducer.ts";
 import type { ExcludeEmptyFields } from "~types/utilities.ts";
+import { ContextProvider } from "~utilities/drizzle/context-provider.ts";
+import { EventProvider } from "~utilities/drizzle/event-provider.ts";
+import { SnapshotProvider } from "~utilities/drizzle/snapshot-provider.ts";
 import { pushEventRecord } from "~utilities/event-store/push-event-record.ts";
 
-import { ContextProvider } from "./contexts/provider.ts";
+import { contexts } from "./contexts.ts";
 import { type EventStoreDB, schema, type Transaction } from "./database.ts";
-import { EventProvider } from "./events/provider.ts";
-import { SnapshotProvider } from "./snapshots/provider.ts";
+import { events } from "./events.ts";
+import { snapshots } from "./snapshots.ts";
 
 export { migrate } from "./database.ts";
 
@@ -94,9 +97,9 @@ export class SQLiteEventStore<TEvent extends Event, TRecord extends EventRecord 
 
     this.hooks = config.hooks ?? {};
 
-    this.contexts = new ContextProvider(tx ?? this.#database);
-    this.events = new EventProvider(tx ?? this.#database);
-    this.snapshots = new SnapshotProvider(tx ?? this.#database);
+    this.contexts = new ContextProvider(tx ?? this.#database, contexts);
+    this.events = new EventProvider(tx ?? this.#database, events);
+    this.snapshots = new SnapshotProvider(tx ?? this.#database, snapshots);
 
     this.validator = new Validator<TRecord>();
     this.projector = new Projector<TRecord>();

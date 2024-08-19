@@ -1,13 +1,22 @@
 import type { Database } from "@valkyr/toolkit/drizzle";
 import { and, eq } from "drizzle-orm";
 
+import type { PGContextTable } from "~stores/pg/contexts.ts";
+import type { EventStoreDB as PGEventStoreDB, Transaction as PGTransaction } from "~stores/pg/database.ts";
+import type { SQLiteContextTable } from "~stores/sqlite/contexts.ts";
+import type { EventStoreDB as SQLiteEventStoreDB, Transaction as SQLiteTransaction } from "~stores/sqlite/database.ts";
 import type { Context } from "~types/context.ts";
 
-import type { EventStoreDB, Transaction } from "../database.ts";
-import { contexts as schema } from "./schema.ts";
-
 export class ContextProvider {
-  constructor(readonly db: Database<EventStoreDB> | Transaction) {}
+  readonly db: Database<PGEventStoreDB>;
+  readonly schema: PGContextTable;
+
+  constructor(db: Database<PGEventStoreDB> | PGTransaction, schema: PGContextTable);
+  constructor(db: Database<SQLiteEventStoreDB> | SQLiteTransaction, schema: SQLiteContextTable);
+  constructor(db: any, schema: any) {
+    this.db = db;
+    this.schema = schema;
+  }
 
   /**
    * Handle incoming context operations.
@@ -32,7 +41,7 @@ export class ContextProvider {
    * @param stream - Stream to add to the context.
    */
   async insert(key: string, stream: string): Promise<void> {
-    await this.db.insert(schema).values({ key, stream });
+    await this.db.insert(this.schema).values({ key, stream });
   }
 
   /**
@@ -41,7 +50,7 @@ export class ContextProvider {
    * @param key - Context key to get event streams for.
    */
   async getByKey(key: string): Promise<{ stream: string; key: string }[]> {
-    return this.db.select().from(schema).where(eq(schema.key, key));
+    return this.db.select().from(this.schema).where(eq(this.schema.key, key));
   }
 
   /**
@@ -51,6 +60,6 @@ export class ContextProvider {
    * @param stream - Stream to remove from context.
    */
   async remove(key: string, stream: string): Promise<void> {
-    await this.db.delete(schema).where(and(eq(schema.key, key), eq(schema.stream, stream)));
+    await this.db.delete(this.schema).where(and(eq(this.schema.key, key), eq(this.schema.stream, stream)));
   }
 }

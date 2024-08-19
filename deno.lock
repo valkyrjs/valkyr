@@ -22,7 +22,7 @@
       "npm:ajv@8.14.0": "npm:ajv@8.14.0",
       "npm:change-case@5.4.4": "npm:change-case@5.4.4",
       "npm:dot-prop@9.0.0": "npm:dot-prop@9.0.0",
-      "npm:drizzle-orm@0.32.1": "npm:drizzle-orm@0.32.1_postgres@3.4.4_react@18.3.1",
+      "npm:drizzle-orm@0.33.0": "npm:drizzle-orm@0.33.0_postgres@3.4.4",
       "npm:eventemitter3@5.0.1": "npm:eventemitter3@5.0.1",
       "npm:fake-indexeddb@6.0.0": "npm:fake-indexeddb@6.0.0",
       "npm:fast-equals@5.0.1": "npm:fast-equals@5.0.1",
@@ -34,7 +34,6 @@
       "npm:nanoid@5.0.7": "npm:nanoid@5.0.7",
       "npm:postgres@3.4.4": "npm:postgres@3.4.4",
       "npm:prettier@3.3.3": "npm:prettier@3.3.3",
-      "npm:react@18.3.1": "npm:react@18.3.1",
       "npm:urlpattern-polyfill@10.0.0": "npm:urlpattern-polyfill@10.0.0",
       "npm:zod-to-ts@1.2.0": "npm:zod-to-ts@1.2.0_typescript@5.5.4_zod@3.23.8",
       "npm:zod@3.23.8": "npm:zod@3.23.8"
@@ -224,11 +223,10 @@
           "type-fest": "type-fest@4.24.0"
         }
       },
-      "drizzle-orm@0.32.1_postgres@3.4.4_react@18.3.1": {
-        "integrity": "sha512-Wq1J+lL8PzwR5K3a1FfoWsbs8powjr3pGA4+5+2ueN1VTLDNFYEolUyUWFtqy8DVRvYbL2n7sXZkgVmK9dQkng==",
+      "drizzle-orm@0.33.0_postgres@3.4.4": {
+        "integrity": "sha512-SHy72R2Rdkz0LEq0PSG/IdvnT3nGiWuRk+2tXZQ90GVq/XQhpCzu/EFT3V2rox+w8MlkBQxifF8pCStNYnERfA==",
         "dependencies": {
-          "postgres": "postgres@3.4.4",
-          "react": "react@18.3.1"
+          "postgres": "postgres@3.4.4"
         }
       },
       "es-define-property@1.0.0": {
@@ -350,10 +348,6 @@
         "integrity": "sha512-U6QajmpV/nhL9SyfAewo000fkiRQ+Yd2H0lBxJJ9apjpOgkOcBQJWOrMo917lxLptdS/n/o/xPzMkXhF46K8hQ==",
         "dependencies": {}
       },
-      "js-tokens@4.0.0": {
-        "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==",
-        "dependencies": {}
-      },
       "js-yaml@3.14.1": {
         "integrity": "sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==",
         "dependencies": {
@@ -389,12 +383,6 @@
       "lodash@4.17.21": {
         "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==",
         "dependencies": {}
-      },
-      "loose-envify@1.4.0": {
-        "integrity": "sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==",
-        "dependencies": {
-          "js-tokens": "js-tokens@4.0.0"
-        }
       },
       "methods@1.1.2": {
         "integrity": "sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==",
@@ -467,12 +455,6 @@
         "integrity": "sha512-+38qI9SOr8tfZ4QmJNplMUxqjbe7LKvvZgWdExBOmd+egZTtjLB67Gu0HRX3u/XOq7UU2Nx6nsjvS16Z9uwfpg==",
         "dependencies": {
           "side-channel": "side-channel@1.0.6"
-        }
-      },
-      "react@18.3.1": {
-        "integrity": "sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==",
-        "dependencies": {
-          "loose-envify": "loose-envify@1.4.0"
         }
       },
       "readable-stream@3.6.2": {
@@ -616,7 +598,7 @@
       "npm:@valkyr/db@1.0.1",
       "npm:change-case@5.4.4",
       "npm:dot-prop@9.0.0",
-      "npm:drizzle-orm@0.32.1",
+      "npm:drizzle-orm@0.33.0",
       "npm:nanoid@5.0.7",
       "npm:postgres@3.4.4",
       "npm:prettier@3.3.3",

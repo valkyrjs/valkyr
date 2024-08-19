@@ -56,10 +56,12 @@ export default describe<Event, EventRecord>(".makeReducer", (getEventStore) => {
 
   it("should create a 'user' reducer and only reduce filtered events", async () => {
     const store = await getEventStore();
-    const stream = nanoid();
+
+    const streamA = nanoid();
+    const streamB = nanoid();
 
     await store.addEvent({
-      stream,
+      stream: streamA,
       type: "user:created",
       data: {
         name: {
@@ -71,7 +73,19 @@ export default describe<Event, EventRecord>(".makeReducer", (getEventStore) => {
     });
 
     await store.addEvent({
-      stream,
+      stream: streamB,
+      type: "user:created",
+      data: {
+        name: {
+          given: "Peter",
+          family: "Parker",
+        },
+        email: "peter.parker@fixture.none",
+      },
+    });
+
+    await store.addEvent({
+      stream: streamA,
       type: "user:name:given-set",
       data: {
         given: "Jane",
@@ -79,7 +93,7 @@ export default describe<Event, EventRecord>(".makeReducer", (getEventStore) => {
     });
 
     await store.addEvent({
-      stream,
+      stream: streamA,
       type: "user:email-set",
       data: {
         email: "jane.doe@fixture.none",
@@ -89,7 +103,18 @@ export default describe<Event, EventRecord>(".makeReducer", (getEventStore) => {
       },
     });
 
-    const state = await store.reduce(stream, userFilteredReducer);
+    await store.addEvent({
+      stream: streamB,
+      type: "user:email-set",
+      data: {
+        email: "spiderman@fixture.none",
+      },
+      meta: {
+        auditor: "system",
+      },
+    });
+
+    const state = await store.reduce(streamA, userFilteredReducer);
 
     assertEquals(state?.name, { given: "John", family: "Doe" });
     assertEquals(state?.email, "jane.doe@fixture.none");

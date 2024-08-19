@@ -1,6 +1,6 @@
 import { index, type SQLiteColumn, sqliteTable, type SQLiteTableWithColumns, text } from "drizzle-orm/sqlite-core";
 
-export const events: Table = sqliteTable("valkyr_events", {
+export const events: SQLiteEventTable = sqliteTable("valkyr_events", {
   id: text("id").primaryKey(),
   stream: text("stream").notNull(),
   type: text("type").notNull(),
@@ -15,7 +15,7 @@ export const events: Table = sqliteTable("valkyr_events", {
   createdIdx: index("valkyr_events_created_idx").on(table.created),
 }));
 
-type Table = SQLiteTableWithColumns<{
+export type SQLiteEventTable = SQLiteTableWithColumns<{
   name: "valkyr_events";
   schema: undefined;
   columns: {

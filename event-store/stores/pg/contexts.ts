@@ -1,8 +1,8 @@
 import { index, type PgColumn, type PgTableWithColumns, serial, varchar } from "drizzle-orm/pg-core";
 
-import { schema } from "../schema.ts";
+import { schema } from "./schema.ts";
 
-export const contexts: Table = schema.table("contexts", {
+export const contexts: PGContextTable = schema.table("contexts", {
   id: serial("id").primaryKey(),
   key: varchar("key").notNull(),
   stream: varchar("stream").notNull(),
@@ -10,7 +10,7 @@ export const contexts: Table = schema.table("contexts", {
   keyIdx: index().on(table.key),
 }));
 
-type Table = PgTableWithColumns<{
+export type PGContextTable = PgTableWithColumns<{
   name: "contexts";
   schema: "event_store";
   columns: {

@@ -2,9 +2,9 @@ import { index, jsonb, type PgColumn, type PgTableWithColumns, varchar } from "d
 
 import type { EventRecord } from "~types/event.ts";
 
-import { schema } from "../schema.ts";
+import { schema } from "./schema.ts";
 
-export const events: Table = schema.table("events", {
+export const events: PGEventTable = schema.table("events", {
   id: varchar("id").primaryKey(),
   stream: varchar("stream").notNull(),
   type: varchar("type").notNull(),
@@ -19,7 +19,7 @@ export const events: Table = schema.table("events", {
   createdIdx: index().on(table.created),
 }));
 
-type Table = PgTableWithColumns<{
+export type PGEventTable = PgTableWithColumns<{
   name: "events";
   schema: "event_store";
   columns: {

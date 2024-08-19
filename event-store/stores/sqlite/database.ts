@@ -3,8 +3,8 @@ import { type BunSQLiteDatabase, drizzle } from "drizzle-orm/bun-sqlite";
 import { migrate as runMigration } from "drizzle-orm/bun-sqlite/migrator";
 import type { Database as SQLiteDatabase } from "sqlite";
 
-import { contexts } from "~stores/sqlite/contexts/schema.ts";
-import { events } from "~stores/sqlite/events/schema.ts";
+import { contexts } from "./contexts.ts";
+import { events } from "./events.ts";
 
 export const schema = { contexts, events };
 

@@ -1,8 +1,8 @@
 import { index, jsonb, type PgColumn, type PgTableWithColumns, serial, varchar } from "drizzle-orm/pg-core";
 
-import { schema } from "../schema.ts";
+import { schema } from "./schema.ts";
 
-export const snapshots: Table = schema.table("snapshots", {
+export const snapshots: PGSnapshotTable = schema.table("snapshots", {
   id: serial("id").primaryKey(),
   name: varchar("name").notNull(),
   stream: varchar("stream").notNull(),
@@ -14,7 +14,7 @@ export const snapshots: Table = schema.table("snapshots", {
 
 export type Snapshot = typeof snapshots.$inferSelect;
 
-type Table = PgTableWithColumns<{
+export type PGSnapshotTable = PgTableWithColumns<{
   name: "snapshots";
   schema: "event_store";
   columns: {

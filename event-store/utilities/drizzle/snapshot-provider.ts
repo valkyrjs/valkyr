@@ -1,11 +1,21 @@
 import { type Database, takeOne } from "@valkyr/toolkit/drizzle";
 import { and, eq } from "drizzle-orm";
 
-import type { EventStoreDB, Transaction } from "../database.ts";
-import { type Snapshot, snapshots as schema } from "./schema.ts";
+import type { EventStoreDB as PGEventStoreDB, Transaction as PGTransaction } from "~stores/pg/database.ts";
+import type { PGSnapshotTable, Snapshot } from "~stores/pg/snapshots.ts";
+import type { EventStoreDB as SQLiteEventStoreDB, Transaction as SQLiteTransaction } from "~stores/sqlite/database.ts";
+import type { SQLiteSnapshotTable } from "~stores/sqlite/snapshots.ts";
 
 export class SnapshotProvider {
-  constructor(readonly db: Database<EventStoreDB> | Transaction) {}
+  readonly db: Database<PGEventStoreDB>;
+  readonly schema: PGSnapshotTable;
+
+  constructor(db: Database<PGEventStoreDB> | PGTransaction, schema: PGSnapshotTable);
+  constructor(db: Database<SQLiteEventStoreDB> | SQLiteTransaction, schema: SQLiteSnapshotTable);
+  constructor(db: any, schema: any) {
+    this.db = db;
+    this.schema = schema;
+  }
 
   /**
    * Add snapshot state under given reducer stream.
@@ -16,7 +26,7 @@ export class SnapshotProvider {
    * @param state  - State of the reduced events.
    */
   async insert(name: string, stream: string, cursor: string, state: Record<string, unknown>): Promise<void> {
-    await this.db.insert(schema).values({ name, stream, cursor, state });
+    await this.db.insert(this.schema).values({ name, stream, cursor, state });
   }
 
   /**
@@ -26,7 +36,7 @@ export class SnapshotProvider {
    * @param stream - Stream the state was reduced for.
    */
   async getByStream(name: string, stream: string): Promise<Snapshot | undefined> {
-    return this.db.select().from(schema).where(and(eq(schema.name, name), eq(schema.stream, stream))).then(takeOne);
+    return this.db.select().from(this.schema).where(and(eq(this.schema.name, name), eq(this.schema.stream, stream))).then(takeOne);
   }
 
   /**
@@ -36,6 +46,6 @@ export class SnapshotProvider {
    * @param stream - Stream to remove from snapshots.
    */
   async remove(name: string, stream: string): Promise<void> {
-    await this.db.delete(schema).where(and(eq(schema.name, name), eq(schema.stream, stream)));
+    await this.db.delete(this.schema).where(and(eq(this.schema.name, name), eq(this.schema.stream, stream)));
   }
 }
