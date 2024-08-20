@@ -1,11 +1,11 @@
 import type { Database } from "@valkyr/toolkit/drizzle";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 
 import type { PGContextTable } from "~stores/pg/contexts.ts";
 import type { EventStoreDB as PGEventStoreDB, Transaction as PGTransaction } from "~stores/pg/database.ts";
 import type { SQLiteContextTable } from "~stores/sqlite/contexts.ts";
 import type { EventStoreDB as SQLiteEventStoreDB, Transaction as SQLiteTransaction } from "~stores/sqlite/database.ts";
-import type { Context } from "~types/context.ts";
+import type { Context, ContextPayload } from "~types/context.ts";
 
 export class ContextProvider {
   readonly db: Database<PGEventStoreDB>;
@@ -50,7 +50,7 @@ export class ContextProvider {
    * @param contexts  - Contexts to insert.
    * @param batchSize - Batch size for the insert loop.
    */
-  async insertBatch(contexts: { key: string; stream: string }[], batchSize: number = 1_000): Promise<void> {
+  async insertBatch(contexts: ContextPayload[], batchSize: number = 1_000): Promise<void> {
     for (let i = 0; i < contexts.length; i += batchSize) {
       await this.db.insert(this.schema).values(contexts.slice(i, i + batchSize));
     }
@@ -73,5 +73,22 @@ export class ContextProvider {
    */
   async remove(key: string, stream: string): Promise<void> {
     await this.db.delete(this.schema).where(and(eq(this.schema.key, key), eq(this.schema.stream, stream)));
+  }
+
+  /**
+   * Removes a stream form.
+   *
+   * @param contexts  - Contexts to remove stream from.
+   * @param batchSize - Batch size for the insert loop.
+   */
+  async removeBatch(contexts: ContextPayload[], batchSize: number = 1_000): Promise<void> {
+    if (this.schema.key.columnType === "SQLiteText" as any) {
+      batchSize = 500;
+    }
+    for (let i = 0; i < contexts.length; i += batchSize) {
+      await this.db.delete(this.schema).where(
+        or(...contexts.slice(i, i + batchSize).map((context) => and(eq(this.schema.key, context.key), eq(this.schema.stream, context.stream)))),
+      );
+    }
   }
 }

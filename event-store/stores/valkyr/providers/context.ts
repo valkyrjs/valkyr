@@ -1,6 +1,6 @@
 import type { Collection } from "@valkyr/db";
 
-import type { Context as Operation } from "~types/context.ts";
+import type { Context as Operation, ContextPayload } from "~types/context.ts";
 
 import type { Context } from "../database.ts";
 
@@ -62,5 +62,15 @@ export class ContextProvider {
    */
   async remove(key: string, stream: string): Promise<void> {
     await this.contexts.remove({ key, stream });
+  }
+
+  /**
+   * Removes a batch context
+   *
+   * @param contexts  - Contexts to remove stream from.
+   * @param batchSize - Batch size for the insert loop.
+   */
+  async removeBatch(_: ContextPayload[], __: number = 1_000): Promise<void> {
+    throw new Error("Context .removeBatch is not yet supported by @valkyr/db");
   }
 }
