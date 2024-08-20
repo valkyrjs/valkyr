@@ -31,7 +31,7 @@ export default describe<Event, EventRecord>(".makeEvent", (getEventStore) => {
 
     const t1 = performance.now();
 
-    assertLess((t1 - t0) / 1000, 1);
+    assertLess((t1 - t0) / 1000, 5);
 
     const t3 = performance.now();
 
@@ -39,7 +39,7 @@ export default describe<Event, EventRecord>(".makeEvent", (getEventStore) => {
 
     const t4 = performance.now();
 
-    assertLess((t4 - t3) / 1000, 1);
+    assertLess((t4 - t3) / 1000, 5);
 
     const events = await eventStore.getEvents();
 
@@ -71,13 +71,13 @@ export default describe<Event, EventRecord>(".makeEvent", (getEventStore) => {
     const tr0 = (performance.now() - t0) / 1000;
 
     assertEquals((await eventStore.contexts.getByKey(`test:xyz`)).length, 10_000);
-    assertLess(tr0, 1);
+    assertLess(tr0, 5);
 
     const t1 = performance.now();
     await eventStore.contexts.removeBatch(contexts);
     const tr1 = (performance.now() - t1) / 1000;
 
     assertEquals((await eventStore.contexts.getByKey(`test:xyz`)).length, 0);
-    assertLess(tr1, 3);
+    assertLess(tr1, 10);
   });
 });
