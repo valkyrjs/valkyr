@@ -11,6 +11,7 @@ import { type Event, type EventRecord, events, validators } from "./mocks/events
 import testAddEvent from "./store/add-event.ts";
 import testAddSequence from "./store/add-sequence.ts";
 import testCreateSnapshot from "./store/create-snapshot.ts";
+import testMakeEvent from "./store/make-event.ts";
 import testMakeReducer from "./store/make-reducer.ts";
 import testReduce from "./store/reduce.ts";
 import testReplayEvents from "./store/replay-events.ts";
@@ -52,6 +53,7 @@ describe("PGEventStore", () => {
   testAddEvent(eventStoreFn);
   testAddSequence(eventStoreFn);
   testCreateSnapshot(eventStoreFn);
+  testMakeEvent(eventStoreFn);
   testMakeReducer(eventStoreFn);
   testReplayEvents(eventStoreFn);
   testReduce(eventStoreFn);

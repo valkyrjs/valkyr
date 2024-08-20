@@ -34,6 +34,18 @@ export class ContextProvider {
   }
 
   /**
+   * Batch insert a large amount of event contexts.
+   *
+   * @param contexts  - Contexts to insert.
+   * @param batchSize - Batch size for the insert loop.
+   */
+  async insertBatch(contexts: { key: string; stream: string }[], batchSize: number = 1_000): Promise<void> {
+    for (let i = 0; i < contexts.length; i += batchSize) {
+      await this.contexts.insertMany(contexts.slice(i, i + batchSize));
+    }
+  }
+
+  /**
    * Get a list of event streams registered under the given context key.
    *
    * @param key - Context key to get event streams for.

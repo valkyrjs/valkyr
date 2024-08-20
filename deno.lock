@@ -17,6 +17,7 @@
       "jsr:@std/path@0.217": "jsr:@std/path@0.217.0",
       "jsr:@std/path@^0.221.0": "jsr:@std/path@0.221.0",
       "jsr:@std/testing@0.225.3": "jsr:@std/testing@0.225.3",
+      "npm:@faker-js/faker@8.4.1": "npm:@faker-js/faker@8.4.1",
       "npm:@types/node": "npm:@types/node@18.16.19",
       "npm:@valkyr/db@1.0.1": "npm:@valkyr/db@1.0.1",
       "npm:ajv@8.14.0": "npm:ajv@8.14.0",
@@ -114,6 +115,10 @@
         "dependencies": {
           "regenerator-runtime": "regenerator-runtime@0.14.1"
         }
+      },
+      "@faker-js/faker@8.4.1": {
+        "integrity": "sha512-XQ3cU+Q8Uqmrbf2e0cIC/QN43sTBSC8KF12u29Mb47tWrt2hAgBXSgpZMj4Ao8Uk0iJcU99QsOCaIL8934obCg==",
+        "dependencies": {}
       },
       "@types/node@18.16.19": {
         "integrity": "sha512-IXl7o+R9iti9eBW4Wg2hx1xQDig183jj7YLn8F7udNceyfkbn1ZxmzZXuak20gR40D7pIkIY1kYGx5VIGbaHKA==",
@@ -595,6 +600,7 @@
       "jsr:@std/assert@1.0.0",
       "jsr:@std/async@^1.0.3",
       "jsr:@std/testing@0.225.3",
+      "npm:@faker-js/faker@8.4.1",
       "npm:@valkyr/db@1.0.1",
       "npm:change-case@5.4.4",
       "npm:dot-prop@9.0.0",

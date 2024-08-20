@@ -20,6 +20,18 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
   hasEvent(type: TEvent["type"]): boolean;
 
   /**
+   * Make a new event.
+   *
+   * This simply creates a new compatible event object that can be added to the
+   * store at a later time.
+   *
+   * @param event - Event data to make.
+   */
+  makeEvent<TEventType extends Event["type"]>(
+    event: ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream?: string },
+  ): TRecord;
+
+  /**
    * Add a new event onto the local event store database.
    *
    * Push is meant to take events from the local services and insert them as new

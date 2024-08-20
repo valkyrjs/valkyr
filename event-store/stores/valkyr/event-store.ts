@@ -116,6 +116,14 @@ export class ValkyrEventStore<TEvent extends Event, TRecord extends EventRecord 
     return this.#events.has(type);
   }
 
+  makeEvent<TEventType extends Event["type"]>(
+    event: ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & {
+      stream?: string;
+    },
+  ): TRecord {
+    return createEventRecord<TEvent, TRecord>(event as any);
+  }
+
   async addEvent<TEventType extends Event["type"]>(
     event: ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream?: string },
   ): Promise<string> {

@@ -19,6 +19,7 @@
     "change-case": "npm:change-case@5.4.4",
     "dot-prop": "npm:dot-prop@9.0.0",
     "drizzle-orm": "npm:drizzle-orm@0.33.0",
+    "faker": "npm:@faker-js/faker@8.4.1",
     "nanoid": "npm:nanoid@5.0.7",
     "postgres": "npm:postgres@3.4.4",
     "prettier": "npm:prettier@3.3.3",

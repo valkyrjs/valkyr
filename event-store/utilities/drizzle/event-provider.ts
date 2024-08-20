@@ -30,6 +30,18 @@ export class EventProvider<TRecord extends EventRecord> {
   }
 
   /**
+   * Batch insert a large amount of event records.
+   *
+   * @param records   - Event records to insert.
+   * @param batchSize - Batch size for the insert loop.
+   */
+  async insertBatch(records: TRecord[], batchSize: number = 1_000): Promise<void> {
+    for (let i = 0; i < records.length; i += batchSize) {
+      await this.db.insert(this.schema).values(records.slice(i, i + batchSize));
+    }
+  }
+
+  /**
    * Retrieve all the events in the events table. Optionally a cursor and direction
    * can be provided to reduce the list of events returned.
    *

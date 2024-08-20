@@ -132,19 +132,27 @@ export class PGEventStore<TEvent extends Event, TRecord extends EventRecord = Ev
     return this.#events.has(type);
   }
 
+  makeEvent<TEventType extends Event["type"]>(
+    event: ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & {
+      stream?: string;
+    },
+  ): TRecord {
+    return createEventRecord<TEvent, TRecord>(event as any);
+  }
+
   async addEvent<TEventType extends Event["type"]>(
     event: ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & {
       stream?: string;
     },
   ): Promise<string> {
-    return this.pushEvent(createEventRecord(event as any) as TRecord, false);
+    return this.pushEvent(createEventRecord<TEvent, TRecord>(event as any), false);
   }
 
   async addEventSequence<TEventType extends Event["type"]>(
     events: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream: string })[],
   ): Promise<void> {
     return this.pushEventSequence(
-      events.map((event) => ({ record: createEventRecord(event as any) as TRecord, hydrated: false })),
+      events.map((event) => ({ record: createEventRecord<TEvent, TRecord>(event as any), hydrated: false })),
     );
   }
 

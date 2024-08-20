@@ -1,4 +1,4 @@
-import { nanoid } from "nanoid";
+import { makeId } from "~utilities/generators.ts";
 
 import type { Event, EventRecord } from "../types/event.ts";
 import { getLogicalTimestamp } from "./time.ts";
@@ -9,19 +9,19 @@ import { getLogicalTimestamp } from "./time.ts";
  *
  * @param event - The event to record.
  */
-export function createEventRecord<E extends Event>(
-  event: E & {
+export function createEventRecord<TEvent extends Event, TRecord extends EventRecord>(
+  event: TEvent & {
     stream?: string;
   },
-): EventRecord<E> {
+): TRecord {
   const timestamp = getLogicalTimestamp();
   return {
-    id: nanoid(11),
-    stream: event.stream ?? nanoid(11),
+    id: makeId(),
+    stream: event.stream ?? makeId(),
     type: event.type,
     data: event.data ?? {},
     meta: event.meta ?? {},
     created: timestamp,
     recorded: timestamp,
-  };
+  } as TRecord;
 }
