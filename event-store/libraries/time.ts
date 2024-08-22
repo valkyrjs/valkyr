@@ -17,7 +17,7 @@ export function getDate(timestamp: string): Date {
  */
 export function getLogicalTimestamp(): string {
   const ts = clock.now().toJSON();
-  return `${ts.time}-${String(ts.logical).padStart(2, "0")}`;
+  return `${ts.time}-${String(ts.logical).padStart(5, "0")}`;
 }
 
 /**
