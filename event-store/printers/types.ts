@@ -23,7 +23,7 @@ export function getEventType(event: Config["event"]) {
       properties: event.meta,
     });
   }
-  return `export type ${pascalCase(event.type)} = TEvent<"${event.type}", ${data}, ${meta}>;`;
+  return `export type ${pascalCase(event.type)} = TEvent<"${event.type}", ${data}, ${meta}>;`.replace(/(["\w\s|]+)(\[\])/g, "($1)$2");
 }
 
 /**
