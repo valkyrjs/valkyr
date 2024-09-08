@@ -17,5 +17,8 @@
     "~stores/": "./stores/",
     "~types/": "./types/",
     "~utilities/": "./utilities/"
-  }
+  },
+  "exclude": [
+    "tests"
+  ]
 }
