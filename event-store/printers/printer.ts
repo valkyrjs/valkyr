@@ -8,7 +8,7 @@ import { jsonSchemaToZod } from "json-schema-to-zod";
 import { format } from "prettier";
 
 import { assertConfig, type Config } from "./asserts/events.ts";
-import { getEventType, getImports } from "./types.ts";
+import { getDefinitions, getEventType, getImports } from "./types.ts";
 import { jsonSchema } from "./utilities/json-schema.ts";
 
 /**
@@ -34,7 +34,7 @@ import { jsonSchema } from "./utilities/json-schema.ts";
  * ```
  */
 export async function printEvents({ paths, output, modules = [] }: Options) {
-  const { names, types, validators } = await getEventStoreContainer(paths, [
+  const { names, types, validators, definitions } = await getEventStoreContainer(paths, [
     ...modules.map((module) => module.events).flat(),
   ]);
   await ensureDir(output);
@@ -42,9 +42,8 @@ export async function printEvents({ paths, output, modules = [] }: Options) {
     output,
     await format(
       `
-        /* eslint-disable @typescript-eslint/no-unused-vars */
-        // deno-fmt-ignore-file
         // This is an auto generated file. Do not modify this file!
+        // deno-fmt-ignore-file
         
         import { type AnyZodObject, type Empty, type Event as TEvent, type EventToRecord, z } from "@valkyr/event-store";
     
@@ -64,6 +63,8 @@ export async function printEvents({ paths, output, modules = [] }: Options) {
         export type Event = ${names.sort().map((name) => pascalCase(name)).join(" | ")};
 
         ${types.sort().join("\n\n")}
+
+        ${definitions.join("\n\n")}
       `,
       {
         parser: "typescript",
@@ -91,11 +92,14 @@ async function getEventStoreContainer(
       data: new Map<string, any>(),
       meta: new Map<string, any>(),
     },
+    definitions: [],
     imports: [],
   };
 
+  const defs = new Map<string, any>();
+
   const configs = [...(await getLocalConfigs(paths)), ...getModuleConfigs(module)];
-  for (const { event } of configs) {
+  for (const { event, definitions } of configs) {
     const type = event.type;
     container.names.push(type);
     container.types.push(getEventType(event));
@@ -106,9 +110,18 @@ async function getEventStoreContainer(
     if (event.meta !== undefined) {
       container.validators.meta.set(type, await getEventValidator(type, event.meta));
     }
+    if (definitions !== undefined) {
+      for (const key in definitions) {
+        if (defs.has(key)) {
+          throw new Error(`Config Duplicate Definition Error: Key '${key}' is already defined`);
+        }
+        defs.set(key, definitions[key]);
+      }
+    }
   }
 
   container.imports = getImports(configs);
+  container.definitions = getDefinitions(defs);
 
   return container;
 }
@@ -242,5 +255,6 @@ type EventStoreContainer = {
     data: Map<string, any>;
     meta: Map<string, any>;
   };
+  definitions: string[];
   imports: string[];
 };

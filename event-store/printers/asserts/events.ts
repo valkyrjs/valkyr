@@ -37,6 +37,15 @@ export function assertConfig(config: any): asserts config is Config {
       throw new EventConfigAssertionError("Invalid 'meta' provided, must be valid JSONSchema", error);
     }
   }
+  if (config.definitions) {
+    for (const key in config.definitions) {
+      try {
+        new Ajv().addSchema(config.definitions[key]);
+      } catch (error) {
+        throw new EventConfigAssertionError("Invalid 'definitions' provided, must be valid JSONSchema", error);
+      }
+    }
+  }
 }
 
 export type Config = {
@@ -45,6 +54,7 @@ export type Config = {
     data?: JSONSchemaProperties;
     meta?: JSONSchemaProperties;
   };
+  definitions: JSONSchemaProperties;
 };
 
 type JSONSchemaProperties = {

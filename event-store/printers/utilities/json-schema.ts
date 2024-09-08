@@ -1,3 +1,4 @@
+import { pascalCase } from "change-case";
 import type { JSONSchema4, JSONSchema4Type } from "json-schema";
 
 export const jsonSchema = {
@@ -6,6 +7,9 @@ export const jsonSchema = {
 };
 
 function compile(schema: JSONSchema4): string {
+  if (schema.$ref) {
+    return pascalCase(schema.$ref);
+  }
   switch (schema.type) {
     case "object": {
       if (schema.properties === undefined) {
@@ -16,7 +20,9 @@ function compile(schema: JSONSchema4): string {
       }
       const properties: string[] = [];
       for (const property in schema.properties) {
-        properties.push(`${property}: ${compile(schema.properties[property])}`);
+        const data = schema.properties[property];
+        const optional = data.optional === true ? "?" : "";
+        properties.push(`${property}${optional}: ${compile(data)}`);
       }
       return `{ ${properties.join("\n")} }`;
     }
@@ -31,7 +37,7 @@ function compile(schema: JSONSchema4): string {
         }
         return `[${types.join(", ")}]`;
       }
-      return `${compile(schema.items)}[]`;
+      return `(${compile(schema.items)})[]`;
     }
     default: {
       if (schema.enum !== undefined) {

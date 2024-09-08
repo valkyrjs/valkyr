@@ -23,7 +23,7 @@ export function getEventType(event: Config["event"]) {
       properties: event.meta,
     });
   }
-  return `export type ${pascalCase(event.type)} = TEvent<"${event.type}", ${data}, ${meta}>;`.replace(/(["\w\s|]+)(\[\])/g, "($1)$2");
+  return `export type ${pascalCase(event.type)} = TEvent<"${event.type}", ${data}, ${meta}>;`;
 }
 
 /**
@@ -46,4 +46,14 @@ export function getImports(configs: any[]) {
     output.push(`import type { ${Array.from(imports[key]).join(", ")} } from "${key}";`);
   }
   return output;
+}
+
+export function getDefinitions(defs: Map<string, any>): string[] {
+  const result: string[] = [];
+  for (const key of Array.from(defs.keys())) {
+    result.push(`
+      export type ${pascalCase(key)} = ${jsonSchema.compile(defs.get(key))}
+    `);
+  }
+  return result;
 }

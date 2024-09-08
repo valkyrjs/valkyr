@@ -7,12 +7,44 @@
       },
       "body": {
         "type": "string"
+      },
+      "comments": {
+        "type": "array",
+        "items": {
+          "$ref": "comment"
+        }
+      },
+      "modules": {
+        "type": "array",
+        "items": {
+          "$ref": "module"
+        }
       }
     },
     "meta": {
       "auditor": {
         "type": "string"
       }
+    }
+  },
+  "definitions": {
+    "comment": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "comment"
+          }
+        }
+      }
+    },
+    "module": {
+      "type": "string",
+      "enum": ["comments", "likes", "count"]
     }
   }
 }
