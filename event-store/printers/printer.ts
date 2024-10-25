@@ -1,8 +1,8 @@
-import { readdir, readFile, writeFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { ensureDir } from "@valkyr/toolkit/fs";
-import { pascalCase } from "change-case";
+import { ensureFile } from "@std/fs";
+import { toPascalCase } from "@std/text";
 import { resolveRefs } from "json-refs";
 import { jsonSchemaToZod } from "json-schema-to-zod";
 import { format } from "prettier";
@@ -37,15 +37,17 @@ export async function printEvents({ paths, output, modules = [] }: Options) {
   const { names, types, validators, definitions } = await getEventStoreContainer(paths, [
     ...modules.map((module) => module.events).flat(),
   ]);
-  await ensureDir(output);
-  await writeFile(
+  await ensureFile(output);
+  await Deno.writeFile(
     output,
-    await format(
-      `
+    await new TextEncoder().encode(
+      await format(
+        `
         // This is an auto generated file. Do not modify this file!
         // deno-fmt-ignore-file
         
-        import { type AnyZodObject, type Empty, type Event as TEvent, type EventToRecord, z } from "@valkyr/event-store";
+        import { type AnyZodObject, type Empty, type Event as TEvent, type EventToRecord } from "@valkyr/event-store";
+        import { z } from "zod";
     
         export const events = new Set([${names.sort().map((event) => `"${event}"`).join(",")}] as const);
 
@@ -60,17 +62,21 @@ export async function printEvents({ paths, output, modules = [] }: Options) {
 
         export type EventRecord = EventToRecord<Event>;
 
-        export type Event = ${names.sort().map((name) => pascalCase(name)).join(" | ")};
+        export type Event = ${names.sort().map((name) => toPascalCase(name)).join(" | ")};
 
         ${types.sort().join("\n\n")}
 
         ${definitions.join("\n\n")}
       `,
-      {
-        parser: "typescript",
-        printWidth: 120,
-      },
+        {
+          parser: "typescript",
+          printWidth: 120,
+        },
+      ),
     ),
+    {
+      create: true,
+    },
   );
 }
 

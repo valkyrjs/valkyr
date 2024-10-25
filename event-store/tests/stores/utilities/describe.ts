@@ -1,8 +1,7 @@
 import { describe as desc } from "@std/testing/bdd";
 
-import type { PGEventStore } from "~stores/pg/event-store.ts";
-import type { SQLiteEventStore } from "~stores/sqlite/event-store.ts";
-import type { ValkyrEventStore } from "~stores/valkyr/event-store.ts";
+import type { BrowserEventStore } from "~stores/browser/event-store.ts";
+import type { PostgresEventStore } from "~stores/postgres/event-store.ts";
 import type { Event, EventRecord } from "~types/event.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 
@@ -15,4 +14,4 @@ export function describe<TEvent extends Event, TEventRecord extends EventRecord>
 
 type EventStoreFn<TEvent extends Event, TEventRecord extends EventRecord> = (
   hooks?: EventStoreHooks<TEventRecord>,
-) => Promise<PGEventStore<TEvent> | SQLiteEventStore<TEvent> | ValkyrEventStore<TEvent>>;
+) => Promise<PostgresEventStore<TEvent> | BrowserEventStore<TEvent>>;

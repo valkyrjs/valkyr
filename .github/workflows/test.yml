@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 20
 
-      - run: cd .eslint && npm ci
+      - run: deno install
       - run: deno task lint
 
   test:
@@ -33,5 +33,6 @@ jobs:
       - name: Setup Deno
         uses: maximousblk/setup-deno@v2
 
+      - run: deno install
       - run: deno task test
       - run: deno task test:publish

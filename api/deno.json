@@ -1,11 +1,12 @@
 {
   "name": "@valkyr/api",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "exports": {
     ".": "./mod.ts"
   },
   "imports": {
     "~libraries/": "./libraries/",
+    "~scripts/": "./scripts/",
     "~utilities/": "./utilities/"
   }
 }

@@ -1,0 +1,26 @@
+{
+  "dependencies": {
+    "@valkyr/db": "1.0.1",
+    "ajv": "8.17.1",
+    "dot-prop": "9.0.0",
+    "drizzle-kit": "0.26.2",
+    "drizzle-orm": "0.35.3",
+    "jose": "5.9.6",
+    "json-refs": "3.0.15",
+    "json-schema": "0.4.0",
+    "json-schema-to-zod": "2.4.1",
+    "nanoid": "5.0.7",
+    "postgres": "3.4.4",
+    "prettier": "3.3.3",
+    "zod": "3.23.8",
+    "zod-to-ts": "1.2.0"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "9.0.3",
+    "eslint": "9.13.0",
+    "eslint-plugin-simple-import-sort": "12.1.1",
+    "fake-indexeddb": "6.0.0",
+    "prettier": "3.3.3",
+    "typescript-eslint": "8.11.0"
+  }
+}

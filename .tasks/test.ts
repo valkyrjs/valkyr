@@ -1,7 +1,5 @@
 import { resolve } from "node:path";
 
-//  && deno test -A --unstable-ffi
+import { execute } from "@valkyr/process";
 
-// ### Test Setup
-
-await Deno.run({ cmd: ["deno", "run", "-A", "scripts/generate.ts"], cwd: resolve("api") }).status();
+await execute("deno", "run", "-A", `${resolve("api")}/scripts/generate.ts`);

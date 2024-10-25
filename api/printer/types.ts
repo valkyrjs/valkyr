@@ -1,4 +1,4 @@
-import { pascalCase } from "change-case";
+import { toPascalCase } from "@std/text";
 import { printNode, zodToTs } from "zod-to-ts";
 
 import type { Method } from "~libraries/method.ts";
@@ -15,7 +15,7 @@ export function resolveNamespacedTypes(methods: Method[]) {
   const map: any = getMappedMethods(methods);
   for (const key in map) {
     types.push(`
-      type ${pascalCase(key)} = {
+      type ${toPascalCase(key)} = {
         ${getMethods(map[key])}
       };
     `.trim());
@@ -39,7 +39,7 @@ function getMethods(map: any): string {
 
 // deno-lint-ignore no-explicit-any
 function addMethod(name: string, map: any): string {
-  return `${pascalCase(name)}: {
+  return `${toPascalCase(name)}: {
     ${getMethods(map)}
   }`.trim();
 }
@@ -51,7 +51,7 @@ function addMethod(name: string, map: any): string {
  */
 function getRequestTypes({ params, output, file }: Method): string {
   const types: string[] = [];
-  types.push(`${pascalCase(file)}: {`);
+  types.push(`${toPascalCase(file)}: {`);
   if (params !== undefined) {
     types.push(`
       ${getTypeJSDoc(params)}

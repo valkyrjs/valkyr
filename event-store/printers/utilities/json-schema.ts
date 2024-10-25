@@ -1,4 +1,4 @@
-import { pascalCase } from "change-case";
+import { toPascalCase } from "@std/text";
 import type { JSONSchema4, JSONSchema4Type } from "json-schema";
 
 export const jsonSchema = {
@@ -8,7 +8,7 @@ export const jsonSchema = {
 
 function compile(schema: JSONSchema4): string {
   if (schema.$ref) {
-    return pascalCase(schema.$ref);
+    return toPascalCase(schema.$ref);
   }
   switch (schema.type) {
     case "object": {

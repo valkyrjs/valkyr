@@ -34,7 +34,7 @@ export async function validateEventRecord(
 
   try {
     await store.validator.validate(record);
-  } catch (error) {
+  } catch (error: any) {
     const eventError = new EventValidationFailure(error.message);
     if (store.hooks?.beforeEventError !== undefined) {
       throw await store.hooks?.beforeEventError(eventError, record);

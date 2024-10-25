@@ -1,4 +1,4 @@
-import { pascalCase } from "change-case";
+import { toPascalCase } from "@std/text";
 
 import type { Config } from "./asserts/events.ts";
 import { jsonSchema } from "./utilities/json-schema.ts";
@@ -23,7 +23,7 @@ export function getEventType(event: Config["event"]) {
       properties: event.meta,
     });
   }
-  return `export type ${pascalCase(event.type)} = TEvent<"${event.type}", ${data}, ${meta}>;`;
+  return `export type ${toPascalCase(event.type)} = TEvent<"${event.type}", ${data}, ${meta}>;`;
 }
 
 /**
@@ -52,7 +52,7 @@ export function getDefinitions(defs: Map<string, any>): string[] {
   const result: string[] = [];
   for (const key of Array.from(defs.keys())) {
     result.push(`
-      export type ${pascalCase(key)} = ${jsonSchema.compile(defs.get(key))}
+      export type ${toPascalCase(key)} = ${jsonSchema.compile(defs.get(key))}
     `);
   }
   return result;

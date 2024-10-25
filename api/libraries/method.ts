@@ -22,7 +22,6 @@ export class Method<
   TParams extends ZodMethodType = ZodMethodType,
   TOutput extends ZodMethodType | undefined = any,
 > {
-  readonly method: string;
   readonly description: string;
   readonly notification: boolean;
   readonly actions: TActions;
@@ -32,12 +31,12 @@ export class Method<
   readonly examples?: string[];
 
   #meta?: {
+    method: string;
     file: string;
     location: string[];
   };
 
   constructor(options: MethodOptions<TContext, TActions, TParams, TOutput>) {
-    this.method = options.method;
     this.description = options.description;
     this.notification = options.notification ?? false;
     this.actions = options.actions ?? [] as unknown as TActions;
@@ -45,6 +44,16 @@ export class Method<
     this.output = options.output;
     this.handler = options.handler;
     this.examples = options.examples?.map((example) => dedent(example));
+  }
+
+  /**
+   * Get the assigned method name.
+   */
+  get method(): string {
+    if (this.#meta === undefined) {
+      throw new Error("Route Violation: Cannot get 'method', meta data has not been resolved.");
+    }
+    return this.#meta.method;
   }
 
   /**
@@ -81,7 +90,7 @@ export class Method<
    * @param location - Nested location the method file is located.
    */
   meta(file: string, location: string[]) {
-    this.#meta = { file, location };
+    this.#meta = { method: `${location.join(":")}:${file}`, file, location };
   }
 }
 
@@ -99,11 +108,6 @@ export type MethodOptions<
   TParams extends ZodMethodType = ZodMethodType,
   TOutput extends ZodMethodType | undefined = any,
 > = {
-  /**
-   * Name of the method used to identify the JSON-RPC 2.0 handler to execute.
-   */
-  method: string;
-
   /**
    * Describes the intent of the methods behavior used by client genreation
    * tools to document the function output.
@@ -181,7 +185,7 @@ type MethodHandler<
 > = (
   context:
     & TContext
-    & (TParams extends ZodMethodType ? { params: z.infer<TParams> } : {})
+    & (TParams extends ZodMethodType ? { params: z.infer<TParams> } : object)
     & (TActions extends [] ? object
       : {
         [K in keyof TActions]: TActions[K] extends Action<infer P> ? P : never;

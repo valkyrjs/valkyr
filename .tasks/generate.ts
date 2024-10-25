@@ -1,11 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-import { execute } from "@valkyr/toolkit/sub-process";
-
-// ### Run Setup
-
-await execute("deno", "cache", "-r", "--allow-scripts", "--node-modules-dir", "npm:drizzle-orm", "npm:drizzle-kit");
+import { execute } from "@valkyr/process";
 
 // ### Patch Drizzle Kit
 // We need to patch a bug in the drizzle-kit/bin.cjs as it prefixes a ./ onto the
@@ -25,6 +21,5 @@ if (file.includes(line) === true) {
 
 // ### Generate Migrations
 
-await execute("npx", "drizzle-kit", "generate", "--config", "auth/stores/sqlite/migrations/config.ts");
-await execute("npx", "drizzle-kit", "generate", "--config", "event-store/stores/pg/migrations/config.ts");
-await execute("npx", "drizzle-kit", "generate", "--config", "event-store/stores/sqlite/migrations/config.ts");
+await execute("npx", "drizzle-kit", "generate", "--config", "auth/stores/postgres/migrations/config.ts");
+await execute("npx", "drizzle-kit", "generate", "--config", "event-store/stores/postgres/migrations/config.ts");

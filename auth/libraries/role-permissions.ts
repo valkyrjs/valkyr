@@ -45,7 +45,7 @@ export class RolePermission<TPermissions extends Permissions> {
    */
   async commit(): Promise<Role<TPermissions>> {
     return this.role.update({
-      permissions: await this.#repository.setPermissions(this.role.roleId, this.operations),
+      permissions: await this.#repository.setPermissions(this.role.id, this.operations),
     });
   }
 }

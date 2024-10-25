@@ -1,6 +1,6 @@
+import { faker } from "@faker-js/faker";
 import { assertEquals, assertLess } from "@std/assert";
 import { it } from "@std/testing/bdd";
-import { faker } from "faker";
 
 import { ContextPayload } from "~types/context.ts";
 

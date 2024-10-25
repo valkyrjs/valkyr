@@ -22,8 +22,7 @@ export type RolePermissions<TPermissions extends Permissions> = Partial<
          * Action within the given resource the role can perform. Houses either a
          * conditional value, or true.
          */
-        [TAction in keyof TPermissions[TResource]]: TPermissions[TResource][TAction] extends
-          { validator: ActionValidator<any, infer TConditions> }
+        [TAction in keyof TPermissions[TResource]]: TPermissions[TResource][TAction] extends { validator: ActionValidator<any, infer TConditions> }
           ? TPermissions[TResource][TAction] extends { filter: ActionFilter<infer TFilter> } ? {
               validator: TypeOf<TConditions>;
               filter: TFilter;
@@ -51,8 +50,9 @@ export type EntityConditions<TPermissions extends Permissions> = Partial<
   {
     [TResource in keyof TPermissions]: Partial<
       {
-        [TAction in keyof TPermissions[TResource]]: TPermissions[TResource][TAction] extends
-          { validator: ActionValidator<any, infer TConditions> } ? TypeOf<TConditions> : void;
+        [TAction in keyof TPermissions[TResource]]: TPermissions[TResource][TAction] extends { validator: ActionValidator<any, infer TConditions> }
+          ? TypeOf<TConditions>
+          : void;
       }
     >;
   }
@@ -62,8 +62,7 @@ export type EntityFilters<TPermissions extends Permissions> = Partial<
   {
     [TResource in keyof TPermissions]: Partial<
       {
-        [TAction in keyof TPermissions[TResource]]: TPermissions[TResource][TAction] extends
-          { filter: ActionFilter<infer TFilter> } ? TFilter : void;
+        [TAction in keyof TPermissions[TResource]]: TPermissions[TResource][TAction] extends { filter: ActionFilter<infer TFilter> } ? TFilter : void;
       }
     >;
   }
@@ -76,7 +75,7 @@ export type RolePayload<TPermissions extends Permissions> = {
 };
 
 export type RoleData<TPermissions extends Permissions> = {
-  roleId: string;
+  id: string;
   tenantId: string;
   name: string;
   permissions: RolePermissions<TPermissions>;
@@ -161,8 +160,7 @@ export type GetActionValidatorConditions<
   TPermissions extends Permissions,
   TResource extends keyof TPermissions,
   TAction extends keyof TPermissions[TResource],
-> = TPermissions[TResource][TAction] extends { validator: ActionValidator<any, infer TConditions> }
-  ? TypeOf<TConditions>
+> = TPermissions[TResource][TAction] extends { validator: ActionValidator<any, infer TConditions> } ? TypeOf<TConditions>
   : void;
 
 export class ActionFilter<TFilter extends string[]> {

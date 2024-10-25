@@ -2,6 +2,7 @@ import { assertEquals } from "@std/assert";
 import { beforeEach, it } from "@std/testing/bdd";
 
 import { Role } from "~libraries/role.ts";
+import type { PostgresAuth } from "~stores/postgres/auth.ts";
 
 import { describe } from "../describe.ts";
 import { AppPermissions } from "../permissions.ts";
@@ -9,15 +10,18 @@ import { AppPermissions } from "../permissions.ts";
 const TENANT_ID = "tenant-a";
 const ENTITY_ID = "entity-a";
 
-export default describe("Multi Role Access", (container) => {
+export default describe("Multi Role Access", (getAuth) => {
+  let auth: PostgresAuth<AppPermissions>;
   let token: string;
   let moderator: Role<AppPermissions>;
   let user: Role<AppPermissions>;
 
   beforeEach(async () => {
-    token = await container.auth.generate(TENANT_ID, ENTITY_ID);
+    auth = await getAuth();
 
-    moderator = await container.auth.addRole({
+    token = await auth.generate(TENANT_ID, ENTITY_ID);
+
+    moderator = await auth.addRole({
       tenantId: TENANT_ID,
       name: "moderator",
       permissions: {
@@ -33,7 +37,7 @@ export default describe("Multi Role Access", (container) => {
 
     await moderator.addEntity(ENTITY_ID);
 
-    user = await container.auth.addRole({
+    user = await auth.addRole({
       tenantId: TENANT_ID,
       name: "user",
       permissions: {
@@ -50,7 +54,7 @@ export default describe("Multi Role Access", (container) => {
   });
 
   it("should have combined access rights", async () => {
-    const { access } = await container.auth.resolve(token);
+    const { access } = await auth.resolve(token);
     assertEquals(access.check("users", "create", { tenantId: TENANT_ID }).granted, false);
     assertEquals(access.check("users", "read").granted, true);
     assertEquals(access.check("users", "update").granted, true);
@@ -58,7 +62,7 @@ export default describe("Multi Role Access", (container) => {
   });
 
   it("should have combined read filters", async () => {
-    const { access } = await container.auth.resolve(token);
+    const { access } = await auth.resolve(token);
     assertEquals(
       access.check("users", "read").filter({
         name: "John Doe",
@@ -72,13 +76,13 @@ export default describe("Multi Role Access", (container) => {
   });
 
   it("should prioritize entity assignments", async () => {
-    await container.auth.setFilters(moderator.roleId, ENTITY_ID, {
+    await auth.setFilters(moderator.id, ENTITY_ID, {
       users: {
         read: ["name"],
       },
     });
 
-    const { access } = await container.auth.resolve(token);
+    const { access } = await auth.resolve(token);
 
     assertEquals(
       access.check("users", "read").filter({

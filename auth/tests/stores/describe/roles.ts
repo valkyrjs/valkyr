@@ -2,6 +2,7 @@ import { assertArrayIncludes, assertEquals, assertObjectMatch } from "@std/asser
 import { beforeEach, it } from "@std/testing/bdd";
 
 import { Role } from "~libraries/role.ts";
+import type { PostgresAuth } from "~stores/postgres/auth.ts";
 
 import { describe } from "../describe.ts";
 import { AppPermissions } from "../permissions.ts";
@@ -9,11 +10,13 @@ import { AppPermissions } from "../permissions.ts";
 const TENANT_ID = "tenant-a";
 const ENTITY_ID = "entity-a";
 
-export default describe("Roles", (container) => {
+export default describe("Roles", (getAuth) => {
+  let auth: PostgresAuth<AppPermissions>;
   let role: Role<AppPermissions>;
 
   beforeEach(async () => {
-    role = await container.auth.addRole({
+    auth = await getAuth();
+    role = await auth.addRole({
       tenantId: TENANT_ID,
       name: "admin",
       permissions: {
@@ -35,7 +38,7 @@ export default describe("Roles", (container) => {
   });
 
   it("should successfully create a role", async () => {
-    assertObjectMatch((await container.auth.getRole(role.roleId))!, {
+    assertObjectMatch((await auth.getRole(role.id))!, {
       name: "admin",
       permissions: {
         users: {
@@ -56,10 +59,10 @@ export default describe("Roles", (container) => {
 
   it("should successfully add a entity", async () => {
     assertArrayIncludes(
-      await container.auth.getRolesByEntityId(ENTITY_ID).then((roles) => roles.map((role) => role.toJSON())),
+      await auth.getRolesByEntityId(ENTITY_ID).then((roles) => roles.map((role) => role.toJSON())),
       [
         {
-          roleId: role.roleId,
+          id: role.id,
           tenantId: TENANT_ID,
           name: "admin",
           permissions: {
@@ -84,13 +87,13 @@ export default describe("Roles", (container) => {
   it("should successfully add, and remove a entity", async () => {
     await role.delEntity(ENTITY_ID);
     assertEquals(
-      await container.auth.getRolesByEntityId(ENTITY_ID).then((roles) => roles.map((role) => role.toJSON())),
+      await auth.getRolesByEntityId(ENTITY_ID).then((roles) => roles.map((role) => role.toJSON())),
       [],
     );
   });
 
   it("should successfully set custom conditions and filters for a entity", async () => {
-    await container.auth.setConditions(role.roleId, ENTITY_ID, {
+    await auth.setConditions(role.id, ENTITY_ID, {
       users: {
         create: {
           tenantId: "tenant-b",
@@ -98,17 +101,17 @@ export default describe("Roles", (container) => {
       },
     });
 
-    await container.auth.setFilters(role.roleId, ENTITY_ID, {
+    await auth.setFilters(role.id, ENTITY_ID, {
       users: {
         read: ["email"],
       },
     });
 
     assertArrayIncludes(
-      await container.auth.getRolesByEntityId(ENTITY_ID).then((roles) => roles.map((role) => role.toJSON())),
+      await auth.getRolesByEntityId(ENTITY_ID).then((roles) => roles.map((role) => role.toJSON())),
       [
         {
-          roleId: role.roleId,
+          id: role.id,
           tenantId: TENANT_ID,
           name: "admin",
           permissions: {

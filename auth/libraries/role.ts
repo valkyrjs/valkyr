@@ -3,7 +3,7 @@ import { RolePermission } from "./role-permissions.ts";
 import type { Permissions, RoleData, RoleEntityAssignments, RolePermissions } from "./types.ts";
 
 export class Role<TPermissions extends Permissions> {
-  readonly roleId: string;
+  readonly id: string;
   readonly tenantId: string;
   readonly name: string;
   readonly permissions: RolePermissions<TPermissions>;
@@ -11,7 +11,7 @@ export class Role<TPermissions extends Permissions> {
   readonly #repository: Repository<TPermissions>;
 
   constructor(data: RoleData<TPermissions>, repository: Repository<TPermissions>) {
-    this.roleId = data.roleId;
+    this.id = data.id;
     this.tenantId = data.tenantId;
     this.name = data.name;
     this.permissions = data.permissions;
@@ -39,11 +39,11 @@ export class Role<TPermissions extends Permissions> {
    */
 
   async addEntity(entityId: string, assignments?: RoleEntityAssignments<TPermissions>) {
-    await this.#repository.addEntity(this.roleId, entityId, assignments);
+    await this.#repository.addEntity(this.id, entityId, assignments);
   }
 
   async delEntity(entityId: string) {
-    await this.#repository.delEntity(this.roleId, entityId);
+    await this.#repository.delEntity(this.id, entityId);
   }
 
   /*
@@ -54,7 +54,7 @@ export class Role<TPermissions extends Permissions> {
 
   update({ name, permissions }: UpdatePayload<TPermissions>): Role<TPermissions> {
     return new Role({
-      roleId: this.roleId,
+      id: this.id,
       tenantId: this.tenantId,
       name: name ?? this.name,
       permissions: permissions ?? this.permissions,
@@ -68,13 +68,13 @@ export class Role<TPermissions extends Permissions> {
    */
 
   toJSON(): {
-    roleId: string;
+    id: string;
     tenantId: string;
     name: string;
     permissions: RolePermissions<TPermissions>;
   } {
     return {
-      roleId: this.roleId,
+      id: this.id,
       tenantId: this.tenantId,
       name: this.name,
       permissions: this.permissions,

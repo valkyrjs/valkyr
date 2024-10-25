@@ -32,7 +32,7 @@ export class Image {
   async inspect(image: string): Promise<InspectImageResponse | undefined> {
     try {
       return await modem.get<InspectImageResponse>({ path: `/images/${image}/json` });
-    } catch (_) {
+    } catch {
       return undefined;
     }
   }

@@ -1,9 +1,7 @@
-import { writeFile } from "node:fs/promises";
-
+import { ensureFile } from "@std/fs";
 import { format } from "prettier";
 
 import type { Method } from "../libraries/method.ts";
-import { ensureDir } from "../utilities/fs.ts";
 import { resolveMethods } from "./methods.ts";
 import { resolveNamespacedTypes } from "./types.ts";
 
@@ -68,10 +66,13 @@ export async function printApi(outputPaths: string[], methods: Method[]) {
     ),
   );
   for (const outputPath of outputPaths) {
-    await ensureDir(outputPath);
-    await writeFile(
+    await ensureFile(outputPath);
+    await Deno.writeFile(
       outputPath,
       content,
+      {
+        create: true,
+      },
     );
   }
 }

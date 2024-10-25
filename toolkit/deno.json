@@ -1,9 +1,0 @@
-{
-  "name": "@valkyr/toolkit",
-  "version": "1.1.0",
-  "exports": {
-    "./drizzle": "./drizzle/mod.ts",
-    "./fs": "./fs/mod.ts",
-    "./sub-process": "./sub-process/mod.ts"
-  }
-}

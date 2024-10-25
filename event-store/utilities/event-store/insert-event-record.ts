@@ -7,7 +7,7 @@ export async function insertEventRecord(
 ): Promise<void> {
   try {
     await store.events.insert(record);
-  } catch (error) {
+  } catch (error: any) {
     const eventError = new EventInsertionFailure(error.message);
     if (store.hooks?.beforeEventError !== undefined) {
       throw await store.hooks?.beforeEventError(eventError, record);

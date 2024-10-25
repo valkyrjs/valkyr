@@ -12,13 +12,13 @@ export async function pushEventRecordUpdates(
     if ("contextor" in store) {
       await store.contextor.push(record);
     }
-  } catch (error) {
+  } catch (error: any) {
     store.hooks?.afterEventError?.(new EventContextFailure(error.message), record);
   }
 
   try {
     await store.projector.project(record, { hydrated, outdated: status.outdated });
-  } catch (error) {
+  } catch (error: any) {
     store.hooks?.afterEventError?.(new EventProjectionFailure(error.message), record);
   }
 

@@ -1,15 +1,14 @@
 import { describe as desc } from "@std/testing/bdd";
 
-import { SQLiteAuth } from "../../stores/sqlite/auth.ts";
+import { PostgresAuth } from "~stores/postgres/auth.ts";
+
 import { AppPermissions } from "./permissions.ts";
 
 export function describe(
   name: string,
-  runner: (container: AuthContainer) => void,
-): (container: AuthContainer) => void {
-  return (container: AuthContainer) => desc(name, () => runner(container));
+  runner: (getAuth: AuthContainer) => void,
+): (getAuth: AuthContainer) => void {
+  return (getAuth: AuthContainer) => desc(name, () => runner(getAuth));
 }
 
-export type AuthContainer = {
-  auth: SQLiteAuth<AppPermissions>;
-};
+export type AuthContainer = () => Promise<PostgresAuth<AppPermissions>>;

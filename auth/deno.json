@@ -1,13 +1,13 @@
 {
   "name": "@valkyr/auth",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "exports": {
     ".": "./mod.ts",
-    "./sqlite": "./stores/sqlite/auth.ts"
+    "./postgres": "./stores/postgres/auth.ts"
   },
   "imports": {
-    "jose": "npm:jose@5.4.1",
     "~libraries/": "./libraries/",
+    "~stores/": "./stores/",
     "~utilities/": "./utilities/"
   }
 }

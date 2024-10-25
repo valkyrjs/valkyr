@@ -1,8 +1,8 @@
-import { camelCase, pascalCase } from "change-case";
+import { toCamelCase, toPascalCase } from "@std/text";
 import { ZodObject, type ZodTypeAny } from "zod";
 
-import type { Method } from "../libraries/method.ts";
-import { getMappedMethods } from "../utilities/methods.ts";
+import type { Method } from "~libraries/method.ts";
+import { getMappedMethods } from "~utilities/methods.ts";
 
 export function resolveMethods(methods: Method[]) {
   const result: string[] = [];
@@ -10,7 +10,7 @@ export function resolveMethods(methods: Method[]) {
   const map: any = getMappedMethods(methods);
   for (const key in map) {
     result.push(`
-      readonly ${camelCase(key)} = {
+      readonly ${toCamelCase(key)} = {
         ${getMethods(map[key], [])}
       };
     `.trim());
@@ -34,14 +34,14 @@ function getMethods(map: any, path: string[] = []): string {
 
 // deno-lint-ignore no-explicit-any
 function addMethod(name: string, map: any, path: string[] = []): string {
-  return `${camelCase(name)}: {
+  return `${toCamelCase(name)}: {
     ${getMethods(map, [...path, name])}
   }`.trim();
 }
 
 function getRouteMethod(method: Method, paths: string[]): string {
-  const name = camelCase(method.file);
-  const namespace = pascalCase(method.location[0]);
+  const name = toCamelCase(method.file);
+  const namespace = toPascalCase(method.location[0]);
   const args = getRequestArguments(namespace, method, paths);
   const response = getResponseType(method);
 
@@ -159,15 +159,15 @@ function getPadder(size: number) {
 function getRequestArguments(namespace: string, method: Method, paths: string[]): string {
   const result: string[] = [];
   if (method.params !== undefined) {
-    result.push(`params: ${namespace}${getTypePaths(paths)}["${pascalCase(method.file)}"]["Params"]`);
+    result.push(`params: ${namespace}${getTypePaths(paths)}["${toPascalCase(method.file)}"]["Params"]`);
   }
   return result.join(",");
 }
 
 function getResponseType({ file }: Method): string {
-  return `${pascalCase(file)}`;
+  return `${toPascalCase(file)}`;
 }
 
 function getTypePaths(paths: string[]) {
-  return paths.map((step) => `["${pascalCase(step)}"]`).join("");
+  return paths.map((step) => `["${toPascalCase(step)}"]`).join("");
 }

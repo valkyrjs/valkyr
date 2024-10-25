@@ -2,34 +2,28 @@
   "workspace": [
     "./api",
     "./auth",
+    "./drizzle",
     "./event-emitter",
     "./event-store",
     "./inverse",
     "./json-rpc",
+    "./process",
     "./router",
-    "./testcontainers",
-    "./toolkit"
+    "./testcontainers"
   ],
   "imports": {
-    "@db/sqlite": "jsr:@db/sqlite@0.11",
-    "@std/assert": "jsr:@std/assert@1.0.0",
-    "@std/async": "jsr:@std/async@^1.0.3",
-    "@std/testing": "jsr:@std/testing@0.225.3",
-    "@valkyr/db": "npm:@valkyr/db@1.0.1",
-    "change-case": "npm:change-case@5.4.4",
-    "dot-prop": "npm:dot-prop@9.0.0",
-    "drizzle-orm": "npm:drizzle-orm@0.33.0",
-    "faker": "npm:@faker-js/faker@8.4.1",
-    "nanoid": "npm:nanoid@5.0.7",
-    "postgres": "npm:postgres@3.4.4",
-    "prettier": "npm:prettier@3.3.3",
-    "sqlite": "jsr:@db/sqlite@0.11",
-    "zod": "npm:zod@3.23.8",
-    "zod-to-ts": "npm:zod-to-ts@1.2.0"
+    "@db/sqlite": "jsr:@db/sqlite@0.12.0",
+    "@std/assert": "jsr:@std/assert@1.0.6",
+    "@std/async": "jsr:@std/async@1.0.7",
+    "@std/fs": "jsr:@std/fs@1.0.5",
+    "@std/path": "jsr:@std/path@1.0.7",
+    "@std/testing": "jsr:@std/testing@1.0.3",
+    "@std/text": "jsr:@std/text@1.0.8"
   },
   "exclude": [
     ".vscode"
   ],
+  "nodeModulesDir": "auto",
   "lint": {
     "rules": {
       "exclude": [
@@ -52,9 +46,10 @@
     ]
   },
   "tasks": {
-    "lint": "npx eslint -c .eslint/eslint.config.mjs .",
+    "lint": "npx eslint -c eslint.config.mjs .",
     "test": "deno run -A .tasks/test.ts && deno test -A --unstable-ffi",
     "test:publish": "deno publish --dry-run",
-    "generate": "deno run -A .tasks/generate.ts"
+    "generate": "deno run -A .tasks/generate.ts",
+    "ncu": "npx ncu -u -p npm"
   }
 }
