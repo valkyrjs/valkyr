@@ -23,7 +23,7 @@ export abstract class Database<TClient, TDrizzle extends Drizzle> {
   /**
    * {@link https://orm.drizzle.team/docs/rqb}
    */
-  get query() {
+  get query(): TDrizzle["query"] {
     return this.drizzle.query;
   }
 

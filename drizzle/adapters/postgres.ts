@@ -10,7 +10,7 @@ export class PostgresDatabase<TSchema extends Record<string, unknown>> extends D
     super();
   }
 
-  override get client() {
+  override get client(): Sql {
     if (typeof this.conn === "string") {
       return psql(this.conn);
     }
@@ -20,7 +20,7 @@ export class PostgresDatabase<TSchema extends Record<string, unknown>> extends D
     return this.conn();
   }
 
-  override get drizzle() {
+  override get drizzle(): PostgresJsDatabase<TSchema> {
     if (this.#instance === undefined) {
       this.#instance = drizzle(this.client, { schema: this.schema });
     }
