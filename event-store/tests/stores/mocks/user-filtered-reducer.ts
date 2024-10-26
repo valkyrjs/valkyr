@@ -2,7 +2,7 @@ import { makeReducer } from "~libraries/reducer.ts";
 
 import type { EventRecord } from "./events.ts";
 
-export const userFilteredReducer = makeReducer<UserState, EventRecord>((state, event) => {
+export const userFilteredReducer = makeReducer<EventRecord, UserState>((state, event) => {
   switch (event.type) {
     case "user:created": {
       state.name.given = event.data.name.given ?? "";
@@ -38,19 +38,18 @@ export const userFilteredReducer = makeReducer<UserState, EventRecord>((state, e
   filter: {
     types: ["user:created", "user:email-set"],
   },
-  state: () => ({
-    name: {
-      given: "",
-      family: "",
-    },
-    email: "",
-    active: true,
-    posts: {
-      list: [],
-      count: 0,
-    },
-  }),
-});
+}, () => ({
+  name: {
+    given: "",
+    family: "",
+  },
+  email: "",
+  active: true,
+  posts: {
+    list: [],
+    count: 0,
+  },
+}));
 
 type UserState = {
   name: {

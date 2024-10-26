@@ -32,15 +32,16 @@
 import { type PostgresConnection, PostgresDatabase } from "@valkyr/drizzle";
 import type { AnyZodObject } from "zod";
 
+import type { AggregateRoot } from "~libraries/aggregate.ts";
 import { Contextor } from "~libraries/contextor.ts";
 import { createEventRecord } from "~libraries/event.ts";
 import { Projector } from "~libraries/projector.ts";
-import { makeReducer } from "~libraries/reducer.ts";
+import { makeAggregateReducer, makeReducer } from "~libraries/reducer.ts";
 import { Validator } from "~libraries/validator.ts";
 import type { Unknown } from "~types/common.ts";
 import type { Event, EventRecord, EventStatus, EventToRecord } from "~types/event.ts";
 import type { EventReadOptions, EventStore, EventStoreHooks } from "~types/event-store.ts";
-import type { InferReducerState, Reducer, ReducerConfig, ReducerLeftFold } from "~types/reducer.ts";
+import type { InferReducerState, Reducer, ReducerConfig, ReducerLeftFold, ReducerState } from "~types/reducer.ts";
 import type { ExcludeEmptyFields } from "~types/utilities.ts";
 import { pushEventRecord } from "~utilities/event-store/push-event-record.ts";
 import { pushEventRecordSequence } from "~utilities/event-store/push-event-record-sequence.ts";
@@ -209,10 +210,18 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
    */
 
   makeReducer<TState extends Unknown>(
-    folder: ReducerLeftFold<TState, TRecord>,
-    config: ReducerConfig<TState, TRecord>,
-  ): Reducer<TState, TRecord> {
-    return makeReducer<TState, TRecord>(folder, config);
+    foldFn: ReducerLeftFold<TState, TRecord>,
+    config: ReducerConfig<TRecord>,
+    stateFn: ReducerState<TState>,
+  ): Reducer<TRecord, TState> {
+    return makeReducer<TRecord, TState>(foldFn, config, stateFn);
+  }
+
+  makeAggregateReducer<TAggregateRoot extends typeof AggregateRoot<TRecord>>(
+    aggregate: TAggregateRoot,
+    config: ReducerConfig<TRecord>,
+  ): Reducer<TRecord, InstanceType<TAggregateRoot>> {
+    return makeAggregateReducer<TRecord, TAggregateRoot>(aggregate, config);
   }
 
   async reduce<TReducer extends Reducer>(
@@ -232,8 +241,8 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
       ? await this.getEventsByStream(streamOrContext, { cursor, filter: reducer.filter })
       : await this.getEventsByContext(streamOrContext, { cursor, filter: reducer.filter });
     if (events.length === 0) {
-      if (snapshot !== undefined) {
-        return snapshot.state;
+      if (state !== undefined) {
+        return reducer.from(state);
       }
       return undefined;
     }

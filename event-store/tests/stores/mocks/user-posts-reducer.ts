@@ -2,7 +2,7 @@ import { makeReducer } from "~libraries/reducer.ts";
 
 import type { EventRecord } from "./events.ts";
 
-export const userPostReducer = makeReducer<UserPostState, EventRecord>((state, event) => {
+export const userPostReducer = makeReducer<EventRecord, UserPostState>((state, event) => {
   switch (event.type) {
     case "post:created": {
       state.posts.push({ id: event.stream, author: event.meta.auditor });
@@ -19,11 +19,10 @@ export const userPostReducer = makeReducer<UserPostState, EventRecord>((state, e
 }, {
   name: "user:posts",
   type: "context",
-  state: () => ({
-    posts: [],
-    count: 0,
-  }),
-});
+}, () => ({
+  posts: [],
+  count: 0,
+}));
 
 type UserPostState = {
   posts: {

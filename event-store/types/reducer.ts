@@ -1,31 +1,45 @@
+import type { AggregateRoot } from "~libraries/aggregate.ts";
+import type { Unknown } from "~types/common.ts";
+
 import type { EventRecord } from "./event.ts";
 
-export type Reducer<TState extends Record<string, unknown> = any, TRecord extends EventRecord = any> = {
+export type Reducer<
+  TRecord extends EventRecord = any,
+  TState extends (Record<string, unknown> | AggregateRoot<TRecord>) = any,
+> = {
   /**
    * Name of the reducer, must be a unique identifier as its used by snapshotter
    * to store, and manage state snapshots for event streams.
    */
-  name: ReducerConfig<TState, TRecord>["name"];
+  name: ReducerConfig<TRecord>["name"];
 
   /**
    * Reducer type which defines if events are pulled from multiple context streams,
    * or a single stream. The type defines how the `.reduce` method retrieves events
    * from the store.
    */
-  type: ReducerConfig<TState, TRecord>["type"];
+  type: ReducerConfig<TRecord>["type"];
 
   /**
    * Filter options for how events are pulled from the store.
    */
-  filter?: ReducerConfig<TState, TRecord>["filter"];
+  filter?: ReducerConfig<TRecord>["filter"];
+
+  /**
+   * Return result directly from a snapshot that does not have any subsequent
+   * events to fold onto a state.
+   *
+   * @param snapshot - Snapshot of a reducer state.
+   */
+  from(snapshot: Unknown): TState;
 
   /**
    * Take in a list of events, and return a state from the given events.
    *
-   * @param events       - Events to reduce.
-   * @param initialState - Initial state to fold onto.
+   * @param events   - Events to reduce.
+   * @param snapshot - Initial snapshot state to apply to the reducer.
    */
-  reduce(events: TRecord[], initialState?: TState): TState;
+  reduce(events: TRecord[], snapshot?: Unknown): TState;
 };
 
 /**
@@ -53,7 +67,7 @@ export type ReducerLeftFold<TState extends Record<string, unknown> = any, TRecor
 /**
  * Reducer configuration containing unique name, and initial state.
  */
-export type ReducerConfig<TState extends Record<string, unknown>, TRecord extends EventRecord> = {
+export type ReducerConfig<TRecord extends EventRecord> = {
   /**
    * Name of the reducer, must be a unique identifier as its used by snapshotter
    * to store, and manage state snapshots for event streams.
@@ -76,11 +90,8 @@ export type ReducerConfig<TState extends Record<string, unknown>, TRecord extend
      */
     types?: TRecord["type"][];
   };
-
-  /**
-   * Initial state to make for the reducer.
-   */
-  state: () => TState;
 };
 
-export type InferReducerState<TReducer> = TReducer extends Reducer<infer TState> ? TState : never;
+export type ReducerState<TState extends Unknown> = () => TState;
+
+export type InferReducerState<TReducer> = TReducer extends Reducer<infer _, infer TState> ? TState : never;

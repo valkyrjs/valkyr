@@ -1,8 +1,9 @@
+import type { AggregateRoot } from "~libraries/aggregate.ts";
 import type { PostEventInsertError, PreEventInsertError } from "~libraries/errors.ts";
 
 import type { Unknown } from "./common.ts";
 import type { Event, EventRecord, EventStatus } from "./event.ts";
-import type { InferReducerState, Reducer, ReducerConfig, ReducerLeftFold } from "./reducer.ts";
+import type { InferReducerState, Reducer, ReducerConfig, ReducerLeftFold, ReducerState } from "./reducer.ts";
 import type { ExcludeEmptyFields } from "./utilities.ts";
 
 export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
@@ -165,9 +166,43 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    * ```
    */
   makeReducer<TState extends Unknown>(
-    folder: ReducerLeftFold<TState, TRecord>,
-    config: ReducerConfig<TState, TRecord>,
-  ): Reducer<TState, TRecord>;
+    foldFn: ReducerLeftFold<TState, TRecord>,
+    config: ReducerConfig<TRecord>,
+    stateFn: ReducerState<TState>,
+  ): Reducer<TRecord, TState>;
+
+  /**
+   * Make a new event reducer based on the events registered with the event store.
+   *
+   * @param aggregate - Aggregate class to create instance from.
+   *
+   * @example
+   * ```ts
+   * class Foo {
+   *   name: string = "";
+   *
+   *   with(event) {
+   *     switch (event.type) {
+   *       case "FooCreated": {
+   *         this.name = event.data.name;
+   *         break;
+   *       }
+   *     }
+   *   }
+   * });
+   *
+   * const reducer = makeAggregateReducer(Foo, {
+   *   name: "foo-aggregate",
+   *   type: "stream"
+   * });
+   *
+   * const foo = await eventStore.reduce("stream-id", reducer);
+   * ```
+   */
+  makeAggregateReducer<TAggregateRoot extends typeof AggregateRoot<TRecord>>(
+    aggregate: TAggregateRoot,
+    config: ReducerConfig<TRecord>,
+  ): Reducer<TRecord, InstanceType<TAggregateRoot>>;
 
   /**
    * Reduce events in the given stream to a entity state.
