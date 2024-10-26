@@ -46,8 +46,8 @@ export async function printEvents({ paths, output, modules = [] }: Options) {
         // This is an auto generated file. Do not modify this file!
         // deno-fmt-ignore-file
         
-        import { type AnyZodObject, type Empty, type Event as TEvent, type EventToRecord } from "@valkyr/event-store";
-        import { z } from "zod";
+        import { type Empty, type Event as TEvent, type EventToRecord } from "@valkyr/event-store";
+        import { type AnyZodObject, z } from "zod";
     
         export const events = new Set([${names.sort().map((event) => `"${event}"`).join(",")}] as const);
 
