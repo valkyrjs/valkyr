@@ -2,7 +2,10 @@ import type { Unknown } from "~types/common.ts";
 import type { EventRecord } from "~types/event.ts";
 
 export abstract class AggregateRoot<TRecord extends EventRecord> {
-  static from(snapshot?: Unknown) {
+  static from<TRecord extends EventRecord, TAggregateRoot extends typeof AggregateRoot<TRecord>>(
+    this: TAggregateRoot,
+    snapshot?: Unknown,
+  ): InstanceType<TAggregateRoot> {
     const instance = new (this as any)();
     if (snapshot !== undefined) {
       setSnapshot(instance, snapshot);
