@@ -15,6 +15,7 @@
     "jsr:@std/fs@1.0.5": "1.0.5",
     "jsr:@std/fs@^1.0.4": "1.0.5",
     "jsr:@std/internal@^1.0.4": "1.0.4",
+    "jsr:@std/net@1.0.4": "1.0.4",
     "jsr:@std/path@0.217": "0.217.0",
     "jsr:@std/path@0.221": "0.221.0",
     "jsr:@std/path@1.0.7": "1.0.7",
@@ -101,6 +102,9 @@
     },
     "@std/internal@1.0.4": {
       "integrity": "62e8e4911527e5e4f307741a795c0b0a9e6958d0b3790716ae71ce085f755422"
+    },
+    "@std/net@1.0.4": {
+      "integrity": "2f403b455ebbccf83d8a027d29c5a9e3a2452fea39bb2da7f2c04af09c8bc852"
     },
     "@std/path@0.217.0": {
       "integrity": "1217cc25534bca9a2f672d7fe7c6f356e4027df400c0e85c0ef3e4343bc67d11",
@@ -1438,6 +1442,7 @@
       "jsr:@std/assert@1.0.6",
       "jsr:@std/async@1.0.7",
       "jsr:@std/fs@1.0.5",
+      "jsr:@std/net@1.0.4",
       "jsr:@std/path@1.0.7",
       "jsr:@std/testing@1.0.3",
       "jsr:@std/text@1.0.8"
@@ -1475,12 +1480,6 @@
         "dependencies": [
           "npm:history@5.3.0",
           "npm:urlpattern-polyfill@10.0.0"
-        ]
-      },
-      "testcontainers": {
-        "dependencies": [
-          "jsr:@std/async@1.0.0",
-          "jsr:@std/net@0.224.5"
         ]
       }
     }
