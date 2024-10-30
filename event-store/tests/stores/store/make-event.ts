@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { assertEquals, assertLess } from "@std/assert";
 import { it } from "@std/testing/bdd";
 
-import { ContextPayload } from "~types/context.ts";
+import { RelationPayload } from "~types/relation.ts";
 
 import type { Event, EventRecord } from "../mocks/events.ts";
 import { describe } from "../utilities/describe.ts";
@@ -35,7 +35,7 @@ export default describe<Event, EventRecord>(".makeEvent", (getEventStore) => {
 
     const t3 = performance.now();
 
-    await eventStore.events.insertBatch(eventsToInsert);
+    await eventStore.db.events.insertMany(eventsToInsert);
 
     const t4 = performance.now();
 
@@ -49,7 +49,7 @@ export default describe<Event, EventRecord>(".makeEvent", (getEventStore) => {
   it("should performantly create and remove event contexts", async () => {
     const eventStore = await getEventStore();
 
-    const contexts: ContextPayload[] = [];
+    const relations: RelationPayload[] = [];
 
     let count = 10_000;
     while (count--) {
@@ -63,21 +63,21 @@ export default describe<Event, EventRecord>(".makeEvent", (getEventStore) => {
           email: faker.internet.email(),
         },
       });
-      contexts.push({ key: `test:xyz`, stream: event.stream });
+      relations.push({ key: `test:xyz`, stream: event.stream });
     }
 
     const t0 = performance.now();
-    await eventStore.contexts.insertBatch(contexts);
+    await eventStore.db.relations.insertMany(relations);
     const tr0 = (performance.now() - t0) / 1000;
 
-    assertEquals((await eventStore.contexts.getByKey(`test:xyz`)).length, 10_000);
+    assertEquals((await eventStore.db.relations.getByKey(`test:xyz`)).length, 10_000);
     assertLess(tr0, 5);
 
     const t1 = performance.now();
-    await eventStore.contexts.removeBatch(contexts);
+    await eventStore.db.relations.removeMany(relations);
     const tr1 = (performance.now() - t1) / 1000;
 
-    assertEquals((await eventStore.contexts.getByKey(`test:xyz`)).length, 0);
+    assertEquals((await eventStore.db.relations.getByKey(`test:xyz`)).length, 0);
     assertLess(tr1, 10);
   });
 });

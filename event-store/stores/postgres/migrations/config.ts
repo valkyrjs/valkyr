@@ -5,8 +5,8 @@ import { defineConfig } from "drizzle-kit";
 export default defineConfig({
   dialect: "postgresql",
   schema: [
-    resolve(__dirname, "..", "schemas", "contexts.ts"),
     resolve(__dirname, "..", "schemas", "events.ts"),
+    resolve(__dirname, "..", "schemas", "relations.ts"),
     resolve(__dirname, "..", "schemas", "snapshots.ts"),
     resolve(__dirname, "..", "schema.ts"),
   ],

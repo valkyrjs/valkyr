@@ -7,7 +7,7 @@ import type { EventStoreHooks } from "~types/event-store.ts";
 
 import { type Event, type EventRecord, events, validators } from "./mocks/events.ts";
 import testAddEvent from "./store/add-event.ts";
-import testAddSequence from "./store/add-sequence.ts";
+import testAddManyEvents from "./store/add-many-events.ts";
 import testCreateSnapshot from "./store/create-snapshot.ts";
 import testMakeAggregateReducer from "./store/make-aggregate-reducer.ts";
 import testMakeEvent from "./store/make-event.ts";
@@ -33,7 +33,7 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-  await container.client(DB_NAME)`TRUNCATE "event_store"."contexts","event_store"."events","event_store"."snapshots" CASCADE`;
+  await container.client(DB_NAME)`TRUNCATE "event_store"."relations","event_store"."events","event_store"."snapshots" CASCADE`;
 });
 
 afterAll(async () => {
@@ -48,7 +48,7 @@ afterAll(async () => {
 
 describe("PostgresEventStore", () => {
   testAddEvent(eventStoreFn);
-  testAddSequence(eventStoreFn);
+  testAddManyEvents(eventStoreFn);
   testCreateSnapshot(eventStoreFn);
   testMakeEvent(eventStoreFn);
   testMakeReducer(eventStoreFn);

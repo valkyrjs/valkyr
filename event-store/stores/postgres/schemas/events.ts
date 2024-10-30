@@ -12,12 +12,12 @@ export const events: PGEventTable = schema.table("events", {
   meta: jsonb("meta").$type<EventRecord["meta"]>().notNull(),
   recorded: varchar("recorded").notNull(),
   created: varchar("created").notNull(),
-}, (table) => ({
-  streamIdx: index().on(table.stream),
-  typeIdx: index().on(table.type),
-  recordedIdx: index().on(table.recorded),
-  createdIdx: index().on(table.created),
-}));
+}, (table) => [
+  index().on(table.stream),
+  index().on(table.type),
+  index().on(table.recorded),
+  index().on(table.created),
+]);
 
 export type PGEventTable = PgTableWithColumns<{
   name: "events";

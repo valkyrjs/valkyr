@@ -3,11 +3,13 @@ export class Queue<T> {
 
   #queue: Message<T>[];
   #handle: Handler<T>;
+  #hooks: Hooks;
 
-  constructor(handler: Handler<T>) {
+  constructor(handler: Handler<T>, hooks: Hooks = {}) {
     this.status = "idle";
     this.#queue = [];
     this.#handle = handler;
+    this.#hooks = hooks;
   }
 
   /*
@@ -65,6 +67,9 @@ export class Queue<T> {
 
   #setStatus(value: Status): this {
     this.status = value;
+    if (value === "drained") {
+      this.#hooks.onDrained?.();
+    }
     return this;
   }
 }
@@ -78,6 +83,10 @@ export class Queue<T> {
 type Status = "idle" | "working" | "drained";
 
 type Handler<T> = (message: T) => Promise<any> | Promise<any[]>;
+
+type Hooks = {
+  onDrained?: () => void;
+};
 
 type Message<T> = {
   message: T;

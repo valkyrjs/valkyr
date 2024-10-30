@@ -18,9 +18,10 @@ export function getEventStoreDatabase(name: string, adapter: Adapter): EventStor
             ],
           },
           {
-            name: "contexts",
+            name: "relations",
             indexes: [
               ["key", { unique: false }],
+              ["stream", { unique: false }],
             ],
           },
           {
@@ -39,7 +40,7 @@ export function getEventStoreDatabase(name: string, adapter: Adapter): EventStor
         name,
         registrars: [
           { name: "events" },
-          { name: "contexts" },
+          { name: "relations" },
           { name: "snapshots" },
         ],
       });
@@ -59,11 +60,11 @@ export type Adapter = "indexedb" | "memorydb";
 
 export type Collections = {
   events: EventRecord;
-  contexts: Context;
+  relations: Relation;
   snapshots: Snapshot;
 };
 
-export type Context = {
+export type Relation = {
   key: string;
   stream: string;
 };

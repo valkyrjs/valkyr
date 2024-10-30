@@ -1,14 +1,7 @@
 import type { Subscription } from "~types/common.ts";
 import type { EventRecord } from "~types/event.ts";
 
-import type {
-  ProjectionFilter,
-  ProjectionHandler,
-  ProjectionState,
-  ProjectorListenerFn,
-  ProjectorListeners,
-  ProjectorMessage,
-} from "../types/projector.ts";
+import type { ProjectionFilter, ProjectionHandler, ProjectionStatus, ProjectorListenerFn, ProjectorListeners, ProjectorMessage } from "../types/projector.ts";
 import { Queue } from "./queue.ts";
 
 /*
@@ -40,12 +33,21 @@ const FILTER_ALL = Object.freeze<ProjectionFilter>({
 
 export class Projector<Record extends EventRecord = EventRecord> {
   #listeners: ProjectorListeners<Record> = {};
-  #queue: Queue<ProjectorMessage<Record>>;
+  #queues: {
+    [stream: string]: Queue<ProjectorMessage<Record>>;
+  } = {};
 
   constructor() {
-    this.project = this.project.bind(this);
-    this.#queue = new Queue(async ({ record, state }) => {
-      return Promise.all(Array.from(this.#listeners[record.type as string] || []).map((fn) => fn(record, state)));
+    this.push = this.push.bind(this);
+  }
+
+  #makeQueue(stream: string) {
+    this.#queues[stream] = new Queue(async ({ record, status }) => {
+      return Promise.all(Array.from(this.#listeners[record.type as string] || []).map((fn) => fn(record, status)));
+    }, {
+      onDrained: () => {
+        delete this.#queues[stream];
+      },
     });
   }
 
@@ -55,9 +57,12 @@ export class Projector<Record extends EventRecord = EventRecord> {
    |--------------------------------------------------------------------------------
    */
 
-  async project(record: Record, state: ProjectionState): Promise<boolean> {
+  async push(record: Record, status: ProjectionStatus): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-      this.#queue.push({ record, state }, resolve, reject);
+      if (this.#queues[record.stream] === undefined) {
+        this.#makeQueue(record.stream);
+      }
+      this.#queues[record.stream].push({ record, status }, resolve, reject);
     });
   }
 
@@ -181,7 +186,7 @@ export class Projector<Record extends EventRecord = EventRecord> {
    * @param filter - Projection filter to match against.
    * @param state  - Projection state to validate.
    */
-  #hasValidState(filter: ProjectionFilter, { hydrated, outdated }: ProjectionState) {
+  #hasValidState(filter: ProjectionFilter, { hydrated, outdated }: ProjectionStatus) {
     if (filter.allowHydratedEvents === false && hydrated === true) {
       return false;
     }

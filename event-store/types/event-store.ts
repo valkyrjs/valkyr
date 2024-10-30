@@ -1,5 +1,6 @@
 import type { AggregateRoot } from "~libraries/aggregate.ts";
-import type { PostEventInsertError, PreEventInsertError } from "~libraries/errors.ts";
+import type { EventProjectionError, EventRelationsError } from "~libraries/errors.ts";
+import type { ProjectionStatus } from "~types/projector.ts";
 
 import type { Unknown } from "./common.ts";
 import type { Event, EventRecord, EventStatus } from "./event.ts";
@@ -9,16 +10,9 @@ import type { ExcludeEmptyFields } from "./utilities.ts";
 export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
   /*
    |--------------------------------------------------------------------------------
-   | Events
+   | Factories
    |--------------------------------------------------------------------------------
    */
-
-  /**
-   * Check if the event store has an event of the given type.
-   *
-   * @param type - Event type to check for.
-   */
-  hasEvent(type: TEvent["type"]): boolean;
 
   /**
    * Make a new event.
@@ -31,114 +25,6 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
   makeEvent<TEventType extends Event["type"]>(
     event: ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream?: string },
   ): TRecord;
-
-  /**
-   * Add a new event onto the local event store database.
-   *
-   * Push is meant to take events from the local services and insert them as new
-   * event records as non hydrated events.
-   *
-   * @param event - Event data to record.
-   */
-  addEvent<TEventType extends Event["type"]>(
-    event: ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream?: string },
-  ): Promise<string>;
-
-  /**
-   * Add multiple new events sequentially onto the local event store database in
-   * a all or nothing pattern.
-   *
-   * @param events - List of events to process.
-   */
-  addEventSequence<TEventType extends Event["type"]>(
-    event: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream: string })[],
-  ): Promise<void>;
-
-  /**
-   * Insert an event record to the local event store database.
-   *
-   * This method triggers event validation and projection. If validation fails the
-   * event will not be inserted. If the projection fails the projection itself
-   * should be handling the error based on its own business logic.
-   *
-   * When hydration is true the event will be recorded with a new locally generated
-   * timestamp as its being recorded locally but is not the originator of the event
-   * creation.
-   *
-   * @param record   - EventRecord to insert.
-   * @param hydrated - Whether the event is hydrated or not. (Optional)
-   */
-  pushEvent(record: TRecord, hydrated?: boolean): Promise<string>;
-
-  /**
-   * Insert multiple event records sequentially to the local event store database.
-   *
-   * This is a two step process, first step validates and inserts each event in
-   * a commit transaction. Once the commit is successfull the second step projects
-   * the inserted records.
-   *
-   * @param records - List of event records to process.
-   */
-  pushEventSequence(records: { record: TRecord; hydrated?: boolean }[]): Promise<void>;
-
-  /**
-   * Enable the ability to check an incoming events status in relation to the local
-   * ledger. This is to determine what actions to take upon the ledger based on the
-   * current status.
-   *
-   * **Exists**
-   *
-   * References the existence of the event in the local ledger. It is determined by
-   * looking at the recorded event id which should be unique to the entirety of the
-   * ledger.
-   *
-   * **Outdated**
-   *
-   * References the events created relationship to the same event type in the
-   * hosted stream. If another event of the same type in the streamis newer than
-   * the provided event, the provided event is considered outdated.
-   */
-  getEventStatus(event: TRecord): Promise<EventStatus>;
-
-  /**
-   * Retrieve events from the events table.
-   *
-   * @param options - Read options. (Optional)
-   */
-  getEvents(options?: EventReadOptions<TRecord>): Promise<TRecord[]>;
-
-  /**
-   * Retrieve events from the events table under the given stream.
-   *
-   * @param stream  - Stream to retrieve events for.
-   * @param options - Stream logic options. (Optional)
-   */
-  getEventsByStream(stream: string, options?: EventReadOptions<TRecord>): Promise<TRecord[]>;
-
-  /**
-   * Retrieve all events under the given context key.
-   *
-   * @param key     - Context key to retrieve events for.
-   * @param options - Context logic options. (Optional)
-   */
-  getEventsByContext(key: string, options?: EventReadOptions<TRecord>): Promise<TRecord[]>;
-
-  /**
-   * Retrieves a list of events, and runs them through context, and projection
-   * subcribers. This is usefull for when projections, or contexts has been updated
-   * or added.
-   *
-   * When no stream is provided, the entire event store is replayed.
-   *
-   * @param stream - Stream to replay events for. (Optional)
-   */
-  replayEvents(stream?: string): Promise<void>;
-
-  /*
-   |--------------------------------------------------------------------------------
-   | Reducers
-   |--------------------------------------------------------------------------------
-   */
 
   /**
    * Make a new event reducer based on the events registered with the event store.
@@ -204,6 +90,124 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
     config: ReducerConfig<TRecord>,
   ): Reducer<TRecord, InstanceType<TAggregateRoot>>;
 
+  /*
+   |--------------------------------------------------------------------------------
+   | Events
+   |--------------------------------------------------------------------------------
+   */
+
+  /**
+   * Check if the event store has an event of the given type.
+   *
+   * @param type - Event type to check for.
+   */
+  hasEvent(type: TEvent["type"]): boolean;
+
+  /**
+   * Add a new event to the events table.
+   *
+   * @param event - Event data to record.
+   */
+  addEvent<TEventType extends Event["type"]>(
+    event: ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream?: string },
+  ): Promise<void>;
+
+  /**
+   * Add many events in strict sequence to the events table.
+   *
+   * This method runs in a transaction and will fail all events if one or more
+   * insertion failures occurs.
+   *
+   * @param events - List of events to record.
+   */
+  addManyEvents<TEventType extends Event["type"]>(
+    event: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream: string })[],
+  ): Promise<void>;
+
+  /**
+   * Insert an event record to the local event store database.
+   *
+   * This method triggers event validation and projection. If validation fails the
+   * event will not be inserted. If the projection fails the projection itself
+   * should be handling the error based on its own business logic.
+   *
+   * When hydration is true the event will be recorded with a new locally generated
+   * timestamp as its being recorded locally but is not the originator of the event
+   * creation.
+   *
+   * @param record   - Event record to insert.
+   * @param hydrated - Whether the record is hydrated or not. (Optional)
+   */
+  pushEvent(record: TRecord, status: ProjectionStatus): Promise<void>;
+
+  /**
+   * Add many events in strict sequence to the events table.
+   *
+   * This method runs in a transaction and will fail all events if one or more
+   * insertion failures occurs.
+   *
+   * Once inserted the events are emitted to any event active event listeners.
+   *
+   * @param records  - List of event records to insert.
+   * @param hydrated - Whether the records is hydrated or not. (Optional)
+   */
+  pushManyEvents(entries: { record: TRecord; status: ProjectionStatus }[]): Promise<void>;
+
+  /**
+   * Enable the ability to check an incoming events status in relation to the local
+   * ledger. This is to determine what actions to take upon the ledger based on the
+   * current status.
+   *
+   * **Exists**
+   *
+   * References the existence of the event in the local ledger. It is determined by
+   * looking at the recorded event id which should be unique to the entirety of the
+   * ledger.
+   *
+   * **Outdated**
+   *
+   * References the events created relationship to the same event type in the
+   * hosted stream. If another event of the same type in the streamis newer than
+   * the provided event, the provided event is considered outdated.
+   */
+  getEventStatus(event: TRecord): Promise<EventStatus>;
+
+  /**
+   * Retrieve events from the events table.
+   *
+   * @param options - Read options. (Optional)
+   */
+  getEvents(options?: EventReadOptions<TRecord>): Promise<TRecord[]>;
+
+  /**
+   * Retrieve events from the events table under the given streams.
+   *
+   * @param stream  - Stream to retrieve events for.
+   * @param options - Stream logic options. (Optional)
+   */
+  getEventsByStreams(streams: string[], options?: EventReadOptions<TRecord>): Promise<TRecord[]>;
+
+  /**
+   * Retrieve all events under the given relational keys.
+   *
+   * @param keys    - Relational keys to retrieve events for.
+   * @param options - Relational logic options. (Optional)
+   */
+  getEventsByRelations(keys: string[], options?: EventReadOptions<TRecord>): Promise<TRecord[]>;
+
+  /**
+   * Send all the provided events through the event subscription layers.
+   *
+   * @param records - Records to replay.
+   */
+  replay(records: TRecord[]): Promise<void>;
+
+  /*
+   |--------------------------------------------------------------------------------
+   | Reducers
+   |--------------------------------------------------------------------------------
+   */
+
   /**
    * Reduce events in the given stream to a entity state.
    *
@@ -225,6 +229,7 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
   reduce<TReducer extends Reducer>(
     streamOrContext: string,
     reducer: TReducer,
+    pending?: TRecord[],
   ): Promise<ReturnType<TReducer["reduce"]> | undefined>;
 
   /*
@@ -315,31 +320,6 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
 
 export type EventStoreHooks<TRecord extends EventRecord> = Partial<{
   /**
-   * Before an error is thrown, this hook allows for customizing the error that
-   * is thrown. This is useful for when you want to throw a different error that
-   * more complies with your project setup.
-   *
-   * @param error  - Event error that got triggered.
-   * @param record - Record that was passed to the event store.
-   *
-   * @example
-   * ```ts
-   * const eventStore = new EventStore({
-   *   ...config,
-   *   hooks: {
-   *     beforeEventError(error) {
-   *       if (error.step === "validation") {
-   *         return new ServerError(error.message);
-   *       }
-   *       return error;
-   *     }
-   *   }
-   * })
-   * ```
-   */
-  beforeEventError(error: PreEventInsertError, record: TRecord): Promise<Error | unknown>;
-
-  /**
    * After an error is thrown, this hook allows for reacting to a failure that
    * occured during event record insertion. This is useful for reporting issues,
    * especially in the events that failed to project or update contexts.
@@ -352,28 +332,40 @@ export type EventStoreHooks<TRecord extends EventRecord> = Partial<{
    * const eventStore = new EventStore({
    *   ...config,
    *   hooks: {
-   *     async afterEventError(error, record) {
-   *       if (error.step === "project") {
-   *         await report.projectionFailed(
-   *          `Failed to project record '${record.stream}', manual recovery required!`
-   *         );
-   *       }
+   *     async onProjectionError(error, record) {
+   *       await report.projectionFailed(
+   *            `Failed to project record '${record.stream}', manual recovery required!`
+   *          );
    *     }
    *   }
    * })
    * ```
    */
-  afterEventError(error: PostEventInsertError, record: TRecord): Promise<void> | void;
+  onProjectionError(error: EventProjectionError, record: TRecord): Promise<void> | void;
 
   /**
    * After an event record has been successfully inserted, this hooks will
    * trigger, allowing for further non internal operations on the inserted
    * event record.
    *
-   * @param record   - Record that was inserted.
-   * @param hydrated - Hydrated state of the record.
+   * @param error  - Event error that got triggered.
+   * @param record - Record that was passed to the event store.
+   *
+   * @example
+   * ```ts
+   * const eventStore = new EventStore({
+   *   ...config,
+   *   hooks: {
+   *     async onRelationsError(error, record) {
+   *       await report.projectionFailed(
+   *            `Failed to create relations for record '${record.stream}', manual recovery required!`
+   *          );
+   *     }
+   *   }
+   * })
+   * ```
    */
-  afterEventInsert(record: TRecord, hydrated: boolean): Promise<void> | void;
+  onRelationsError(error: EventRelationsError, record: TRecord): Promise<void> | void;
 }>;
 
 /*

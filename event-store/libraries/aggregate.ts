@@ -8,7 +8,7 @@ export abstract class AggregateRoot<TRecord extends EventRecord> {
   ): InstanceType<TAggregateRoot> {
     const instance = new (this as any)();
     if (snapshot !== undefined) {
-      setSnapshot(instance, snapshot);
+      Object.assign(instance, snapshot);
     }
     return instance;
   }
@@ -19,14 +19,4 @@ export abstract class AggregateRoot<TRecord extends EventRecord> {
    * @param event - Event record to fold.
    */
   abstract with(event: TRecord): void;
-}
-
-/**
- * Assigns a snapshot to the provided aggregate instance.
- *
- * @param aggregate - Aggregate to populate.
- * @param snapshot  - Snapshot to assign.
- */
-function setSnapshot(aggregate: AggregateRoot<any>, snapshot: Unknown) {
-  Object.assign(aggregate, snapshot);
 }

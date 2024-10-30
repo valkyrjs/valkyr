@@ -33,26 +33,25 @@ import { type PostgresConnection, PostgresDatabase } from "@valkyr/drizzle";
 import type { AnyZodObject } from "zod";
 
 import type { AggregateRoot } from "~libraries/aggregate.ts";
-import { Contextor } from "~libraries/contextor.ts";
+import { EventInsertionError, EventMissingError, EventParserError } from "~libraries/errors.ts";
 import { createEventRecord } from "~libraries/event.ts";
 import { Projector } from "~libraries/projector.ts";
 import { makeAggregateReducer, makeReducer } from "~libraries/reducer.ts";
-import { Validator } from "~libraries/validator.ts";
+import { Relations } from "~libraries/relations.ts";
+import { getLogicalTimestamp } from "~libraries/time.ts";
 import type { Unknown } from "~types/common.ts";
 import type { Event, EventRecord, EventStatus, EventToRecord } from "~types/event.ts";
 import type { EventReadOptions, EventStore, EventStoreHooks } from "~types/event-store.ts";
+import type { ProjectionStatus } from "~types/projector.ts";
 import type { InferReducerState, Reducer, ReducerConfig, ReducerLeftFold, ReducerState } from "~types/reducer.ts";
 import type { ExcludeEmptyFields } from "~types/utilities.ts";
-import { pushEventRecord } from "~utilities/event-store/push-event-record.ts";
-import { pushEventRecordSequence } from "~utilities/event-store/push-event-record-sequence.ts";
-import { pushEventRecordUpdates } from "~utilities/event-store/push-event-record-updates.ts";
 
-import { type EventStoreDatabase, type EventStoreSchema, schema, type Transaction } from "./database.ts";
-import { ContextProvider } from "./providers/context.ts";
+import { type EventStoreSchema, schema, type Transaction } from "./database.ts";
 import { EventProvider } from "./providers/event.ts";
+import { RelationsProvider } from "./providers/relations.ts";
 import { SnapshotProvider } from "./providers/snapshot.ts";
-import { contexts } from "./schemas/contexts.ts";
 import { events } from "./schemas/events.ts";
+import { relations } from "./schemas/relations.ts";
 import { snapshots } from "./schemas/snapshots.ts";
 
 export { migrate } from "./database.ts";
@@ -68,52 +67,36 @@ export { migrate } from "./database.ts";
  * postgres database.
  */
 export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecord = EventToRecord<TEvent>> implements EventStore<TEvent, TRecord> {
-  readonly #config: Config<TEvent, TRecord>;
-
   readonly #database: PostgresDatabase<EventStoreSchema>;
   readonly #events: EventList<TEvent>;
   readonly #validators: ValidatorConfig<TEvent>;
   readonly #snapshot: "manual" | "auto";
+  readonly #hooks: EventStoreHooks<TRecord>;
 
-  readonly hooks: EventStoreHooks<TRecord>;
-
-  readonly contexts: ContextProvider;
-  readonly events: EventProvider<TRecord>;
-  readonly snapshots: SnapshotProvider;
-
-  readonly validator: Validator<TRecord>;
   readonly projector: Projector<TRecord>;
-  readonly contextor: Contextor<TRecord>;
+  readonly relations: Relations<TRecord>;
+
+  readonly db: {
+    readonly relations: RelationsProvider;
+    readonly events: EventProvider<TRecord>;
+    readonly snapshots: SnapshotProvider;
+  };
 
   constructor(config: Config<TEvent, TRecord>, tx?: Transaction) {
-    this.#config = config;
     this.#database = new PostgresDatabase<EventStoreSchema>(config.database, schema);
     this.#events = config.events;
     this.#validators = config.validators;
     this.#snapshot = config.snapshot ?? "manual";
+    this.#hooks = config.hooks ?? {};
 
-    this.hooks = config.hooks ?? {};
+    this.db = {
+      relations: new RelationsProvider(tx ?? this.#database, relations),
+      events: new EventProvider(tx ?? this.#database, events),
+      snapshots: new SnapshotProvider(tx ?? this.#database, snapshots),
+    };
 
-    this.contexts = new ContextProvider(tx ?? this.#database, contexts);
-    this.events = new EventProvider(tx ?? this.#database, events);
-    this.snapshots = new SnapshotProvider(tx ?? this.#database, snapshots);
-
-    this.validator = new Validator<TRecord>();
     this.projector = new Projector<TRecord>();
-    this.contextor = new Contextor<TRecord>(this.contexts.handle.bind(this.contexts));
-  }
-
-  /*
-   |--------------------------------------------------------------------------------
-   | Accessors
-   |--------------------------------------------------------------------------------
-   */
-
-  /**
-   * Access the event store database drizzle wrapped instance.
-   */
-  get db(): EventStoreDatabase {
-    return this.#database.drizzle;
+    this.relations = new Relations<TRecord>(this.db.relations.handle.bind(this.db.relations));
   }
 
   /*
@@ -138,69 +121,117 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
     event: ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & {
       stream?: string;
     },
-  ): Promise<string> {
-    return this.pushEvent(createEventRecord<TEvent, TRecord>(event as any), false);
+  ): Promise<void> {
+    await this.pushEvent(createEventRecord<TEvent, TRecord>(event as any), { hydrated: false, outdated: false });
   }
 
-  async addEventSequence<TEventType extends Event["type"]>(
+  async addManyEvents<TEventType extends Event["type"]>(
     events: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream: string })[],
   ): Promise<void> {
-    return this.pushEventSequence(
-      events.map((event) => ({ record: createEventRecord<TEvent, TRecord>(event as any), hydrated: false })),
+    await this.pushManyEvents(events.map((event) => ({
+      record: createEventRecord<TEvent, TRecord>(event as any),
+      status: {
+        hydrated: false,
+        outdated: false,
+      },
+    })));
+  }
+
+  async pushEvent(record: TRecord, status: ProjectionStatus): Promise<void> {
+    if (this.hasEvent(record.type) === false) {
+      throw new EventMissingError(record.type);
+    }
+    await this.parseEventRecord(record);
+    if (status.hydrated === true) {
+      record.recorded = getLogicalTimestamp();
+    }
+    await this.db.events.insert(record).catch((error) => {
+      throw new EventInsertionError(error.message);
+    });
+    await Promise.all([
+      this.projector.push(record, status).catch((error) => {
+        if (this.#hooks.onProjectionError !== undefined) {
+          this.#hooks.onProjectionError?.(error, record);
+        } else {
+          console.error({ error, record });
+        }
+      }),
+      this.relations.push(record).catch((error) => {
+        if (this.#hooks.onRelationsError !== undefined) {
+          this.#hooks.onRelationsError?.(error, record);
+        } else {
+          console.error({ error, record });
+        }
+      }),
+    ]);
+  }
+
+  async pushManyEvents(entries: { record: TRecord; status: ProjectionStatus }[]): Promise<void> {
+    const events = [];
+    for (const { record, status } of entries) {
+      if (this.hasEvent(record.type) === false) {
+        throw new EventMissingError(record.type);
+      }
+      await this.parseEventRecord(record);
+      if (status.hydrated === true) {
+        record.recorded = getLogicalTimestamp();
+      }
+      events.push(record);
+    }
+    await this.db.events.insertMany(events).catch((error) => {
+      throw new EventInsertionError(error.message);
+    });
+    await Promise.all(
+      entries.flatMap(({ record, status }) => [
+        this.projector.push(record, status).catch((error) => {
+          if (this.#hooks.onProjectionError !== undefined) {
+            this.#hooks.onProjectionError?.(error, record);
+          } else {
+            console.error({ error, record });
+          }
+        }),
+        this.relations.push(record).catch((error) => {
+          if (this.#hooks.onRelationsError !== undefined) {
+            this.#hooks.onRelationsError?.(error, record);
+          } else {
+            console.error({ error, record });
+          }
+        }),
+      ]),
     );
   }
 
-  async pushEvent(record: TRecord, hydrated = true): Promise<string> {
-    return pushEventRecord(this as any, record, hydrated);
-  }
-
-  async pushEventSequence(records: { record: TRecord; hydrated?: boolean }[]): Promise<void> {
-    const inserted = await this.#database.transaction(async (tx) => {
-      return pushEventRecordSequence(
-        new PostgresEventStore(this.#config, tx) as any,
-        records.map<{ record: TRecord; hydrated: boolean }>((record) => {
-          record.hydrated = record.hydrated === undefined ? true : record.hydrated;
-          return record as { record: TRecord; hydrated: boolean };
-        }),
-      );
-    });
-    for (const { record, hydrated, status } of inserted) {
-      await pushEventRecordUpdates(this as any, record, hydrated, status);
-    }
-  }
-
   async getEventStatus(event: TRecord): Promise<EventStatus> {
-    const record = await this.events.getById(event.id);
+    const record = await this.db.events.getById(event.id);
     if (record) {
       return { exists: true, outdated: true };
     }
-    return { exists: false, outdated: await this.events.checkOutdated(event) };
+    return { exists: false, outdated: await this.db.events.checkOutdated(event) };
   }
 
   async getEvents(options?: EventReadOptions<TRecord>): Promise<TRecord[]> {
-    return this.events.get(options);
+    return this.db.events.get(options);
   }
 
-  async getEventsByStream(stream: string, options?: EventReadOptions<TRecord>): Promise<TRecord[]> {
-    return this.events.getByStream(stream, options);
+  async getEventsByStreams(stream: string[], options?: EventReadOptions<TRecord>): Promise<TRecord[]> {
+    return this.db.events.getByStreams(stream, options);
   }
 
-  async getEventsByContext(key: string, options?: EventReadOptions<TRecord>): Promise<TRecord[]> {
-    const rows = await this.contexts.getByKey(key);
-    if (rows.length === 0) {
+  async getEventsByRelations(keys: string[], options?: EventReadOptions<TRecord>): Promise<TRecord[]> {
+    const streamIds = await this.db.relations.getByKeys(keys);
+    if (streamIds.length === 0) {
       return [];
     }
-    return this.events.getByStreams(rows.map((row) => row.stream), options);
+    return this.db.events.getByStreams(streamIds, options);
   }
 
-  async replayEvents(stream?: string): Promise<void> {
-    const events = stream !== undefined ? await this.events.getByStream(stream) : await this.events.get();
-    for (const event of events) {
-      await Promise.all([
-        this.contextor.push(event),
-        this.projector.project(event, { hydrated: true, outdated: false }),
-      ]);
-    }
+  async replay(records: TRecord[]): Promise<void> {
+    await Promise.all(
+      records.flatMap((record) => [
+        this.projector.push(record, { hydrated: true, outdated: false }),
+        this.relations.push(record),
+      ]),
+    );
   }
 
   /*
@@ -225,21 +256,23 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
   }
 
   async reduce<TReducer extends Reducer>(
-    streamOrContext: string,
+    streamOrRelation: string,
     reducer: TReducer,
+    pending: TRecord[] = [],
   ): Promise<ReturnType<TReducer["reduce"]> | undefined> {
     let cursor: string | undefined;
     let state: InferReducerState<TReducer> | undefined;
 
-    const snapshot = await this.getSnapshot(streamOrContext, reducer);
+    const snapshot = await this.getSnapshot(streamOrRelation, reducer);
     if (snapshot !== undefined) {
       cursor = snapshot.cursor;
       state = snapshot.state;
     }
 
-    const events = reducer.type === "stream"
-      ? await this.getEventsByStream(streamOrContext, { cursor, filter: reducer.filter })
-      : await this.getEventsByContext(streamOrContext, { cursor, filter: reducer.filter });
+    const events =
+      (reducer.type === "stream"
+        ? await this.getEventsByStreams([streamOrRelation], { cursor, filter: reducer.filter })
+        : await this.getEventsByRelations([streamOrRelation], { cursor, filter: reducer.filter })).concat(pending);
     if (events.length === 0) {
       if (state !== undefined) {
         return reducer.from(state);
@@ -249,7 +282,7 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
 
     const result = reducer.reduce(events, state);
     if (this.#snapshot === "auto") {
-      await this.snapshots.insert(name, streamOrContext, events.at(-1)!.created, result);
+      await this.db.snapshots.insert(name, streamOrRelation, events.at(-1)!.created, result);
     }
     return result;
   }
@@ -260,19 +293,21 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
    |--------------------------------------------------------------------------------
    */
 
-  async createSnapshot<TReducer extends Reducer>(streamOrContext: string, { name, type, filter, reduce }: TReducer): Promise<void> {
-    const events = type === "stream" ? await this.getEventsByStream(streamOrContext, { filter }) : await this.getEventsByContext(streamOrContext, { filter });
+  async createSnapshot<TReducer extends Reducer>(streamOrRelation: string, { name, type, filter, reduce }: TReducer): Promise<void> {
+    const events = type === "stream"
+      ? await this.getEventsByStreams([streamOrRelation], { filter })
+      : await this.getEventsByRelations([streamOrRelation], { filter });
     if (events.length === 0) {
       return undefined;
     }
-    await this.snapshots.insert(name, streamOrContext, events.at(-1)!.created, reduce(events));
+    await this.db.snapshots.insert(name, streamOrRelation, events.at(-1)!.created, reduce(events));
   }
 
   async getSnapshot<TReducer extends Reducer, TState = InferReducerState<TReducer>>(
     streamOrContext: string,
     reducer: TReducer,
   ): Promise<{ cursor: string; state: TState } | undefined> {
-    const snapshot = await this.snapshots.getByStream(reducer.name, streamOrContext);
+    const snapshot = await this.db.snapshots.getByStream(reducer.name, streamOrContext);
     if (snapshot === undefined) {
       return undefined;
     }
@@ -280,7 +315,7 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
   }
 
   async deleteSnapshot<TReducer extends Reducer>(streamOrContext: string, reducer: TReducer): Promise<void> {
-    await this.snapshots.remove(reducer.name, streamOrContext);
+    await this.db.snapshots.remove(reducer.name, streamOrContext);
   }
 
   /*
@@ -288,6 +323,34 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
    | Utilities
    |--------------------------------------------------------------------------------
    */
+
+  /**
+   * Check provided record against its type validators for incoming data and meta
+   * information. If the check fails an EventDataValidationError is thrown.
+   *
+   * @param record - Record to validate.
+   */
+  async parseEventRecord(record: TRecord) {
+    const { data, meta } = this.getValidator(record.type);
+    if (data !== undefined || meta !== undefined) {
+      const errors = [];
+      if (data !== undefined) {
+        const result = await data.safeParseAsync(record.data);
+        if (result.success === false) {
+          errors.push(result.error.flatten().fieldErrors);
+        }
+      }
+      if (meta !== undefined) {
+        const result = await meta.safeParseAsync(record.meta);
+        if (result.success === false) {
+          errors.push(result.error.flatten().fieldErrors);
+        }
+      }
+      if (errors.length > 0) {
+        throw new EventParserError(errors);
+      }
+    }
+  }
 
   /**
    * Get a zod event validator instance used to check if an event object matches

@@ -1,31 +1,47 @@
+export class EventStoreError extends Error {
+  readonly type = "EventStoreError";
+
+  constructor(message: string) {
+    super(`EventStore Error: ${message}`);
+  }
+}
+
+export class EventMissingError extends Error {
+  readonly type = "EventMissingError";
+
+  constructor(type: string) {
+    super(`EventStore Error: Event '${type}' has not been registered with the event store instance.`);
+  }
+}
+
 /*
  |--------------------------------------------------------------------------------
  | Event Errors
  |--------------------------------------------------------------------------------
  */
 
-export class EventDataValidationFailure extends Error {
-  readonly step = "validate";
+export class EventParserError extends Error {
+  readonly type = "EventParserError";
 
   constructor(readonly data: unknown) {
-    super("Invalid event provided.");
+    super("Invalid event provided");
   }
 }
 
-export class EventValidationFailure extends Error {
-  readonly step = "validate";
+export class EventValidationError extends Error {
+  readonly type = "EventValidationError";
 }
 
-export class EventInsertionFailure extends Error {
-  readonly step = "insert";
+export class EventInsertionError extends Error {
+  readonly type = "EventInsertionError";
 }
 
-export class EventContextFailure extends Error {
-  readonly step = "context";
+export class EventProjectionError extends Error {
+  readonly type = "EventProjectionError";
 }
 
-export class EventProjectionFailure extends Error {
-  readonly step = "project";
+export class EventRelationsError extends Error {
+  readonly type = "EventRelationsError";
 }
 
 /*
@@ -61,18 +77,3 @@ export class HLCWallTimeOverflowError extends Error {
     super(`HLC Violation: Wall time ${time}ms exceeds the max time of ${maxTime}ms.`);
   }
 }
-
-/*
- |--------------------------------------------------------------------------------
- | Types
- |--------------------------------------------------------------------------------
- */
-
-export type PreEventInsertError =
-  | EventDataValidationFailure
-  | EventValidationFailure
-  | EventInsertionFailure;
-
-export type PostEventInsertError =
-  | EventContextFailure
-  | EventProjectionFailure;

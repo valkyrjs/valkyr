@@ -49,6 +49,13 @@ export abstract class Database<TClient, TDrizzle extends Drizzle> {
   }
 
   /**
+   * {@link https://orm.drizzle.team/docs/select#distinct-select}
+   */
+  get selectDistinct(): TDrizzle["selectDistinct"] {
+    return this.drizzle.selectDistinct.bind(this.drizzle);
+  }
+
+  /**
    * {@link https://orm.drizzle.team/docs/insert}
    */
   get update(): TDrizzle["update"] {
@@ -74,6 +81,7 @@ type Drizzle = {
   transaction: any;
   insert: any;
   select: any;
+  selectDistinct: any;
   update: any;
   delete: any;
 };

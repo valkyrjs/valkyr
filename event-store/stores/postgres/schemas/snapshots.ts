@@ -8,9 +8,9 @@ export const snapshots: PGSnapshotTable = schema.table("snapshots", {
   stream: varchar("stream").notNull(),
   cursor: varchar("cursor").notNull(),
   state: jsonb("state").$type<Record<string, any>>().notNull(),
-}, (table) => ({
-  nameStreamIdx: index().on(table.name, table.stream, table.cursor),
-}));
+}, (table) => [
+  index().on(table.name, table.stream, table.cursor),
+]);
 
 export type Snapshot = typeof snapshots.$inferSelect;
 

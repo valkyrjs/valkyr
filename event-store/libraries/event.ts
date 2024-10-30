@@ -1,4 +1,4 @@
-import { makeId } from "~utilities/generators.ts";
+import { makeId } from "@valkyr/drizzle";
 
 import type { Event, EventRecord } from "../types/event.ts";
 import { getLogicalTimestamp } from "./time.ts";

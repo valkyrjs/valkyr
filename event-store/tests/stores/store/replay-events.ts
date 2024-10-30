@@ -27,7 +27,7 @@ export default describe<Event, EventRecord>(".replayEvents", (getEventStore) => 
       record[stream].email = email;
     });
 
-    const events = [
+    await store.addManyEvents([
       {
         stream,
         type: "user:created",
@@ -38,14 +38,14 @@ export default describe<Event, EventRecord>(".replayEvents", (getEventStore) => 
           },
           email: "jane.doe@fixture.none",
         },
-      } as const,
+      },
       {
         stream,
         type: "user:name:given-set",
         data: {
           given: "John",
         },
-      } as const,
+      },
       {
         stream,
         type: "user:email-set",
@@ -55,12 +55,8 @@ export default describe<Event, EventRecord>(".replayEvents", (getEventStore) => 
         meta: {
           auditor: "admin",
         },
-      } as const,
-    ];
-
-    for (const event of events) {
-      await store.addEvent(event);
-    }
+      },
+    ]);
 
     assertObjectMatch(record, {
       [stream]: {
@@ -74,7 +70,7 @@ export default describe<Event, EventRecord>(".replayEvents", (getEventStore) => 
 
     delete record[stream];
 
-    await store.replayEvents(stream);
+    await store.replay(await store.getEventsByStreams([stream]));
 
     assertObjectMatch(record, {
       [stream]: {

@@ -3,11 +3,11 @@ import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { migrate as runMigration } from "drizzle-orm/postgres-js/migrator";
 import { type Sql } from "postgres";
 
-import { contexts } from "./schemas/contexts.ts";
 import { events } from "./schemas/events.ts";
+import { relations } from "./schemas/relations.ts";
 import { snapshots } from "./schemas/snapshots.ts";
 
-export const schema = { contexts, events, snapshots };
+export const schema = { relations, events, snapshots };
 
 /*
  |--------------------------------------------------------------------------------
@@ -33,7 +33,7 @@ export type PostgresDatabase = DrizzlePostgresDatabase<EventStoreSchema>;
 export type EventStoreDatabase = PostgresJsDatabase<EventStoreSchema>;
 
 export type EventStoreSchema = {
-  contexts: typeof contexts;
+  relations: typeof relations;
   events: typeof events;
   snapshots: typeof snapshots;
 };

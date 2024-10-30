@@ -7,17 +7,17 @@ export type ProjectorListeners<TRecord extends EventRecord = EventRecord> = Reco
 
 export type ProjectorMessage<TRecord extends EventRecord = EventRecord> = {
   record: TRecord;
-  state: ProjectionState;
+  status: ProjectionStatus;
 };
 
 export type ProjectorListenerFn<TRecord extends EventRecord = EventRecord> = (
   record: TRecord,
-  state: ProjectionState,
+  status: ProjectionStatus,
 ) => void;
 
 export type ProjectionHandler<TRecord extends EventRecord = EventRecord> = (record: TRecord) => Promise<void>;
 
-export type ProjectionState = {
+export type ProjectionStatus = {
   /**
    * Has the event run through projections previously. In which case we do
    * not want to re-run one time projections that should not execute during

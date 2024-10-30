@@ -2,22 +2,23 @@ import { index, type PgColumn, type PgTableWithColumns, serial, varchar } from "
 
 import { schema } from "../schema.ts";
 
-export const contexts: PGContextTable = schema.table("contexts", {
+export const relations: PGRelationsTable = schema.table("relations", {
   id: serial("id").primaryKey(),
   key: varchar("key").notNull(),
   stream: varchar("stream").notNull(),
-}, (table) => ({
-  keyIdx: index().on(table.key),
-}));
+}, (table) => [
+  index().on(table.key),
+  index().on(table.stream),
+]);
 
-export type PGContextTable = PgTableWithColumns<{
-  name: "contexts";
+export type PGRelationsTable = PgTableWithColumns<{
+  name: "relations";
   schema: "event_store";
   columns: {
     id: PgColumn<
       {
         name: "id";
-        tableName: "contexts";
+        tableName: "relations";
         dataType: "number";
         columnType: "PgSerial";
         data: number;
@@ -35,7 +36,7 @@ export type PGContextTable = PgTableWithColumns<{
     key: PgColumn<
       {
         name: "key";
-        tableName: "contexts";
+        tableName: "relations";
         dataType: "string";
         columnType: "PgVarchar";
         data: string;
@@ -53,7 +54,7 @@ export type PGContextTable = PgTableWithColumns<{
     stream: PgColumn<
       {
         name: "stream";
-        tableName: "contexts";
+        tableName: "relations";
         dataType: "string";
         columnType: "PgVarchar";
         data: string;

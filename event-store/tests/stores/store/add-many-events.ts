@@ -2,8 +2,7 @@ import { assertEquals, assertObjectMatch, assertRejects } from "@std/assert";
 import { it } from "@std/testing/bdd";
 import { nanoid } from "nanoid";
 
-import { EventDataValidationFailure } from "~libraries/errors.ts";
-
+import { EventParserError } from "../../../mod.ts";
 import type { Event, EventRecord } from "../mocks/events.ts";
 import { userReducer } from "../mocks/user-reducer.ts";
 import { describe } from "../utilities/describe.ts";
@@ -12,16 +11,6 @@ export default describe<Event, EventRecord>(".addSequence", (getEventStore) => {
   it("should insert 'user:created', 'user:name:given-set', and 'user:email-set' in a sequence of events", async () => {
     const store = await getEventStore();
     const stream = nanoid();
-
-    store.validator.on("user:email-set", async ({ stream }) => {
-      const state = await store.reduce(stream, userReducer);
-      if (state === undefined) {
-        throw new Error("State does not exist");
-      }
-      if (state.name.given !== "John") {
-        throw new Error("Cannot change 'email', given name is not 'John'");
-      }
-    });
 
     const events = [
       {
@@ -54,9 +43,9 @@ export default describe<Event, EventRecord>(".addSequence", (getEventStore) => {
       } as const,
     ];
 
-    await store.addEventSequence(events);
+    await store.addManyEvents(events);
 
-    const records = await store.getEventsByStream(stream);
+    const records = await store.getEventsByStreams([stream]);
 
     assertEquals(records.length, 3);
 
@@ -106,12 +95,12 @@ export default describe<Event, EventRecord>(".addSequence", (getEventStore) => {
     ];
 
     await assertRejects(
-      async () => store.addEventSequence(events),
-      EventDataValidationFailure,
-      new EventDataValidationFailure({}).message,
+      async () => store.addManyEvents(events),
+      EventParserError,
+      new EventParserError({}).message,
     );
 
-    const records = await store.getEventsByStream(stream);
+    const records = await store.getEventsByStreams([stream]);
 
     assertEquals(records.length, 0);
   });
