@@ -38,7 +38,7 @@ import { createEventRecord } from "~libraries/event.ts";
 import { makeAggregateReducer, makeReducer } from "~libraries/reducer.ts";
 import type { Unknown } from "~types/common.ts";
 import type { Event, EventRecord, EventStatus, EventToRecord } from "~types/event.ts";
-import type { EventReadOptions, EventStore, EventStoreHooks } from "~types/event-store.ts";
+import type { EventReadOptions, EventsInsertSettings, EventStore, EventStoreHooks } from "~types/event-store.ts";
 import type { InferReducerState, Reducer, ReducerConfig, ReducerLeftFold, ReducerState } from "~types/reducer.ts";
 import type { ExcludeEmptyFields } from "~types/utilities.ts";
 
@@ -116,17 +116,19 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
     event: ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & {
       stream?: string;
     },
+    settings: EventsInsertSettings = {},
   ): Promise<void> {
-    await this.pushEvent(createEventRecord<TEvent, TRecord>(event as any));
+    await this.pushEvent(createEventRecord<TEvent, TRecord>(event as any), settings);
   }
 
   async addManyEvents<TEventType extends Event["type"]>(
     events: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream: string })[],
+    settings: EventsInsertSettings = {},
   ): Promise<void> {
-    await this.pushManyEvents(events.map((event) => createEventRecord<TEvent, TRecord>(event as any)));
+    await this.pushManyEvents(events.map((event) => createEventRecord<TEvent, TRecord>(event as any)), settings);
   }
 
-  async pushEvent(record: TRecord): Promise<void> {
+  async pushEvent(record: TRecord, settings: EventsInsertSettings = {}): Promise<void> {
     if (this.hasEvent(record.type) === false) {
       throw new EventMissingError(record.type);
     }
@@ -134,10 +136,10 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
     await this.events.insert(record).catch((error) => {
       throw new EventInsertionError(error.message);
     });
-    await this.#hooks.onEventsInserted?.([record], {}).catch(this.#hooks.onError ?? console.error);
+    await this.#hooks.onEventsInserted?.([record], settings).catch(this.#hooks.onError ?? console.error);
   }
 
-  async pushManyEvents(records: TRecord[], batch?: string): Promise<void> {
+  async pushManyEvents(records: TRecord[], settings: EventsInsertSettings = {}): Promise<void> {
     const events: TRecord[] = [];
     for (const record of records) {
       if (this.hasEvent(record.type) === false) {
@@ -149,7 +151,7 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
     await this.events.insertMany(events).catch((error) => {
       throw new EventInsertionError(error.message);
     });
-    await this.#hooks.onEventsInserted?.(events, { batch }).catch(this.#hooks.onError ?? console.error);
+    await this.#hooks.onEventsInserted?.(events, settings).catch(this.#hooks.onError ?? console.error);
   }
 
   async getEventStatus(event: TRecord): Promise<EventStatus> {

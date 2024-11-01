@@ -104,10 +104,12 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
   /**
    * Add a new event to the events table.
    *
-   * @param event - Event data to record.
+   * @param event    - Event data to record.
+   * @param settings - Event settings which can modify insertion behavior.
    */
   addEvent<TEventType extends Event["type"]>(
     event: ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream?: string },
+    settings?: EventsInsertSettings,
   ): Promise<void>;
 
   /**
@@ -116,18 +118,21 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    * This method runs in a transaction and will fail all events if one or more
    * insertion failures occurs.
    *
-   * @param events - List of events to record.
+   * @param events   - List of events to record.
+   * @param settings - Event settings which can modify insertion behavior.
    */
   addManyEvents<TEventType extends Event["type"]>(
     event: (ExcludeEmptyFields<Extract<TEvent, { type: TEventType }>> & { stream: string })[],
+    settings?: EventsInsertSettings,
   ): Promise<void>;
 
   /**
    * Insert an event record to the local event store database.
    *
-   * @param record - Event record to insert.
+   * @param record   - Event record to insert.
+   * @param settings - Event settings which can modify insertion behavior.
    */
-  pushEvent(record: TRecord): Promise<void>;
+  pushEvent(record: TRecord, settings?: EventsInsertSettings): Promise<void>;
 
   /**
    * Add many events in strict sequence to the events table.
@@ -135,9 +140,10 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    * This method runs in a transaction and will fail all events if one or more
    * insertion failures occurs.
    *
-   * @param records - List of event records to insert.
+   * @param records  - List of event records to insert.
+   * @param settings - Event settings which can modify insertion behavior.
    */
-  pushManyEvents(records: TRecord[]): Promise<void>;
+  pushManyEvents(records: TRecord[], settings?: EventsInsertSettings): Promise<void>;
 
   /**
    * Enable the ability to check an incoming events status in relation to the local
@@ -302,9 +308,9 @@ export type EventStoreHooks<TRecord extends EventRecord> = Partial<{
    * Triggered when `.pushEvent` and `.pushManyEvents` has completed successfully.
    *
    * @param records  - List of event records inserted.
-   * @param settings - Insertion settings.
+   * @param settings - Event insert settings used.
    */
-  onEventsInserted(records: TRecord[], settings: EventsInsertedSettings): Promise<void>;
+  onEventsInserted(records: TRecord[], settings: EventsInsertSettings): Promise<void>;
 
   /**
    * Triggered when an unhandled exception is thrown during `.pushEvent` and
@@ -371,6 +377,6 @@ export type OffsetPagination = {
   limit: number;
 };
 
-export type EventsInsertedSettings = {
+export type EventsInsertSettings = {
   batch?: string;
 };
