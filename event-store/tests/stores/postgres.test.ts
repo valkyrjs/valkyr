@@ -3,7 +3,8 @@ import type { PostgresConnection } from "@valkyr/drizzle";
 import { PostgresTestContainer } from "@valkyr/testcontainers/postgres";
 
 import { Projector } from "~libraries/projector.ts";
-import { migrate, PostgresEventStore } from "~stores/postgres/event-store.ts";
+import { migrate } from "~stores/postgres/database.ts";
+import { PostgresEventStore } from "~stores/postgres/event-store.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 
 import { type Event, type EventRecord, events, validators } from "./mocks/events.ts";
