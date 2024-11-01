@@ -8,7 +8,7 @@ import { describe } from "../utilities/describe.ts";
 
 export default describe<Event, EventRecord>(".createSnapshot", (getEventStore) => {
   it("should create a new snapshot", async () => {
-    const store = await getEventStore();
+    const { store } = await getEventStore();
     const stream = nanoid();
 
     await store.addEvent({
@@ -41,7 +41,7 @@ export default describe<Event, EventRecord>(".createSnapshot", (getEventStore) =
 
     await store.createSnapshot(stream, userReducer);
 
-    const snapshot = await store.db.snapshots.getByStream(userReducer.name, stream);
+    const snapshot = await store.snapshots.getByStream(userReducer.name, stream);
 
     assertNotEquals(snapshot, undefined);
     assertObjectMatch(snapshot!.state, {
@@ -61,7 +61,7 @@ export default describe<Event, EventRecord>(".createSnapshot", (getEventStore) =
       },
     });
 
-    const events = await store.db.events.getByStream(stream, { cursor: snapshot!.cursor });
+    const events = await store.events.getByStream(stream, { cursor: snapshot!.cursor });
 
     assertEquals(events.length, 1);
 

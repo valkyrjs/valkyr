@@ -8,7 +8,7 @@ import { describe } from "../utilities/describe.ts";
 
 export default describe<Event, EventRecord>(".makeAggregateReducer", (getEventStore) => {
   it("should reduce a user", async () => {
-    const store = await getEventStore();
+    const { store } = await getEventStore();
     const stream = nanoid();
 
     await store.addEvent({

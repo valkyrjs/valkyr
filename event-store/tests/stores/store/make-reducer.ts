@@ -10,7 +10,7 @@ import { describe } from "../utilities/describe.ts";
 
 export default describe<Event, EventRecord>(".makeReducer", (getEventStore) => {
   it("should create a 'user' reducer and only reduce filtered events", async () => {
-    const store = await getEventStore();
+    const { store } = await getEventStore();
 
     const streamA = nanoid();
     const streamB = nanoid();
@@ -76,13 +76,12 @@ export default describe<Event, EventRecord>(".makeReducer", (getEventStore) => {
   });
 
   it("should create a 'post:count' reducer and retrieve post correct post count", async () => {
-    const store = await getEventStore();
+    const { store, projector } = await getEventStore();
     const auditor = nanoid();
 
-    store.relations.register("post:created", async ({ meta: { auditor } }) => [{
-      key: `user:${auditor}:posts`,
-      op: "insert",
-    }]);
+    projector.on("post:created", async ({ stream, meta: { auditor } }) => {
+      await store.relations.insert(`user:${auditor}:posts`, stream);
+    });
 
     const post1 = makeId();
     const post2 = makeId();

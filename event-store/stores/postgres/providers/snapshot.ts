@@ -8,6 +8,13 @@ export class SnapshotProvider {
   constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: PGSnapshotTable) {}
 
   /**
+   * Access drizzle query features for snapshot provider.
+   */
+  get query(): this["db"]["query"] {
+    return this.db.query;
+  }
+
+  /**
    * Add snapshot state under given reducer stream.
    *
    * @param name   - Name of the reducer the snapshot is attached to.

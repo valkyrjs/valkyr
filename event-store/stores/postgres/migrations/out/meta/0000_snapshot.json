@@ -1,5 +1,5 @@
 {
-  "id": "6f7ca216-b95f-4c03-ad88-eb863193cba8",
+  "id": "4b1d96fd-3827-4139-8446-28fa7cd70ee8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -46,8 +46,7 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
+      "uniqueConstraints": {}
     },
     "event_store.events": {
       "name": "events",
@@ -160,8 +159,7 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
+      "uniqueConstraints": {}
     },
     "event_store.snapshots": {
       "name": "snapshots",
@@ -229,8 +227,7 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
+      "uniqueConstraints": {}
     }
   },
   "enums": {},
@@ -238,7 +235,6 @@
     "event_store": "event_store"
   },
   "sequences": {},
-  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},

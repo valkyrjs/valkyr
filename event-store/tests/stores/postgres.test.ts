@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeAll, describe } from "@std/testing/bdd";
 import type { PostgresConnection } from "@valkyr/drizzle";
 import { PostgresTestContainer } from "@valkyr/testcontainers/postgres";
 
+import { Projector } from "~libraries/projector.ts";
 import { migrate, PostgresEventStore } from "~stores/postgres/event-store.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 
@@ -19,7 +20,7 @@ const DB_NAME = "sandbox";
 
 const container = await PostgresTestContainer.start("postgres:14");
 
-const eventStoreFn = async (hooks?: EventStoreHooks<EventRecord>) => getEventStore(container.url(DB_NAME), hooks);
+const eventStoreFn = async (options: { hooks?: EventStoreHooks<EventRecord> } = {}) => getEventStore(container.url(DB_NAME), options);
 
 /*
  |--------------------------------------------------------------------------------
@@ -63,6 +64,21 @@ describe("PostgresEventStore", () => {
  |--------------------------------------------------------------------------------
  */
 
-async function getEventStore(database: PostgresConnection, hooks: EventStoreHooks<EventRecord> = {}) {
-  return new PostgresEventStore<Event>({ database, events, validators, hooks });
+async function getEventStore(database: PostgresConnection, { hooks = {} }: { hooks?: EventStoreHooks<EventRecord> }) {
+  const store = new PostgresEventStore<Event>({ database, events, validators, hooks });
+
+  const projector = new Projector<EventRecord>();
+
+  if (hooks.onEventsInserted === undefined) {
+    store.onEventsInserted(async (records, { batch }) => {
+      if (batch !== undefined) {
+        return projector.pushMany(batch, records);
+      }
+      for (const record of records) {
+        await projector.push(record, { hydrated: false, outdated: false });
+      }
+    });
+  }
+
+  return { store, projector };
 }

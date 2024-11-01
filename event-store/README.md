@@ -32,7 +32,7 @@ Open the file and add the event details.
 ```json
 {
   "event": {
-    "type": "UserCreated",
+    "type": "user:created",
     "data": {
       "name": {
         "type": "object",
@@ -80,30 +80,44 @@ for `sqlite`, `postgres`, and `valkyr/db` which all works the same way. So for t
 store.
 
 ```ts
-import { Database } from "sqlite";
+import { PostgresEventStore } from "@valkyr/event-store/postgres";
+import psql from "postgres";
 
-import { SQLiteEventStore } from "@valkyr/event-store/sqlite";
+import { type Event, type EventRecord, events, validators } from "./generated/events.ts";
 
-import { type Event, events, validators } from "./generated/events.ts";
-
-const eventStore = new SQLiteEventStore<Event>({
-  database: new Database(":memory:"),
+export const eventStore = new PostgresEventStore<Event>({
+  database: () => {
+    return psql("url");
+  },
   events,
   validators,
   hooks: {
-    async beforeEventError(error) {
-      if (error.step === "validate") {
-        return new Error("Custom Event Error");
-      }
-      return error;
-    },
-    async afterEventError(error) {
-      // good place to inform the business to investigate failing projections ...
-    },
-    async afterEventInsert(record, hydrated) {
-      // good place to emit events to a distributed queue ...
+    async onError(error) {
+      // when the event store throws unhandled errors they will end up in
+      // this location that can be further logged in the systems own logger
+      // if onError hook is not provided all unhandled errors are logged
+      // through the `console.error` method.
     },
   },
+});
+
+const projector = new Projector<EventRecord>();
+
+eventStore.onEventsInserted(async (records, { batch }) => {
+  // trigger event side effects here such as sending the records through
+  // an event messaging system or other projection patterns
+
+  // ### Projector
+  // The following is an example when registering event handlers with the
+  // projectors instance provided by this library.
+
+  if (batch !== undefined) {
+    await projector.pushMany(batch, records);
+  } else {
+    for (const record of records) {
+      await projector.push(record, { hydrated: false, outdated: false });
+    }
+  }
 });
 ```
 
@@ -114,30 +128,29 @@ side business logic on the current state of our streams. Using read stores for t
 may not be up to date.
 
 ```ts
-import { eventStore } from "./event-store.ts";
+import { makeReducer } from "@valkyr/event-store";
 
-const userReducer = eventStore.reducer<{
+import type { EventRecord } from "./generated/events.ts";
+
+const reducer = makeReducer<{
   name: string;
   email: string;
-}>((state, event) => {
+}, EventRecord>((state, event) => {
   switch (event.type) {
     case "UserCreated": {
-      return {
-        ...state,
-        name: `${event.data.name.given} ${event.data.name.family}`,
-        email: event.data.email,
-      };
+      state.name = `${event.data.name.given} ${event.data.name.family}`;
+      state.email = event.data.email;
+      break;
     }
     case "UserEmailSet": {
-      return {
-        ...state,
-        email: event.data.email,
-      };
+      state.email = event.data.email;
+      break;
     }
   }
   return state;
 }, {
   name: "user",
+  type: "stream",
   state: () => ({
     name: "",
     email: "",
@@ -145,22 +158,52 @@ const userReducer = eventStore.reducer<{
 });
 ```
 
-### Validators
+### Aggreates
 
-To validate incoming events before they are inserted into the event store we can register some business logic
-validators. A validator is registered for a specific event type, and can have multiple handlers.
+Event aggregates takes a entity stream and reduces it to a wanted state. It works on the same conceptual grounds as
+the standard reducer but resolved states using an aggregate instead of folding onto a state object.
+
+The benefit of this is that we can create various helper methods on the aggregate that can help us navigate and
+query the aggregated state.
 
 ```ts
-import { eventStore } from "./event-store.ts";
+import { AggregateRoot, makeAggregateReducer } from "@valkyr/event-store";
 
-eventStore.validator.on("UserEmailSet", async (record) => {
-  const user = await store.getStreamState(stream, userReducer);
-  if (user === undefined) {
-    throw new Error("Event stream does not exist");
+import type { EventRecord } from "./generated/events.ts";
+
+export class User extends AggregateRoot<EventRecord> {
+  name: {
+    given: string;
+    family: string;
+  } = {
+    given: ""
+    family: ""
   }
-  if (user.email === record.data.email) {
-    throw new Error("Email has not changed");
+  email = "";
+
+  with(event: EventRecord) {
+    switch (event.type) {
+      case "UserCreated": {
+        this.name.given = event.data.name.given;
+        this.name.family = event.data.name.family;
+        this.email = event.data.email;
+        break;
+      }
+      case "UserEmailSet": {
+        this.email = event.data.email;
+        break;
+      }
+    }
   }
+
+  fullName() {
+    return `${this.name.given} ${this.name.family}`;
+  }
+}
+
+export const reducer = makeAggregateReducer(User, {
+  name: "user",
+  type: "stream",
 });
 ```
 
@@ -174,9 +217,9 @@ A projector is registered for a specific event type, and can have multiple handl
 types of listeners, `once`, `on`, and `all`.
 
 ```ts
-import { eventStore } from "./event-store.ts";
+import { projector } from "./event-store.ts";
 
-eventStore.projector.on("UserCreated", async (record) => {
+projector.on("UserCreated", async (record) => {
   await db.insert({
     name: `{record.data.name.given} ${record.data.name.family}`,
     email: record.data.email,

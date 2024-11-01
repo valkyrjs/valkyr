@@ -1,7 +1,16 @@
 import type { Subscription } from "~types/common.ts";
 import type { EventRecord } from "~types/event.ts";
 
-import type { ProjectionFilter, ProjectionHandler, ProjectionStatus, ProjectorListenerFn, ProjectorListeners, ProjectorMessage } from "../types/projector.ts";
+import type {
+  BatchedProjectionHandler,
+  BatchedProjectorListeners,
+  ProjectionFilter,
+  ProjectionHandler,
+  ProjectionStatus,
+  ProjectorListenerFn,
+  ProjectorListeners,
+  ProjectorMessage,
+} from "../types/projector.ts";
 import { Queue } from "./queue.ts";
 
 /*
@@ -33,6 +42,7 @@ const FILTER_ALL = Object.freeze<ProjectionFilter>({
 
 export class Projector<Record extends EventRecord = EventRecord> {
   #listeners: ProjectorListeners<Record> = {};
+  #batchedListeners: BatchedProjectorListeners<Record> = {};
   #queues: {
     [stream: string]: Queue<ProjectorMessage<Record>>;
   } = {};
@@ -66,11 +76,31 @@ export class Projector<Record extends EventRecord = EventRecord> {
     });
   }
 
+  async pushMany(key: string, records: Record[]): Promise<void> {
+    await Promise.all(Array.from(this.#batchedListeners[key] || []).map((fn) => fn(records)));
+  }
+
   /*
    |--------------------------------------------------------------------------------
    | Handlers
    |--------------------------------------------------------------------------------
    */
+
+  /**
+   * Create a batched projection handler taking in a list of events inserted under
+   * a specific batched key.
+   *
+   * @param key     - Batch key being projected.
+   * @param handler - Handler method to execute when events are projected.
+   */
+  batch(key: string, handler: BatchedProjectionHandler<Record>): Subscription {
+    const listeners = (this.#batchedListeners[key] ?? (this.#batchedListeners[key] = new Set())).add(handler);
+    return {
+      unsubscribe() {
+        listeners.delete(handler);
+      },
+    };
+  }
 
   /**
    * Create a single run projection handler.

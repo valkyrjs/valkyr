@@ -3,6 +3,7 @@ import "fake-indexeddb/auto";
 import { delay } from "@std/async";
 import { afterAll, describe } from "@std/testing/bdd";
 
+import { Projector } from "~libraries/projector.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 
 import { BrowserEventStore } from "../../stores/browser/event-store.ts";
@@ -14,7 +15,7 @@ import testMakeReducer from "./store/make-reducer.ts";
 import testReduce from "./store/reduce.ts";
 import testReplayEvents from "./store/replay-events.ts";
 
-const eventStoreFn = async (hooks?: EventStoreHooks<EventRecord>) => getEventStore(hooks);
+const eventStoreFn = async (options: { hooks?: EventStoreHooks<EventRecord> } = {}) => getEventStore(options);
 
 /*
  |--------------------------------------------------------------------------------
@@ -47,11 +48,26 @@ describe("Browser Event Store (IndexedDB)", () => {
  |--------------------------------------------------------------------------------
  */
 
-function getEventStore(hooks?: EventStoreHooks<EventRecord>) {
-  return new BrowserEventStore<Event>({
+function getEventStore({ hooks = {} }: { hooks?: EventStoreHooks<EventRecord> }) {
+  const store = new BrowserEventStore<Event>({
     database: "indexedb",
     events,
     validators,
     hooks,
   });
+
+  const projector = new Projector<EventRecord>();
+
+  if (hooks.onEventsInserted === undefined) {
+    store.onEventsInserted(async (records, { batch }) => {
+      if (batch !== undefined) {
+        return projector.pushMany(batch, records);
+      }
+      for (const record of records) {
+        await projector.push(record, { hydrated: false, outdated: false });
+      }
+    });
+  }
+
+  return { store, projector };
 }

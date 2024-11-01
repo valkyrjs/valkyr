@@ -9,6 +9,13 @@ export class RelationsProvider {
   constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: PGRelationsTable) {}
 
   /**
+   * Access drizzle query features for relations provider.
+   */
+  get query(): this["db"]["query"] {
+    return this.db.query;
+  }
+
+  /**
    * Handle incoming relation operations.
    *
    * @param relations - List of relation operations to execute.

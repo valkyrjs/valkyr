@@ -7,23 +7,23 @@ import { describe } from "../utilities/describe.ts";
 
 export default describe<Event, EventRecord>(".replayEvents", (getEventStore) => {
   it("should replay events", async () => {
-    const store = await getEventStore();
+    const { store, projector } = await getEventStore();
     const stream = nanoid();
 
     const record: Record<string, any> = {};
 
-    store.projector.on("user:created", async ({ stream, data: { name, email } }) => {
+    projector.on("user:created", async ({ stream, data: { name, email } }) => {
       record[stream] = {
         name,
         email,
       };
     });
 
-    store.projector.on("user:name:given-set", async ({ stream, data: { given } }) => {
+    projector.on("user:name:given-set", async ({ stream, data: { given } }) => {
       record[stream].name.given = given;
     });
 
-    store.projector.on("user:email-set", async ({ stream, data: { email } }) => {
+    projector.on("user:email-set", async ({ stream, data: { email } }) => {
       record[stream].email = email;
     });
 
@@ -70,7 +70,14 @@ export default describe<Event, EventRecord>(".replayEvents", (getEventStore) => 
 
     delete record[stream];
 
-    await store.replay(await store.getEventsByStreams([stream]));
+    const promises = [];
+
+    const records = await store.getEventsByStreams([stream]);
+    for (const record of records) {
+      promises.push(projector.push(record, { hydrated: true, outdated: false }));
+    }
+
+    await Promise.all(promises);
 
     assertObjectMatch(record, {
       [stream]: {

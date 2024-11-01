@@ -1,6 +1,4 @@
 import type { AggregateRoot } from "~libraries/aggregate.ts";
-import type { EventProjectionError, EventRelationsError } from "~libraries/errors.ts";
-import type { ProjectionStatus } from "~types/projector.ts";
 
 import type { Unknown } from "./common.ts";
 import type { Event, EventRecord, EventStatus } from "./event.ts";
@@ -127,18 +125,9 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
   /**
    * Insert an event record to the local event store database.
    *
-   * This method triggers event validation and projection. If validation fails the
-   * event will not be inserted. If the projection fails the projection itself
-   * should be handling the error based on its own business logic.
-   *
-   * When hydration is true the event will be recorded with a new locally generated
-   * timestamp as its being recorded locally but is not the originator of the event
-   * creation.
-   *
-   * @param record   - Event record to insert.
-   * @param hydrated - Whether the record is hydrated or not. (Optional)
+   * @param record - Event record to insert.
    */
-  pushEvent(record: TRecord, status: ProjectionStatus): Promise<void>;
+  pushEvent(record: TRecord): Promise<void>;
 
   /**
    * Add many events in strict sequence to the events table.
@@ -146,12 +135,9 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    * This method runs in a transaction and will fail all events if one or more
    * insertion failures occurs.
    *
-   * Once inserted the events are emitted to any event active event listeners.
-   *
-   * @param records  - List of event records to insert.
-   * @param hydrated - Whether the records is hydrated or not. (Optional)
+   * @param records - List of event records to insert.
    */
-  pushManyEvents(entries: { record: TRecord; status: ProjectionStatus }[]): Promise<void>;
+  pushManyEvents(records: TRecord[]): Promise<void>;
 
   /**
    * Enable the ability to check an incoming events status in relation to the local
@@ -194,13 +180,6 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    * @param options - Relational logic options. (Optional)
    */
   getEventsByRelations(keys: string[], options?: EventReadOptions<TRecord>): Promise<TRecord[]>;
-
-  /**
-   * Send all the provided events through the event subscription layers.
-   *
-   * @param records - Records to replay.
-   */
-  replay(records: TRecord[]): Promise<void>;
 
   /*
    |--------------------------------------------------------------------------------
@@ -320,52 +299,20 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
 
 export type EventStoreHooks<TRecord extends EventRecord> = Partial<{
   /**
-   * After an error is thrown, this hook allows for reacting to a failure that
-   * occured during event record insertion. This is useful for reporting issues,
-   * especially in the events that failed to project or update contexts.
+   * Triggered when `.pushEvent` and `.pushManyEvents` has completed successfully.
    *
-   * @param error  - Event error that got triggered.
-   * @param record - Record that was passed to the event store.
-   *
-   * @example
-   * ```ts
-   * const eventStore = new EventStore({
-   *   ...config,
-   *   hooks: {
-   *     async onProjectionError(error, record) {
-   *       await report.projectionFailed(
-   *            `Failed to project record '${record.stream}', manual recovery required!`
-   *          );
-   *     }
-   *   }
-   * })
-   * ```
+   * @param records  - List of event records inserted.
+   * @param settings - Insertion settings.
    */
-  onProjectionError(error: EventProjectionError, record: TRecord): Promise<void> | void;
+  onEventsInserted(records: TRecord[], settings: EventsInsertedSettings): Promise<void>;
 
   /**
-   * After an event record has been successfully inserted, this hooks will
-   * trigger, allowing for further non internal operations on the inserted
-   * event record.
+   * Triggered when an unhandled exception is thrown during `.pushEvent` and
+   * `.pushManyEvents` hook.
    *
-   * @param error  - Event error that got triggered.
-   * @param record - Record that was passed to the event store.
-   *
-   * @example
-   * ```ts
-   * const eventStore = new EventStore({
-   *   ...config,
-   *   hooks: {
-   *     async onRelationsError(error, record) {
-   *       await report.projectionFailed(
-   *            `Failed to create relations for record '${record.stream}', manual recovery required!`
-   *          );
-   *     }
-   *   }
-   * })
-   * ```
+   * @param error - Error that was thrown.
    */
-  onRelationsError(error: EventRelationsError, record: TRecord): Promise<void> | void;
+  onError(error: unknown): Promise<void>;
 }>;
 
 /*
@@ -422,4 +369,8 @@ export type OffsetPagination = {
    * Limit the number of streams to return.
    */
   limit: number;
+};
+
+export type EventsInsertedSettings = {
+  batch?: string;
 };

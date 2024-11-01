@@ -9,7 +9,7 @@ import { describe } from "../utilities/describe.ts";
 
 export default describe<Event, EventRecord>(".makeEvent", (getEventStore) => {
   it("should make and performantly batch insert a list of events directly", async () => {
-    const eventStore = await getEventStore();
+    const { store } = await getEventStore();
 
     const eventsToInsert = [];
 
@@ -17,7 +17,7 @@ export default describe<Event, EventRecord>(".makeEvent", (getEventStore) => {
 
     let count = 10_000;
     while (count--) {
-      eventsToInsert.push(eventStore.makeEvent({
+      eventsToInsert.push(store.makeEvent({
         type: "user:created",
         data: {
           name: {
@@ -35,25 +35,25 @@ export default describe<Event, EventRecord>(".makeEvent", (getEventStore) => {
 
     const t3 = performance.now();
 
-    await eventStore.db.events.insertMany(eventsToInsert);
+    await store.events.insertMany(eventsToInsert);
 
     const t4 = performance.now();
 
     assertLess((t4 - t3) / 1000, 5);
 
-    const events = await eventStore.getEvents();
+    const events = await store.getEvents();
 
     assertEquals(events.length, 10_000);
   });
 
   it("should performantly create and remove event contexts", async () => {
-    const eventStore = await getEventStore();
+    const { store } = await getEventStore();
 
     const relations: RelationPayload[] = [];
 
     let count = 10_000;
     while (count--) {
-      const event = eventStore.makeEvent({
+      const event = store.makeEvent({
         type: "user:created",
         data: {
           name: {
@@ -67,17 +67,17 @@ export default describe<Event, EventRecord>(".makeEvent", (getEventStore) => {
     }
 
     const t0 = performance.now();
-    await eventStore.db.relations.insertMany(relations);
+    await store.relations.insertMany(relations);
     const tr0 = (performance.now() - t0) / 1000;
 
-    assertEquals((await eventStore.db.relations.getByKey(`test:xyz`)).length, 10_000);
+    assertEquals((await store.relations.getByKey(`test:xyz`)).length, 10_000);
     assertLess(tr0, 5);
 
     const t1 = performance.now();
-    await eventStore.db.relations.removeMany(relations);
+    await store.relations.removeMany(relations);
     const tr1 = (performance.now() - t1) / 1000;
 
-    assertEquals((await eventStore.db.relations.getByKey(`test:xyz`)).length, 0);
+    assertEquals((await store.relations.getByKey(`test:xyz`)).length, 0);
     assertLess(tr1, 10);
   });
 });

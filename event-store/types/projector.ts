@@ -1,5 +1,10 @@
 import type { EventRecord } from "./event.ts";
 
+export type BatchedProjectorListeners<TRecord extends EventRecord = EventRecord> = Record<
+  string,
+  Set<BatchedProjectorListenerFn<TRecord>> | undefined
+>;
+
 export type ProjectorListeners<TRecord extends EventRecord = EventRecord> = Record<
   string,
   Set<ProjectorListenerFn<TRecord>> | undefined
@@ -10,12 +15,16 @@ export type ProjectorMessage<TRecord extends EventRecord = EventRecord> = {
   status: ProjectionStatus;
 };
 
+export type BatchedProjectorListenerFn<TRecord extends EventRecord = EventRecord> = (records: TRecord[]) => void;
+
 export type ProjectorListenerFn<TRecord extends EventRecord = EventRecord> = (
   record: TRecord,
   status: ProjectionStatus,
 ) => void;
 
 export type ProjectionHandler<TRecord extends EventRecord = EventRecord> = (record: TRecord) => Promise<void>;
+
+export type BatchedProjectionHandler<TRecord extends EventRecord = EventRecord> = (records: TRecord[]) => Promise<void>;
 
 export type ProjectionStatus = {
   /**

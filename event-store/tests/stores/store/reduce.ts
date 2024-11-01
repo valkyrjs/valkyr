@@ -8,7 +8,7 @@ import { describe } from "../utilities/describe.ts";
 
 export default describe<Event, EventRecord>(".reduce", (getEventStore) => {
   it("should return reduced state", async () => {
-    const store = await getEventStore();
+    const { store } = await getEventStore();
     const stream = nanoid();
 
     await store.addEvent({
@@ -45,7 +45,7 @@ export default describe<Event, EventRecord>(".reduce", (getEventStore) => {
   });
 
   it("should return snapshot if it exists and no new events were found", async () => {
-    const store = await getEventStore();
+    const { store } = await getEventStore();
     const stream = nanoid();
 
     await store.addEvent({
@@ -85,7 +85,7 @@ export default describe<Event, EventRecord>(".reduce", (getEventStore) => {
 
   it("should return undefined if stream does not have events", async () => {
     const stream = nanoid();
-    const store = await getEventStore();
+    const { store } = await getEventStore();
     const state = await store.reduce(stream, userReducer);
 
     assertEquals(state, undefined);

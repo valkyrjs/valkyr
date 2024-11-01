@@ -11,6 +11,13 @@ export class EventProvider<TRecord extends EventRecord> {
   constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: PGEventTable) {}
 
   /**
+   * Access drizzle query features for event provider.
+   */
+  get query(): this["db"]["query"] {
+    return this.db.query;
+  }
+
+  /**
    * Insert a new event record to the events table.
    *
    * @param record - Event record to insert.

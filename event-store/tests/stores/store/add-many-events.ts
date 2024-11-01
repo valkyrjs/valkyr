@@ -9,7 +9,7 @@ import { describe } from "../utilities/describe.ts";
 
 export default describe<Event, EventRecord>(".addSequence", (getEventStore) => {
   it("should insert 'user:created', 'user:name:given-set', and 'user:email-set' in a sequence of events", async () => {
-    const store = await getEventStore();
+    const { store } = await getEventStore();
     const stream = nanoid();
 
     const events = [
@@ -60,7 +60,7 @@ export default describe<Event, EventRecord>(".addSequence", (getEventStore) => {
   });
 
   it("should not commit any events when insert fails", async () => {
-    const store = await getEventStore();
+    const { store } = await getEventStore();
     const stream = nanoid();
 
     const events = [

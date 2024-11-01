@@ -36,14 +36,6 @@ export class EventInsertionError extends Error {
   readonly type = "EventInsertionError";
 }
 
-export class EventProjectionError extends Error {
-  readonly type = "EventProjectionError";
-}
-
-export class EventRelationsError extends Error {
-  readonly type = "EventRelationsError";
-}
-
 /*
  |--------------------------------------------------------------------------------
  | Hybrid Logical Clock Errors
