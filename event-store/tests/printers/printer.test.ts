@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { assertArrayIncludes } from "@std/assert";
 import { afterAll, describe, it } from "@std/testing/bdd";
 
-import { printEvents } from "../../mod.ts";
+import { printEvents } from "../../printers/printer.ts";
 
 describe("Events Printer", () => {
   const temp = join(import.meta.dirname!, "_temp");
