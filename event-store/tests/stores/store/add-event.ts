@@ -137,7 +137,7 @@ export default describe<Event, EventRecord>(".addEvent", (getEventStore) => {
     assertObjectMatch(await store.events.getByStream(stream).then((rows) => rows[0]), event);
   });
 
-  it("should insert 'user:created' and add it to 'tenant:xyz' context", async () => {
+  it("should insert 'user:created' and add it to 'tenant:xyz' relation", async () => {
     const { store, projector } = await getEventStore();
 
     const key = `tenant:${makeId()}`;

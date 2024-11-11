@@ -1,4 +1,4 @@
-import { index, type PgColumn, type PgTableWithColumns, serial, varchar } from "drizzle-orm/pg-core";
+import { index, type PgColumn, type PgTableWithColumns, serial, unique, varchar } from "drizzle-orm/pg-core";
 
 import { schema } from "../schema.ts";
 
@@ -9,6 +9,7 @@ export const relations: PGRelationsTable = schema.table("relations", {
 }, (table) => [
   index().on(table.key),
   index().on(table.stream),
+  unique().on(table.key, table.stream),
 ]);
 
 export type PGRelationsTable = PgTableWithColumns<{

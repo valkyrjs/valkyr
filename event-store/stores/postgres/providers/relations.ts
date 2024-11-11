@@ -43,10 +43,10 @@ export class RelationsProvider {
    * @param relations - Relations to insert.
    * @param batchSize - Batch size for the insert loop.
    */
-  async insertMany(contexts: RelationPayload[], batchSize: number = 1_000): Promise<void> {
+  async insertMany(relations: RelationPayload[], batchSize: number = 1_000): Promise<void> {
     await this.db.transaction(async (tx) => {
-      for (let i = 0; i < contexts.length; i += batchSize) {
-        await tx.insert(this.schema).values(contexts.slice(i, i + batchSize));
+      for (let i = 0; i < relations.length; i += batchSize) {
+        await tx.insert(this.schema).values(relations.slice(i, i + batchSize)).onConflictDoNothing();
       }
     });
   }
@@ -57,7 +57,7 @@ export class RelationsProvider {
    * @param key - Relational key to get event streams for.
    */
   async getByKey(key: string): Promise<{ stream: string; key: string }[]> {
-    return this.db.select().from(this.schema).where(eq(this.schema.key, key));
+    return this.db.select({ key: this.schema.key, stream: this.schema.stream }).from(this.schema).where(eq(this.schema.key, key));
   }
 
   /**
@@ -75,7 +75,7 @@ export class RelationsProvider {
    * Removes a stream from the relational table.
    *
    * @param key    - Relational key to remove stream from.
-   * @param stream - Stream to remove from context.
+   * @param stream - Stream to remove from relation.
    */
   async remove(key: string, stream: string): Promise<void> {
     await this.db.delete(this.schema).where(and(eq(this.schema.key, key), eq(this.schema.stream, stream)));

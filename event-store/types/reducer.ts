@@ -14,7 +14,7 @@ export type Reducer<
   name: ReducerConfig<TRecord>["name"];
 
   /**
-   * Reducer type which defines if events are pulled from multiple context streams,
+   * Reducer type which defines if events are pulled from multiple relation streams,
    * or a single stream. The type defines how the `.reduce` method retrieves events
    * from the store.
    */
@@ -75,11 +75,11 @@ export type ReducerConfig<TRecord extends EventRecord> = {
   name: string;
 
   /**
-   * Reducer type which defines if events are pulled from multiple context streams,
+   * Reducer type which defines if events are pulled from multiple relation streams,
    * or a single stream. The type defines how the `.reduce` method retrieves events
    * from the store.
    */
-  type: "stream" | "context";
+  type: "stream" | "relation";
 
   /**
    * Filter options for how events are pulled from the store.

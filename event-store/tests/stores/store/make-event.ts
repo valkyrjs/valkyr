@@ -46,7 +46,7 @@ export default describe<Event, EventRecord>(".makeEvent", (getEventStore) => {
     assertEquals(events.length, 10_000);
   });
 
-  it("should performantly create and remove event contexts", async () => {
+  it("should performantly create and remove event relations", async () => {
     const { store } = await getEventStore();
 
     const relations: RelationPayload[] = [];

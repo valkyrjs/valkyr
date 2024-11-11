@@ -15,8 +15,17 @@ export const schema = { relations, events, snapshots };
  |--------------------------------------------------------------------------------
  */
 
-export async function migrate(connection: Sql): Promise<void> {
-  await runMigration(drizzle(connection, { schema }), {
+/**
+ * Migrates the event store schemas against the local database.
+ *
+ * Note! This only works when event-store is resolved into the node_modules
+ * packages, as the migration files are not available on the local machine when
+ * not fully resolved.
+ *
+ * @param instance - Postgres SQL instance to migrate against.
+ */
+export async function migrate(instance: Sql): Promise<void> {
+  await runMigration(drizzle(instance, { schema }), {
     migrationsFolder: import.meta.resolve("./migrations/out").replace("file://", ""),
     migrationsTable: "event_store_migrations",
   });

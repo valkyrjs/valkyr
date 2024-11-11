@@ -69,7 +69,7 @@ export class RelationsProvider {
    * Removes a stream from the relational table.
    *
    * @param key    - Relational key to remove stream from.
-   * @param stream - Stream to remove from context.
+   * @param stream - Stream to remove from relation.
    */
   async remove(key: string, stream: string): Promise<void> {
     await this.relations.remove({ key, stream });

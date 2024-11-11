@@ -14,6 +14,7 @@ import testCreateSnapshot from "./store/create-snapshot.ts";
 import testMakeAggregateReducer from "./store/make-aggregate-reducer.ts";
 import testMakeEvent from "./store/make-event.ts";
 import testMakeReducer from "./store/make-reducer.ts";
+import testRelationsProvider from "./store/providers/relations.ts";
 import testReduce from "./store/reduce.ts";
 import testReplayEvents from "./store/replay-events.ts";
 
@@ -49,6 +50,7 @@ afterAll(async () => {
  */
 
 describe("PostgresEventStore", () => {
+  testRelationsProvider(eventStoreFn);
   testAddEvent(eventStoreFn);
   testAddManyEvents(eventStoreFn);
   testCreateSnapshot(eventStoreFn);

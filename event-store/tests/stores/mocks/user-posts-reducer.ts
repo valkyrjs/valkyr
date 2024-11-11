@@ -18,7 +18,7 @@ export const userPostReducer = makeReducer<EventRecord, UserPostState>((state, e
   return state;
 }, {
   name: "user:posts",
-  type: "context",
+  type: "relation",
 }, () => ({
   posts: [],
   count: 0,

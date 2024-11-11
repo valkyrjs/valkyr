@@ -196,8 +196,8 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
   /**
    * Reduce events in the given stream to a entity state.
    *
-   * @param streamOrContext - Stream, or Context to get events from.
-   * @param reducer         - Reducer method to generate state from.
+   * @param streamOrRelation - Stream, or relation to get events from.
+   * @param reducer          - Reducer method to generate state from.
    *
    * @example
    * ```ts
@@ -212,7 +212,7 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    * Reducers are created through the `.makeReducer` method.
    */
   reduce<TReducer extends Reducer>(
-    streamOrContext: string,
+    streamOrRelation: string,
     reducer: TReducer,
     pending?: TRecord[],
   ): Promise<ReturnType<TReducer["reduce"]> | undefined>;
@@ -224,10 +224,10 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    */
 
   /**
-   * Create a new snapshot for the given stream/context and reducer.
+   * Create a new snapshot for the given stream/relation and reducer.
    *
-   * @param streamOrContext - Stream, or Context to create a snapshot from.
-   * @param reduce          - Reducer method to create the snapshot state from.
+   * @param streamOrRelation - Stream, or Relation to create a snapshot from.
+   * @param reduce           - Reducer method to create the snapshot state from.
    *
    * @example
    * ```ts
@@ -239,15 +239,15 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    * await eventStore.createSnapshot(`foo:${foo}:bars`, reducer);
    * ```
    */
-  createSnapshot<TReducer extends Reducer>(streamOrContext: string, reduce: TReducer): Promise<void>;
+  createSnapshot<TReducer extends Reducer>(streamOrRelation: string, reduce: TReducer): Promise<void>;
 
   /**
    * Get an entity state snapshot from the database. These are useful for when we
    * want to reduce the amount of events that has to be processed when fetching
    * state history for a reducer.
    *
-   * @param streamOrContext - Stream, or Context to get snapshot for.
-   * @param reducer         - Reducer to get snapshot for.
+   * @param streamOrRelation - Stream, or Relation to get snapshot for.
+   * @param reducer          - Reducer to get snapshot for.
    *
    * @example
    * ```ts
@@ -281,8 +281,8 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
   /**
    * Delete a snapshot.
    *
-   * @param streamOrContext - Stream, or Context to delete snapshot for.
-   * @param reducer         - Reducer to remove snapshot for.
+   * @param streamOrRelation - Stream, or Relation to delete snapshot for.
+   * @param reducer          - Reducer to remove snapshot for.
    *
    * @example
    * ```ts

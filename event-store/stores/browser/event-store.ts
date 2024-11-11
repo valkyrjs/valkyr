@@ -241,18 +241,18 @@ export class BrowserEventStore<TEvent extends Event, TRecord extends EventRecord
   }
 
   async getSnapshot<TReducer extends Reducer, TState = InferReducerState<TReducer>>(
-    streamOrContext: string,
+    streamOrRelation: string,
     reducer: TReducer,
   ): Promise<{ cursor: string; state: TState } | undefined> {
-    const snapshot = await this.snapshots.getByStream(reducer.name, streamOrContext);
+    const snapshot = await this.snapshots.getByStream(reducer.name, streamOrRelation);
     if (snapshot === undefined) {
       return undefined;
     }
     return { cursor: snapshot.cursor, state: snapshot.state as TState };
   }
 
-  async deleteSnapshot<TReducer extends Reducer>(streamOrContext: string, reducer: TReducer): Promise<void> {
-    await this.snapshots.remove(reducer.name, streamOrContext);
+  async deleteSnapshot<TReducer extends Reducer>(streamOrRelation: string, reducer: TReducer): Promise<void> {
+    await this.snapshots.remove(reducer.name, streamOrRelation);
   }
 
   /*
