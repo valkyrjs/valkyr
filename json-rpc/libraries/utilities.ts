@@ -1,8 +1,17 @@
-import type { Params } from "~types/common.ts";
+import type { Id, Params } from "~types/common.ts";
 import type { Notification } from "~types/notification.ts";
 import type { Request, RequestCandidate } from "~types/request.ts";
 
 import { InvalidRequestError, ParseError } from "./errors.ts";
+
+/**
+ * Check if given value is a valid JSON-RPC 2.0 id.
+ *
+ * @param value - Value to verify.
+ */
+export function isJsonRpcId(value: unknown): value is Id {
+  return isString(value) || isInteger(value) || value === null;
+}
 
 /**
  * Takes a JSON-RPC 2.0 message string returns a request candidate
@@ -63,4 +72,17 @@ export function assertJsonRpcRequest(
       received: request,
     });
   }
+}
+
+function isInteger(value: any): value is number {
+  return isNumber(value) && value % 1 === 0;
+}
+
+function isNumber(value: any): value is number {
+  const type = typeof value;
+  return type === "number" && value > Number.NEGATIVE_INFINITY && value < Number.POSITIVE_INFINITY;
+}
+
+function isString(value: any): value is string {
+  return typeof value === "string";
 }
