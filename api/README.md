@@ -39,7 +39,7 @@ export default new Method({
   params: z.object({
     name: z.string().describe("Full name of the user."),
   }),
-  output: z.string(),
+  result: z.string(),
   handler: async ({ params: { name } }) => {
     if (name === "test") {
       throw new BadRequestError("Invalid name given");

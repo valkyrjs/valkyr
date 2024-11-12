@@ -33,51 +33,54 @@ import { jsonSchema } from "./utilities/json-schema.ts";
  * });
  * ```
  */
-export async function printEvents({ paths, output, modules = [] }: Options) {
+export async function printEvents({ paths, outputs, modules = [] }: Options) {
   const { names, types, validators, definitions } = await getEventStoreContainer(paths, [
     ...modules.map((module) => module.events).flat(),
   ]);
-  await ensureFile(output);
-  await Deno.writeFile(
-    output,
-    await new TextEncoder().encode(
-      await format(
-        `
-        // This is an auto generated file. Do not modify this file!
-        // deno-fmt-ignore-file
-        
-        import { type Empty, type Event as TEvent, type EventToRecord } from "@valkyr/event-store";
-        import { type AnyZodObject, z } from "zod";
-    
-        export const events = new Set([${names.sort().map((event) => `"${event}"`).join(",")}] as const);
+  const content = new TextEncoder().encode(
+    await format(
+      `
+      // This is an auto generated file. Do not modify this file!
+      // deno-fmt-ignore-file
+      
+      import { type Empty, type Event as TEvent, type EventToRecord } from "@valkyr/event-store";
+      import { type AnyZodObject, z } from "zod";
+  
+      export const events = new Set([${names.sort().map((event) => `"${event}"`).join(",")}] as const);
 
-        export const validators = {
-          data: new Map<Event["type"], AnyZodObject>([
-            ${Array.from(validators.data.entries()).sort(([a], [b]) => a > b ? 1 : -1).map(([key, value]) => `["${key}", ${value}]`).join(",")}
-          ]),
-          meta: new Map<Event["type"], AnyZodObject>([
-            ${Array.from(validators.meta.entries()).sort(([a], [b]) => a > b ? 1 : -1).map(([key, value]) => `["${key}", ${value}]`).join(",")}
-          ]),
-        }
+      export const validators = {
+        data: new Map<Event["type"], AnyZodObject>([
+          ${Array.from(validators.data.entries()).sort(([a], [b]) => a > b ? 1 : -1).map(([key, value]) => `["${key}", ${value}]`).join(",")}
+        ]),
+        meta: new Map<Event["type"], AnyZodObject>([
+          ${Array.from(validators.meta.entries()).sort(([a], [b]) => a > b ? 1 : -1).map(([key, value]) => `["${key}", ${value}]`).join(",")}
+        ]),
+      }
 
-        export type EventRecord = EventToRecord<Event>;
+      export type EventRecord = EventToRecord<Event>;
 
-        export type Event = ${names.sort().map((name) => toPascalCase(name)).join(" | ")};
+      export type Event = ${names.sort().map((name) => toPascalCase(name)).join(" | ")};
 
-        ${types.sort().join("\n\n")}
+      ${types.sort().join("\n\n")}
 
-        ${definitions.join("\n\n")}
-      `,
-        {
-          parser: "typescript",
-          printWidth: 120,
-        },
-      ),
+      ${definitions.join("\n\n")}
+    `,
+      {
+        parser: "typescript",
+        printWidth: 120,
+      },
     ),
-    {
-      create: true,
-    },
   );
+  for (const output of outputs) {
+    await ensureFile(output);
+    await Deno.writeFile(
+      output,
+      content,
+      {
+        create: true,
+      },
+    );
+  }
 }
 
 /*
@@ -211,7 +214,7 @@ type Options = {
    * ```ts
    * await printEvents({
    *   paths: ["path/to/events-1", "path/to/events-2"]
-   *   output: "path/to/events.ts",
+   *   outputs: ["path/to/events.ts"],
    *   modules: []
    * });
    * ```
@@ -228,7 +231,7 @@ type Options = {
    *
    * await printEvents({
    *   paths: ["path/to/events-1", "path/to/events-2"]
-   *   output: "path/to/events.ts",
+   *   outputs: ["path/to/events.ts"],
    *   modules: [foo]
    * });
    * ```
@@ -245,12 +248,12 @@ type Options = {
    * ```ts
    * await printEvents({
    *   paths: ["path/to/events-1", "path/to/events-2"]
-   *   output: "path/to/events.ts",
+   *   outputs: ["path/to/events.ts"],
    *   modules: []
    * });
    * ```
    */
-  output: string;
+  outputs: string[];
 };
 
 type EventStoreContainer = {

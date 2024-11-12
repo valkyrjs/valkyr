@@ -49,7 +49,7 @@ function addMethod(name: string, map: any): string {
  *
  * @param method - Method to covert types from.
  */
-function getRequestTypes({ params, output, file }: Method): string {
+function getRequestTypes({ params, result, file }: Method): string {
   const types: string[] = [];
   types.push(`${toPascalCase(file)}: {`);
   if (params !== undefined) {
@@ -58,10 +58,10 @@ function getRequestTypes({ params, output, file }: Method): string {
       Params: ${printNode((zodToTs as any)(params).node)}  
     `);
   }
-  if (output !== undefined) {
+  if (result !== undefined) {
     types.push(`
-      ${getTypeJSDoc(output)}
-      Response: ${printNode(zodToTs(output).node)}
+      ${getTypeJSDoc(result)}
+      Response: ${printNode(zodToTs(result).node)}
     `);
   } else {
     types.push(`Response: Promise<void>`);

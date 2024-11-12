@@ -20,14 +20,14 @@ export class Method<
   TContext extends RequestContext = RequestContext,
   TActions extends Action<any>[] = any,
   TParams extends ZodMethodType = ZodMethodType,
-  TOutput extends ZodMethodType | undefined = any,
+  TResult extends ZodMethodType | undefined = any,
 > {
   readonly description: string;
   readonly notification: boolean;
   readonly actions: TActions;
   readonly params?: ZodTypeAny;
-  readonly output?: TOutput;
-  readonly handler: MethodHandler<TContext, TActions, TParams, TOutput>;
+  readonly result?: TResult;
+  readonly handler: MethodHandler<TContext, TActions, TParams, TResult>;
   readonly examples?: string[];
 
   #meta?: {
@@ -36,12 +36,12 @@ export class Method<
     location: string[];
   };
 
-  constructor(options: MethodOptions<TContext, TActions, TParams, TOutput>) {
+  constructor(options: MethodOptions<TContext, TActions, TParams, TResult>) {
     this.description = options.description;
     this.notification = options.notification ?? false;
     this.actions = options.actions ?? [] as unknown as TActions;
     this.params = options.params;
-    this.output = options.output;
+    this.result = options.result;
     this.handler = options.handler;
     this.examples = options.examples?.map((example) => dedent(example));
   }
@@ -90,7 +90,11 @@ export class Method<
    * @param location - Nested location the method file is located.
    */
   meta(file: string, location: string[]) {
-    this.#meta = { method: `${location.join(":")}:${file}`, file, location };
+    this.#meta = {
+      method: `${location.join(":")}:${file}`,
+      file,
+      location,
+    };
   }
 }
 
@@ -106,11 +110,11 @@ export type MethodOptions<
   TContext extends RequestContext = RequestContext,
   TActions extends Action<any>[] = [],
   TParams extends ZodMethodType = ZodMethodType,
-  TOutput extends ZodMethodType | undefined = any,
+  TResult extends ZodMethodType | undefined = any,
 > = {
   /**
    * Describes the intent of the methods behavior used by client genreation
-   * tools to document the function output.
+   * tools to document the function result.
    */
   description: string;
 
@@ -140,10 +144,14 @@ export type MethodOptions<
    *
    * new Method({
    *   method: "Users.Create",
-   *   params: {
+   *   params: z.object({
    *     name: z.string().min(1).max(255),
    *     age: z.number().int().positive(),
-   *   },
+   *   }),
+   *   result: z.object({
+   *     name: z.string().min(1).max(255),
+   *     age: z.number().int().positive(),
+   *   }),
    *   handler: async ({ body }) => {
    *     return { name: body.name, age: body.age };
    *   }
@@ -152,9 +160,9 @@ export type MethodOptions<
   params?: TParams;
 
   /**
-   * Response output produced by the method handler.
+   * Response produced by the method handler.
    */
-  output?: TOutput;
+  result?: TResult;
 
   /**
    * Route handler which will be executed when the method is triggered.
@@ -164,12 +172,13 @@ export type MethodOptions<
    * new Route({
    *   method: "Users.Create",
    *   params: z.string().min(1).max(255),
+   *   result: z.string(),
    *   handler: async ({ body }) => {
    *     return `Hello, ${body.name}!`;
    *   }
    * });
    */
-  handler: MethodHandler<TContext, TActions, TParams, TOutput>;
+  handler: MethodHandler<TContext, TActions, TParams, TResult>;
 
   /**
    * Examples for how to call the method.
@@ -181,7 +190,7 @@ type MethodHandler<
   TContext extends RequestContext = RequestContext,
   TActions extends Action<any>[] = [],
   TParams extends ZodMethodType | undefined = undefined,
-  TOutput extends ZodMethodType | undefined = any,
+  TResult extends ZodMethodType | undefined = any,
 > = (
   context:
     & TContext
@@ -190,7 +199,7 @@ type MethodHandler<
       : {
         [K in keyof TActions]: TActions[K] extends Action<infer P> ? P : never;
       }[number]),
-) => TOutput extends ZodMethodType ? Promise<z.infer<TOutput> | RpcError>
+) => TResult extends ZodMethodType ? Promise<z.infer<TResult> | RpcError>
   : Promise<RpcError | void>;
 
 type ZodMethodType = ZodTypeAny | ZodArray<ZodTypeAny>;

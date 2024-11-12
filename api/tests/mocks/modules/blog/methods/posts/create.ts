@@ -9,7 +9,7 @@ export default new Method({
     body: z.string().describe("Text body of the post."),
     author: z.string().describe("Author of the post in the form of a user id."),
   }),
-  output: z.string(),
+  result: z.string(),
   handler: async ({ params: { title, body, author } }) => {
     return `${title} | ${body} | ${author}`;
   },

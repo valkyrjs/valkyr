@@ -8,7 +8,7 @@ export default new Method({
     email: z.string().describe("Account email."),
     password: z.string().describe("Account password."),
   }),
-  output: z.string(),
+  result: z.string(),
   handler: async ({ params: { email, password } }) => {
     return `${email} | ${password}`;
   },
