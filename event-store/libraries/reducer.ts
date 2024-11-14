@@ -1,7 +1,7 @@
 import type { AggregateRoot } from "~libraries/aggregate.ts";
 import type { Unknown } from "~types/common.ts";
 import type { EventRecord } from "~types/event.ts";
-import type { Reducer, ReducerConfig, ReducerLeftFold, ReducerState } from "~types/reducer.ts";
+import type { Reducer, ReducerLeftFold, ReducerState } from "~types/reducer.ts";
 
 const names = new Set<string>();
 
@@ -14,13 +14,11 @@ const names = new Set<string>();
  */
 export function makeAggregateReducer<TRecord extends EventRecord, TAggregateRoot extends typeof AggregateRoot<TRecord>>(
   aggregate: TAggregateRoot,
-  config: ReducerConfig<TRecord>,
+  name: string,
 ): Reducer<TRecord, InstanceType<TAggregateRoot>> {
-  reserveReducerName(config.name);
+  reserveReducerName(name);
   return {
-    name: config.name,
-    type: config.type,
-    filter: config.filter,
+    name,
     from(snapshot: Unknown) {
       return aggregate.from(snapshot);
     },
@@ -43,14 +41,12 @@ export function makeAggregateReducer<TRecord extends EventRecord, TAggregateRoot
  */
 export function makeReducer<TRecord extends EventRecord, TState extends Unknown>(
   foldFn: ReducerLeftFold<TState, TRecord>,
-  config: ReducerConfig<TRecord>,
+  name: string,
   stateFn: ReducerState<TState>,
 ): Reducer<TRecord, TState> {
-  reserveReducerName(config.name);
+  reserveReducerName(name);
   return {
-    name: config.name,
-    type: config.type,
-    filter: config.filter,
+    name,
     from(snapshot: TState) {
       return snapshot;
     },

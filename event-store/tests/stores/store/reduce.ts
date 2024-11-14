@@ -34,7 +34,7 @@ export default describe<Event, EventRecord>(".reduce", (getEventStore) => {
       },
     });
 
-    const state = await store.reduce(stream, userReducer);
+    const state = await store.reduce({ stream, reducer: userReducer });
 
     assertEquals(state, {
       name: { given: "John", family: "Doe" },
@@ -71,9 +71,9 @@ export default describe<Event, EventRecord>(".reduce", (getEventStore) => {
       },
     });
 
-    await store.createSnapshot(stream, userReducer);
+    await store.createSnapshot({ stream, reducer: userReducer });
 
-    const state = await store.reduce(stream, userReducer);
+    const state = await store.reduce({ stream, reducer: userReducer });
 
     assertEquals(state, {
       name: { given: "John", family: "Doe" },
@@ -86,7 +86,7 @@ export default describe<Event, EventRecord>(".reduce", (getEventStore) => {
   it("should return undefined if stream does not have events", async () => {
     const stream = nanoid();
     const { store } = await getEventStore();
-    const state = await store.reduce(stream, userReducer);
+    const state = await store.reduce({ stream, reducer: userReducer });
 
     assertEquals(state, undefined);
   });

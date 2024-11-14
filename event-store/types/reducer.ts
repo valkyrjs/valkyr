@@ -11,19 +11,7 @@ export type Reducer<
    * Name of the reducer, must be a unique identifier as its used by snapshotter
    * to store, and manage state snapshots for event streams.
    */
-  name: ReducerConfig<TRecord>["name"];
-
-  /**
-   * Reducer type which defines if events are pulled from multiple relation streams,
-   * or a single stream. The type defines how the `.reduce` method retrieves events
-   * from the store.
-   */
-  type: ReducerConfig<TRecord>["type"];
-
-  /**
-   * Filter options for how events are pulled from the store.
-   */
-  filter?: ReducerConfig<TRecord>["filter"];
+  name: string;
 
   /**
    * Return result directly from a snapshot that does not have any subsequent
@@ -63,34 +51,6 @@ export type ReducerLeftFold<TState extends Record<string, unknown> = any, TRecor
   state: TState,
   event: TRecord,
 ) => TState;
-
-/**
- * Reducer configuration containing unique name, and initial state.
- */
-export type ReducerConfig<TRecord extends EventRecord> = {
-  /**
-   * Name of the reducer, must be a unique identifier as its used by snapshotter
-   * to store, and manage state snapshots for event streams.
-   */
-  name: string;
-
-  /**
-   * Reducer type which defines if events are pulled from multiple relation streams,
-   * or a single stream. The type defines how the `.reduce` method retrieves events
-   * from the store.
-   */
-  type: "stream" | "relation";
-
-  /**
-   * Filter options for how events are pulled from the store.
-   */
-  filter?: {
-    /**
-     * Only include events of in the given type.
-     */
-    types?: TRecord["type"][];
-  };
-};
 
 export type ReducerState<TState extends Unknown> = () => TState;
 

@@ -15,7 +15,7 @@ describe("Events Printer", () => {
 
   it("should create a new events.ts file", async () => {
     await printEvents({
-      paths: [join(import.meta.dirname!, "mocks", "events")],
+      inputs: [join(import.meta.dirname!, "mocks", "events")],
       outputs: [output],
     });
 

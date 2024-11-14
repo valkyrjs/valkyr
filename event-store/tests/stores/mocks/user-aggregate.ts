@@ -51,10 +51,7 @@ export class User extends AggregateRoot<EventRecord> {
   }
 }
 
-export const userAggregateReducer = makeAggregateReducer(User, {
-  name: "user-aggregate-root",
-  type: "stream",
-});
+export const userAggregateReducer = makeAggregateReducer(User, "user:aggregate");
 
 type Name = {
   given: string;

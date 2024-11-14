@@ -38,8 +38,8 @@ import { createEventRecord } from "~libraries/event.ts";
 import { makeAggregateReducer, makeReducer } from "~libraries/reducer.ts";
 import type { Unknown } from "~types/common.ts";
 import type { Event, EventRecord, EventStatus, EventToRecord } from "~types/event.ts";
-import type { EventReadOptions, EventsInsertSettings, EventStore, EventStoreHooks } from "~types/event-store.ts";
-import type { InferReducerState, Reducer, ReducerConfig, ReducerLeftFold, ReducerState } from "~types/reducer.ts";
+import type { EventReadOptions, EventsInsertSettings, EventStore, EventStoreHooks, ReduceQuery } from "~types/event-store.ts";
+import type { InferReducerState, Reducer, ReducerLeftFold, ReducerState } from "~types/reducer.ts";
 import type { ExcludeEmptyFields } from "~types/utilities.ts";
 
 import { type Adapter, type Collections, getEventStoreDatabase } from "./database.ts";
@@ -181,45 +181,47 @@ export class BrowserEventStore<TEvent extends Event, TRecord extends EventRecord
 
   makeReducer<TState extends Unknown>(
     foldFn: ReducerLeftFold<TState, TRecord>,
-    config: ReducerConfig<TRecord>,
+    name: string,
     stateFn: ReducerState<TState>,
   ): Reducer<TRecord, TState> {
-    return makeReducer<TRecord, TState>(foldFn, config, stateFn);
+    return makeReducer<TRecord, TState>(foldFn, name, stateFn);
   }
 
   makeAggregateReducer<TAggregateRoot extends typeof AggregateRoot<TRecord>>(
     aggregate: TAggregateRoot,
-    config: ReducerConfig<TRecord>,
+    name: string,
   ): Reducer<TRecord, InstanceType<TAggregateRoot>> {
-    return makeAggregateReducer<TRecord, TAggregateRoot>(aggregate, config);
+    return makeAggregateReducer<TRecord, TAggregateRoot>(aggregate, name);
   }
 
   async reduce<TReducer extends Reducer>(
-    streamOrRelation: string,
-    reducer: TReducer,
+    { stream, relation, reducer, ...query }: ReduceQuery<TRecord, TReducer>,
+    pending: TRecord[] = [],
   ): Promise<ReturnType<TReducer["reduce"]> | undefined> {
-    let cursor: string | undefined;
+    const id = stream ?? relation;
+
+    query.direction = query.direction ?? "asc";
+
     let state: InferReducerState<TReducer> | undefined;
 
-    const snapshot = await this.getSnapshot(streamOrRelation, reducer);
+    const snapshot = await this.getSnapshot(id, reducer);
     if (snapshot !== undefined) {
-      cursor = snapshot.cursor;
+      query.cursor = snapshot.cursor;
       state = snapshot.state;
     }
 
-    const events = reducer.type === "stream"
-      ? await this.getEventsByStreams([streamOrRelation], { cursor, filter: reducer.filter })
-      : await this.getEventsByRelations([streamOrRelation], { cursor, filter: reducer.filter });
+    const events = (stream !== undefined ? await this.getEventsByStreams([id], query) : await this.getEventsByRelations([id], query))
+      .concat(pending);
     if (events.length === 0) {
-      if (snapshot !== undefined) {
-        return snapshot.state;
+      if (state !== undefined) {
+        return reducer.from(state);
       }
       return undefined;
     }
 
     const result = reducer.reduce(events, state);
     if (this.#snapshot === "auto") {
-      await this.snapshots.insert(name, streamOrRelation, events.at(-1)!.created, result);
+      await this.snapshots.insert(reducer.name, id, events.at(-1)!.created, result);
     }
     return result;
   }
@@ -230,14 +232,13 @@ export class BrowserEventStore<TEvent extends Event, TRecord extends EventRecord
    |--------------------------------------------------------------------------------
    */
 
-  async createSnapshot<TReducer extends Reducer>(streamOrRelation: string, { name, type, filter, reduce }: TReducer): Promise<void> {
-    const events = type === "stream"
-      ? await this.getEventsByStreams([streamOrRelation], { filter })
-      : await this.getEventsByRelations([streamOrRelation], { filter });
+  async createSnapshot<TReducer extends Reducer>({ stream, relation, reducer, ...query }: ReduceQuery<TRecord, TReducer>): Promise<void> {
+    const id = stream ?? relation;
+    const events = stream !== undefined ? await this.getEventsByStreams([id], query) : await this.getEventsByRelations([id], query);
     if (events.length === 0) {
       return undefined;
     }
-    await this.snapshots.insert(name, streamOrRelation, events.at(-1)!.created, reduce(events));
+    await this.snapshots.insert(reducer.name, id, events.at(-1)!.created, reducer.reduce(events));
   }
 
   async getSnapshot<TReducer extends Reducer, TState = InferReducerState<TReducer>>(

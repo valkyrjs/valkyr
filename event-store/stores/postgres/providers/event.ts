@@ -124,8 +124,8 @@ export class EventProvider<TRecord extends EventRecord> {
     return inArray(this.schema.type, types);
   }
 
-  #withCursor(cursor: string, direction: "asc" | "desc" | undefined) {
-    if (direction === "desc") {
+  #withCursor(cursor: string, direction: 1 | -1 | "asc" | "desc" | undefined) {
+    if (direction === "desc" || direction === -1) {
       return lt(this.schema.created, cursor);
     }
     return gt(this.schema.created, cursor);

@@ -31,7 +31,7 @@ export default describe<Event, EventRecord>(".makeAggregateReducer", (getEventSt
       },
     });
 
-    await store.createSnapshot(stream, userAggregateReducer);
+    await store.createSnapshot({ stream, reducer: userAggregateReducer });
 
     await store.addEvent({
       stream,
@@ -52,7 +52,7 @@ export default describe<Event, EventRecord>(".makeAggregateReducer", (getEventSt
       },
     });
 
-    const user = await store.reduce(stream, userAggregateReducer);
+    const user = await store.reduce({ stream, reducer: userAggregateReducer });
     if (user === undefined) {
       throw new Error("Expected user to exist");
     }

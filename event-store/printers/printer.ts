@@ -12,12 +12,11 @@ import { getDefinitions, getEventType, getImports } from "./types.ts";
 import { jsonSchema } from "./utilities/json-schema.ts";
 
 /**
- * Consumes a list of *.json files stored under given paths and generates a new
- * events file ready for consumption by an event store instance.
+ * Consumes a list of *.json files stored under given inputs and generates new
+ * events files ready for consumption by an event store instance.
  *
- * @param options.paths   - Paths containing *.json event configuration files.
- * @param options.output  - Target file to generate the events to.
- * @param options.modules - List of modules to print events for.
+ * @param options.inputs  - Folders containing *.json event configuration files.
+ * @param options.outputs - List of outputs to print the event files to.
  *
  * @example
  *
@@ -25,18 +24,18 @@ import { jsonSchema } from "./utilities/json-schema.ts";
  * import { printEvents } from "@valkyr/event-store";
  *
  * await printEvents({
- *   paths: [
+ *   inputs: [
  *    "path/to/events-1",
  *    "path/to/events-2"
  *   ],
- *   output: "path/to/events.ts",
+ *   outputs: [
+ *    "path/to/events.ts"
+ *   ],
  * });
  * ```
  */
-export async function printEvents({ paths, outputs, modules = [] }: Options) {
-  const { names, types, validators, definitions } = await getEventStoreContainer(paths, [
-    ...modules.map((module) => module.events).flat(),
-  ]);
+export async function printEvents({ inputs, outputs }: Options) {
+  const { names, types, validators, definitions } = await getEventStoreContainer(inputs);
   const content = new TextEncoder().encode(
     await format(
       `
@@ -89,10 +88,7 @@ export async function printEvents({ paths, outputs, modules = [] }: Options) {
  |--------------------------------------------------------------------------------
  */
 
-async function getEventStoreContainer(
-  paths: string[],
-  module: any[] = [],
-): Promise<EventStoreContainer> {
+async function getEventStoreContainer(inputs: string[]): Promise<EventStoreContainer> {
   const container: EventStoreContainer = {
     names: [],
     types: [],
@@ -107,7 +103,7 @@ async function getEventStoreContainer(
 
   const defs = new Map<string, any>();
 
-  const configs = [...(await getLocalConfigs(paths)), ...getModuleConfigs(module)];
+  const configs = await getLocalConfigs(inputs);
   for (const { event, definitions } of configs) {
     const type = event.type;
     container.names.push(type);
@@ -164,13 +160,6 @@ async function resolveLocalConfigs(path: string, events: Config[]) {
   }
 }
 
-function getModuleConfigs(configs: any[]): Config[] {
-  for (const config of configs) {
-    assertConfig(config);
-  }
-  return configs;
-}
-
 async function getEventValidator(name: string, data: any) {
   const schema = {
     $schema: "http://json-schema.org/draft-04/schema#",
@@ -219,26 +208,7 @@ type Options = {
    * });
    * ```
    */
-  paths: string[];
-
-  /**
-   * List of modules that provides their own events to be included in the output.
-   *
-   * @example
-   *
-   * ```ts
-   * import { foo } from "foo"; // valkyr compliant module
-   *
-   * await printEvents({
-   *   paths: ["path/to/events-1", "path/to/events-2"]
-   *   outputs: ["path/to/events.ts"],
-   *   modules: [foo]
-   * });
-   * ```
-   */
-  modules?: {
-    events: any[];
-  }[];
+  inputs: string[];
 
   /**
    * Absolute path to the folder the generated events should be written.

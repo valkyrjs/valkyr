@@ -2,7 +2,7 @@ import type { AggregateRoot } from "~libraries/aggregate.ts";
 
 import type { Unknown } from "./common.ts";
 import type { Event, EventRecord, EventStatus } from "./event.ts";
-import type { InferReducerState, Reducer, ReducerConfig, ReducerLeftFold, ReducerState } from "./reducer.ts";
+import type { InferReducerState, Reducer, ReducerLeftFold, ReducerState } from "./reducer.ts";
 import type { ExcludeEmptyFields } from "./utilities.ts";
 
 export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
@@ -51,7 +51,7 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    */
   makeReducer<TState extends Unknown>(
     foldFn: ReducerLeftFold<TState, TRecord>,
-    config: ReducerConfig<TRecord>,
+    name: string,
     stateFn: ReducerState<TState>,
   ): Reducer<TRecord, TState>;
 
@@ -65,6 +65,12 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    * class Foo {
    *   name: string = "";
    *
+   *   static #reducer = makeAggregateReducer(Foo, "foo");
+   *
+   *   static async getById(fooId: string): Promise<Foo | undefined> {
+   *     return eventStore.reduce("stream-id", this.#reducer, { type: "stream" });
+   *   }
+   *
    *   with(event) {
    *     switch (event.type) {
    *       case "FooCreated": {
@@ -75,17 +81,14 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    *   }
    * });
    *
-   * const reducer = makeAggregateReducer(Foo, {
-   *   name: "foo-aggregate",
-   *   type: "stream"
-   * });
+   * const reducer = makeAggregateReducer(Foo, "foo");
    *
-   * const foo = await eventStore.reduce("stream-id", reducer);
+   * const foo = await eventStore.reduce("stream-id", reducer, { type: "stream" });
    * ```
    */
   makeAggregateReducer<TAggregateRoot extends typeof AggregateRoot<TRecord>>(
     aggregate: TAggregateRoot,
-    config: ReducerConfig<TRecord>,
+    name: string,
   ): Reducer<TRecord, InstanceType<TAggregateRoot>>;
 
   /*
@@ -196,24 +199,23 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
   /**
    * Reduce events in the given stream to a entity state.
    *
-   * @param streamOrRelation - Stream, or relation to get events from.
-   * @param reducer          - Reducer method to generate state from.
+   * @param query   - Reducer query to resolve event state from.
+   * @param pending - List of non comitted events to append to the server events.
    *
    * @example
    * ```ts
-   * const state = await eventStore.reduce(stream, reducer);
+   * const state = await eventStore.reduce({ stream, reducer });
    * ```
    *
    * @example
    * ```ts
-   * const state = await eventStore.reduce(`foo:${foo}:bars`, reducer);
+   * const state = await eventStore.reduce({ relation: `foo:${foo}:bars`, reducer });
    * ```
    *
-   * Reducers are created through the `.makeReducer` method.
+   * Reducers are created through the `.makeReducer` and `.makeAggregateReducer` method.
    */
   reduce<TReducer extends Reducer>(
-    streamOrRelation: string,
-    reducer: TReducer,
+    query: ReduceQuery<TRecord, TReducer>,
     pending?: TRecord[],
   ): Promise<ReturnType<TReducer["reduce"]> | undefined>;
 
@@ -226,20 +228,19 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
   /**
    * Create a new snapshot for the given stream/relation and reducer.
    *
-   * @param streamOrRelation - Stream, or Relation to create a snapshot from.
-   * @param reduce           - Reducer method to create the snapshot state from.
+   * @param query - Reducer query to create snapshot from.
    *
    * @example
    * ```ts
-   * await eventStore.createSnapshot(stream, reducer);
+   * await eventStore.createSnapshot({ stream, reducer });
    * ```
    *
    * @example
    * ```ts
-   * await eventStore.createSnapshot(`foo:${foo}:bars`, reducer);
+   * await eventStore.createSnapshot({ relation: `foo:${foo}:bars`, reducer });
    * ```
    */
-  createSnapshot<TReducer extends Reducer>(streamOrRelation: string, reduce: TReducer): Promise<void>;
+  createSnapshot<TReducer extends Reducer>(query: ReduceQuery<TRecord, TReducer>): Promise<void>;
 
   /**
    * Get an entity state snapshot from the database. These are useful for when we
@@ -327,6 +328,42 @@ export type EventStoreHooks<TRecord extends EventRecord> = Partial<{
  |--------------------------------------------------------------------------------
  */
 
+export type ReduceQuery<TRecord extends EventRecord, TReducer extends Reducer> =
+  | ({
+    /**
+     * Stream to fetch events from and pass to the reducer method.
+     */
+    stream: string;
+
+    relation?: never;
+
+    /**
+     * Reducer method to pass resolved events to.
+     */
+    reducer: TReducer;
+  } & EventReadOptions<TRecord>)
+  | (
+    & {
+      stream?: never;
+
+      /**
+       * Relational key resolving streams to fetch events from and pass to the
+       * reducer method.
+       */
+      relation: string;
+
+      /**
+       * Reducer method to pass resolved events to.
+       */
+      reducer: TReducer;
+    }
+    & EventReadOptions<TRecord>
+  );
+
+export type EventsInsertSettings = {
+  batch?: string;
+};
+
 export type EventReadOptions<TRecord extends EventRecord> = {
   /**
    * Filter options for how events are pulled from the store.
@@ -339,44 +376,18 @@ export type EventReadOptions<TRecord extends EventRecord> = {
   };
 
   /**
-   * Fetch events from a specific point in time. The direction of which
-   * events are fetched is determined by the direction option.
+   * Fetches events from the specific cursor, which uses the local event
+   * records `recorded` timestamp.
    */
   cursor?: string;
 
   /**
    * Fetch events in ascending or descending order. Default: "asc"
    */
-  direction?: "asc" | "desc";
-};
-
-export type Pagination = CursorPagination | OffsetPagination;
-
-export type CursorPagination = {
-  /**
-   * Fetches streams from the specific cursor. Cursor value represents
-   * a stream id.
-   */
-  cursor: string;
+  direction?: 1 | -1 | "asc" | "desc";
 
   /**
-   * Fetch streams in ascending or descending order.
+   * Limit the number of events returned.
    */
-  direction: 1 | -1;
-};
-
-export type OffsetPagination = {
-  /**
-   * Fetch streams from the specific offset.
-   */
-  offset: number;
-
-  /**
-   * Limit the number of streams to return.
-   */
-  limit: number;
-};
-
-export type EventsInsertSettings = {
-  batch?: string;
+  limit?: number;
 };

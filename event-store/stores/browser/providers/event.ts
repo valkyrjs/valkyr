@@ -73,7 +73,7 @@ export class EventProvider<TRecord extends EventRecord> {
       withTypes(query, filter.types);
     }
     if (cursor !== undefined) {
-      withCursor(query, cursor, direction);
+      withCursor(query, cursor, direction ?? "asc");
     }
     return await this.events.find(query, { sort: { created: 1 } }) as TRecord[];
   }
@@ -112,10 +112,10 @@ function withTypes(filter: any, types: string[]): void {
   filter.type = { $in: types };
 }
 
-function withCursor(filter: any, cursor: string, direction?: "asc" | "desc"): void {
+function withCursor(filter: any, cursor: string, direction?: 1 | -1 | "asc" | "desc"): void {
   if (cursor !== undefined) {
     filter.created = {
-      [direction === "desc" ? "$lt" : "$gt"]: cursor,
+      [direction === "desc" || direction === -1 ? "$lt" : "$gt"]: cursor,
     };
   }
 }

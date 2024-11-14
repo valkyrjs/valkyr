@@ -148,14 +148,10 @@ const reducer = makeReducer<{
     }
   }
   return state;
-}, {
-  name: "user",
-  type: "stream",
-  state: () => ({
-    name: "",
-    email: "",
-  }),
-});
+}, "user", () => ({
+  name: "",
+  email: "",
+}));
 ```
 
 ### Aggreates
@@ -170,6 +166,7 @@ query the aggregated state.
 import { AggregateRoot, makeAggregateReducer } from "@valkyr/event-store";
 
 import type { EventRecord } from "./generated/events.ts";
+import { eventStore } from "./event-store.ts";
 
 export class User extends AggregateRoot<EventRecord> {
   name: {
@@ -180,6 +177,20 @@ export class User extends AggregateRoot<EventRecord> {
     family: ""
   }
   email = "";
+
+  // -------------------------------------------------------------------------
+  // Factories
+  // -------------------------------------------------------------------------
+
+  static #reducer = makeAggregateReducer(User, "user");
+
+  static async getById(userId: string): Promise<User | undefined> {
+    return eventStore.reduce({ stream: userId, reducer: this.#reducer });
+  }
+
+  // -------------------------------------------------------------------------
+  // Folder
+  // -------------------------------------------------------------------------
 
   with(event: EventRecord) {
     switch (event.type) {
@@ -196,15 +207,14 @@ export class User extends AggregateRoot<EventRecord> {
     }
   }
 
+  // -------------------------------------------------------------------------
+  // Utilities
+  // -------------------------------------------------------------------------
+
   fullName() {
     return `${this.name.given} ${this.name.family}`;
   }
 }
-
-export const reducer = makeAggregateReducer(User, {
-  name: "user",
-  type: "stream",
-});
 ```
 
 ### Projectors
