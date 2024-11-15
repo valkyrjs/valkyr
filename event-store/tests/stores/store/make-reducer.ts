@@ -1,7 +1,8 @@
 import { assertEquals } from "@std/assert";
 import { it } from "@std/testing/bdd";
-import { makeId } from "@valkyr/drizzle";
 import { nanoid } from "nanoid";
+
+import { makeId } from "~libraries/nanoid.ts";
 
 import type { Event, EventRecord } from "../mocks/events.ts";
 import { userPostReducer } from "../mocks/user-posts-reducer.ts";
@@ -69,7 +70,7 @@ export default describe<Event, EventRecord>(".makeReducer", (getEventStore) => {
       },
     });
 
-    const state = await store.reduce({ stream: streamA, reducer: userReducer, filter: { types: ["user:created", "user:email-set"] } });
+    const state = await store.reduce({ name: "user", stream: streamA, reducer: userReducer, filter: { types: ["user:created", "user:email-set"] } });
 
     assertEquals(state?.name, { given: "John", family: "Doe" });
     assertEquals(state?.email, "jane.doe@fixture.none");
@@ -96,7 +97,7 @@ export default describe<Event, EventRecord>(".makeReducer", (getEventStore) => {
 
     assertEquals(events.length, 4);
 
-    const state = await store.reduce({ relation: `user:${auditor}:posts`, reducer: userPostReducer });
+    const state = await store.reduce({ name: "user", relation: `user:${auditor}:posts`, reducer: userPostReducer });
 
     assertEquals(state?.posts, [{ id: post1, author: auditor }, { id: post3, author: auditor }]);
     assertEquals(state?.count, 2);

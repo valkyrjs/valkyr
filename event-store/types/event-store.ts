@@ -32,28 +32,22 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    *
    * @example
    * ```ts
-   * const fooReducer = eventStore.makeReducer<FooState>((state, event) => {
+   * const reducer = eventStore.makeReducer<{ name: string }>((state, event) => {
    *   switch (event.type) {
    *     case "FooCreated": {
    *       state.name = event.data.name;
-   *       return state;
+   *       break;
    *     }
    *   }
    *   return state;
-   * }, {
+   * }, () => ({
    *   name: ""
-   * });
+   * }));
    *
-   * type FooState = { name: string };
-   *
-   * const state = await eventStore.reduce("stream-id", reducer);
+   * const state = await eventStore.reduce({ name: "foo:reducer", stream: "stream-id", reducer });
    * ```
    */
-  makeReducer<TState extends Unknown>(
-    foldFn: ReducerLeftFold<TState, TRecord>,
-    name: string,
-    stateFn: ReducerState<TState>,
-  ): Reducer<TRecord, TState>;
+  makeReducer<TState extends Unknown>(foldFn: ReducerLeftFold<TState, TRecord>, stateFn: ReducerState<TState>): Reducer<TRecord, TState>;
 
   /**
    * Make a new event reducer based on the events registered with the event store.
@@ -65,10 +59,14 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    * class Foo {
    *   name: string = "";
    *
-   *   static #reducer = makeAggregateReducer(Foo, "foo");
+   *   static #reducer = makeAggregateReducer(Foo);
    *
    *   static async getById(fooId: string): Promise<Foo | undefined> {
-   *     return eventStore.reduce("stream-id", this.#reducer, { type: "stream" });
+   *     return eventStore.reduce({
+   *       name: "foo:aggregate",
+   *       stream: "stream-id",
+   *       reducer: this.#reducer,
+   *     });
    *   }
    *
    *   with(event) {
@@ -80,16 +78,9 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    *     }
    *   }
    * });
-   *
-   * const reducer = makeAggregateReducer(Foo, "foo");
-   *
-   * const foo = await eventStore.reduce("stream-id", reducer, { type: "stream" });
    * ```
    */
-  makeAggregateReducer<TAggregateRoot extends typeof AggregateRoot<TRecord>>(
-    aggregate: TAggregateRoot,
-    name: string,
-  ): Reducer<TRecord, InstanceType<TAggregateRoot>>;
+  makeAggregateReducer<TAggregateRoot extends typeof AggregateRoot<TRecord>>(aggregate: TAggregateRoot): Reducer<TRecord, InstanceType<TAggregateRoot>>;
 
   /*
    |--------------------------------------------------------------------------------
@@ -252,7 +243,7 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    *
    * @example
    * ```ts
-   * const snapshot = await eventStore.getSnapshot(stream, reducer);
+   * const snapshot = await eventStore.getSnapshot("foo:reducer", stream);
    * console.log(snapshot);
    * // {
    * //   cursor: "jxubdY-0",
@@ -264,7 +255,7 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    *
    * @example
    * ```ts
-   * const snapshot = await eventStore.getSnapshot(`foo:${foo}:bars`, reducer);
+   * const snapshot = await eventStore.getSnapshot("foo:reducer", `foo:${foo}:bars`);
    * console.log(snapshot);
    * // {
    * //   cursor: "jxubdY-0",
@@ -275,8 +266,8 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    * ```
    */
   getSnapshot<TReducer extends Reducer, TState = InferReducerState<TReducer>>(
-    stream: string,
-    reducer: TReducer,
+    name: string,
+    streamOrRelation: string,
   ): Promise<{ cursor: string; state: TState } | undefined>;
 
   /**
@@ -287,15 +278,15 @@ export type EventStore<TEvent extends Event, TRecord extends EventRecord> = {
    *
    * @example
    * ```ts
-   * await eventStore.deleteSnapshot(stream, reducer);
+   * await eventStore.deleteSnapshot("foo:reducer", stream);
    * ```
    *
    * @example
    * ```ts
-   * await eventStore.deleteSnapshot(`foo:${foo}:bars`, reducer);
+   * await eventStore.deleteSnapshot("foo:reducer", `foo:${foo}:bars`);
    * ```
    */
-  deleteSnapshot<TReducer extends Reducer>(stream: string, reducer: TReducer): Promise<void>;
+  deleteSnapshot(name: string, streamOrRelation: string): Promise<void>;
 };
 
 /*
@@ -331,20 +322,30 @@ export type EventStoreHooks<TRecord extends EventRecord> = Partial<{
 export type ReduceQuery<TRecord extends EventRecord, TReducer extends Reducer> =
   | ({
     /**
+     * Name of the reducer, must be a unique identifier as its used by snapshotter
+     * to store, and manage state snapshots for event streams.
+     */
+    name: string;
+
+    /**
      * Stream to fetch events from and pass to the reducer method.
      */
     stream: string;
-
-    relation?: never;
 
     /**
      * Reducer method to pass resolved events to.
      */
     reducer: TReducer;
-  } & EventReadOptions<TRecord>)
+
+    relation?: never;
+  } & EventReadFilter<TRecord>)
   | (
     & {
-      stream?: never;
+      /**
+       * Name of the reducer, must be a unique identifier as its used by snapshotter
+       * to store, and manage state snapshots for event streams.
+       */
+      name: string;
 
       /**
        * Relational key resolving streams to fetch events from and pass to the
@@ -356,25 +357,17 @@ export type ReduceQuery<TRecord extends EventRecord, TReducer extends Reducer> =
        * Reducer method to pass resolved events to.
        */
       reducer: TReducer;
+
+      stream?: never;
     }
-    & EventReadOptions<TRecord>
+    & EventReadFilter<TRecord>
   );
 
 export type EventsInsertSettings = {
   batch?: string;
 };
 
-export type EventReadOptions<TRecord extends EventRecord> = {
-  /**
-   * Filter options for how events are pulled from the store.
-   */
-  filter?: {
-    /**
-     * Only include events in the given types.
-     */
-    types?: TRecord["type"][];
-  };
-
+export type EventReadOptions<TRecord extends EventRecord> = EventReadFilter<TRecord> & {
   /**
    * Fetches events from the specific cursor, which uses the local event
    * records `recorded` timestamp.
@@ -390,4 +383,16 @@ export type EventReadOptions<TRecord extends EventRecord> = {
    * Limit the number of events returned.
    */
   limit?: number;
+};
+
+export type EventReadFilter<TRecord extends EventRecord> = {
+  /**
+   * Filter options for how events are pulled from the store.
+   */
+  filter?: {
+    /**
+     * Only include events in the given types.
+     */
+    types?: TRecord["type"][];
+  };
 };

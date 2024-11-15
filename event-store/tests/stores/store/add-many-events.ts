@@ -53,7 +53,7 @@ export default describe<Event, EventRecord>(".addSequence", (getEventStore) => {
       assertObjectMatch(record, events[index]);
     });
 
-    const state = await store.reduce({ stream, reducer: userReducer });
+    const state = await store.reduce({ name: "user", stream, reducer: userReducer });
 
     assertEquals(state?.name.given, "John");
     assertEquals(state?.email, "john@doe.com");

@@ -34,7 +34,6 @@ export const userReducer = makeReducer<EventRecord, UserState>(
     }
     return state;
   },
-  "user:reducer",
   () => ({
     name: {
       given: "",

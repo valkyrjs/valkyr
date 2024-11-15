@@ -8,12 +8,6 @@ export type Reducer<
   TState extends (Record<string, unknown> | AggregateRoot<TRecord>) = any,
 > = {
   /**
-   * Name of the reducer, must be a unique identifier as its used by snapshotter
-   * to store, and manage state snapshots for event streams.
-   */
-  name: string;
-
-  /**
    * Return result directly from a snapshot that does not have any subsequent
    * events to fold onto a state.
    *

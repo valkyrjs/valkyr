@@ -39,9 +39,9 @@ export default describe<Event, EventRecord>(".createSnapshot", (getEventStore) =
       type: "user:deactivated",
     });
 
-    await store.createSnapshot({ stream, reducer: userReducer });
+    await store.createSnapshot({ name: "user", stream, reducer: userReducer });
 
-    const snapshot = await store.snapshots.getByStream(userReducer.name, stream);
+    const snapshot = await store.snapshots.getByStream("user", stream);
 
     assertNotEquals(snapshot, undefined);
     assertObjectMatch(snapshot!.state, {
@@ -65,7 +65,7 @@ export default describe<Event, EventRecord>(".createSnapshot", (getEventStore) =
 
     assertEquals(events.length, 1);
 
-    const state = await store.reduce({ stream, reducer: userReducer });
+    const state = await store.reduce({ name: "user", stream, reducer: userReducer });
 
     assertObjectMatch(state!, {
       name: {

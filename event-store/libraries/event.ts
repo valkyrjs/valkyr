@@ -1,6 +1,5 @@
-import { makeId } from "@valkyr/drizzle";
-
 import type { Event, EventRecord } from "../types/event.ts";
+import { makeId } from "./nanoid.ts";
 import { getLogicalTimestamp } from "./time.ts";
 
 /**

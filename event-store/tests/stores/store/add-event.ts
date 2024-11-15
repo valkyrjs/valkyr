@@ -1,8 +1,8 @@
 import { assertEquals, assertObjectMatch, assertRejects } from "@std/assert";
 import { it } from "@std/testing/bdd";
-import { makeId } from "@valkyr/drizzle";
 
 import { EventInsertionError, EventParserError } from "~libraries/errors.ts";
+import { makeId } from "~libraries/nanoid.ts";
 
 import type { Event, EventRecord } from "../mocks/events.ts";
 import { describe } from "../utilities/describe.ts";

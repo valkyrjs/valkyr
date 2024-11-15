@@ -187,36 +187,33 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
 
   makeReducer<TState extends Unknown>(
     foldFn: ReducerLeftFold<TState, TRecord>,
-    name: string,
     stateFn: ReducerState<TState>,
   ): Reducer<TRecord, TState> {
-    return makeReducer<TRecord, TState>(foldFn, name, stateFn);
+    return makeReducer<TRecord, TState>(foldFn, stateFn);
   }
 
   makeAggregateReducer<TAggregateRoot extends typeof AggregateRoot<TRecord>>(
     aggregate: TAggregateRoot,
-    name: string,
   ): Reducer<TRecord, InstanceType<TAggregateRoot>> {
-    return makeAggregateReducer<TRecord, TAggregateRoot>(aggregate, name);
+    return makeAggregateReducer<TRecord, TAggregateRoot>(aggregate);
   }
 
   async reduce<TReducer extends Reducer>(
-    { stream, relation, reducer, ...query }: ReduceQuery<TRecord, TReducer>,
+    { name, stream, relation, reducer, ...query }: ReduceQuery<TRecord, TReducer>,
     pending: TRecord[] = [],
   ): Promise<ReturnType<TReducer["reduce"]> | undefined> {
     const id = stream ?? relation;
 
-    query.direction = query.direction ?? "asc";
-
     let state: InferReducerState<TReducer> | undefined;
+    let cursor: string | undefined;
 
-    const snapshot = await this.getSnapshot(id, reducer);
+    const snapshot = await this.getSnapshot(name, id);
     if (snapshot !== undefined) {
-      query.cursor = snapshot.cursor;
+      cursor = snapshot.cursor;
       state = snapshot.state;
     }
 
-    const events = (stream !== undefined ? await this.getEventsByStreams([id], query) : await this.getEventsByRelations([id], query))
+    const events = (stream !== undefined ? await this.getEventsByStreams([id], { ...query, cursor }) : await this.getEventsByRelations([id], { ...query, cursor }))
       .concat(pending);
     if (events.length === 0) {
       if (state !== undefined) {
@@ -227,7 +224,7 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
 
     const result = reducer.reduce(events, state);
     if (this.#snapshot === "auto") {
-      await this.snapshots.insert(reducer.name, id, events.at(-1)!.created, result);
+      await this.snapshots.insert(name, id, events.at(-1)!.created, result);
     }
     return result;
   }
@@ -238,28 +235,28 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
    |--------------------------------------------------------------------------------
    */
 
-  async createSnapshot<TReducer extends Reducer>({ stream, relation, reducer, ...query }: ReduceQuery<TRecord, TReducer>): Promise<void> {
+  async createSnapshot<TReducer extends Reducer>({ name, stream, relation, reducer, ...query }: ReduceQuery<TRecord, TReducer>): Promise<void> {
     const id = stream ?? relation;
     const events = stream !== undefined ? await this.getEventsByStreams([id], query) : await this.getEventsByRelations([id], query);
     if (events.length === 0) {
       return undefined;
     }
-    await this.snapshots.insert(reducer.name, id, events.at(-1)!.created, reducer.reduce(events));
+    await this.snapshots.insert(name, id, events.at(-1)!.created, reducer.reduce(events));
   }
 
   async getSnapshot<TReducer extends Reducer, TState = InferReducerState<TReducer>>(
+    name: string,
     streamOrRelation: string,
-    reducer: TReducer,
   ): Promise<{ cursor: string; state: TState } | undefined> {
-    const snapshot = await this.snapshots.getByStream(reducer.name, streamOrRelation);
+    const snapshot = await this.snapshots.getByStream(name, streamOrRelation);
     if (snapshot === undefined) {
       return undefined;
     }
     return { cursor: snapshot.cursor, state: snapshot.state as TState };
   }
 
-  async deleteSnapshot<TReducer extends Reducer>(streamOrRelation: string, reducer: TReducer): Promise<void> {
-    await this.snapshots.remove(reducer.name, streamOrRelation);
+  async deleteSnapshot(name: string, streamOrRelation: string): Promise<void> {
+    await this.snapshots.remove(name, streamOrRelation);
   }
 
   /*
