@@ -4,7 +4,7 @@
     "ajv": "8.17.1",
     "dot-prop": "9.0.0",
     "drizzle-kit": "0.28.1",
-    "drizzle-orm": "0.36.3",
+    "drizzle-orm": "0.36.4",
     "jose": "5.9.6",
     "json-refs": "3.0.15",
     "json-schema": "0.4.0",
