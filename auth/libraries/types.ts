@@ -2,9 +2,23 @@ import type { TypeOf, ZodTypeAny } from "zod";
 
 /*
  |--------------------------------------------------------------------------------
+ | Session
+ |--------------------------------------------------------------------------------
+ */
+
+export type Session = Record<string, unknown>;
+
+/*
+ |--------------------------------------------------------------------------------
  | Roles
  |--------------------------------------------------------------------------------
  */
+
+export type Role<TPermissions extends Permissions> = {
+  id: string;
+  name: string;
+  permissions: RolePermissions<TPermissions>;
+};
 
 /**
  * Role permissions creates a map of resource action values. Mapping conditional
@@ -39,14 +53,14 @@ export type RolePermissions<TPermissions extends Permissions> = Partial<
   }
 >;
 
-export type RoleEntityAssignments<TPermissions extends Permissions = Permissions> = Partial<
+export type RoleGrantAssignments<TPermissions extends Permissions = Permissions> = Partial<
   {
-    conditions?: EntityConditions<TPermissions>;
-    filters?: EntityFilters<TPermissions>;
+    conditions?: GrantConditions<TPermissions>;
+    filters?: GrantFilters<TPermissions>;
   }
 >;
 
-export type EntityConditions<TPermissions extends Permissions> = Partial<
+export type GrantConditions<TPermissions extends Permissions> = Partial<
   {
     [TResource in keyof TPermissions]: Partial<
       {
@@ -58,7 +72,7 @@ export type EntityConditions<TPermissions extends Permissions> = Partial<
   }
 >;
 
-export type EntityFilters<TPermissions extends Permissions> = Partial<
+export type GrantFilters<TPermissions extends Permissions> = Partial<
   {
     [TResource in keyof TPermissions]: Partial<
       {
@@ -69,14 +83,12 @@ export type EntityFilters<TPermissions extends Permissions> = Partial<
 >;
 
 export type RolePayload<TPermissions extends Permissions> = {
-  tenantId: string;
   name: string;
   permissions: RolePermissions<TPermissions>;
 };
 
 export type RoleData<TPermissions extends Permissions> = {
   id: string;
-  tenantId: string;
   name: string;
   permissions: RolePermissions<TPermissions>;
 };

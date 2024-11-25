@@ -1,9 +1,8 @@
 {
   "name": "@valkyr/auth",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "exports": {
-    ".": "./mod.ts",
-    "./postgres": "./stores/postgres/auth.ts"
+    ".": "./mod.ts"
   },
   "imports": {
     "~libraries/": "./libraries/",
