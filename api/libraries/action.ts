@@ -17,7 +17,7 @@ export class Action<
     this.#handler = options.handler;
   }
 
-  async handle(context: any) {
+  async handle(context: any): Promise<TOutput | unknown> {
     const result = (await this.#props?.spa(context)) ?? { success: true, data: context };
     if (result.success === false) {
       throw new BadRequestError(
