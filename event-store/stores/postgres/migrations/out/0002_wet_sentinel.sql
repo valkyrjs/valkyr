@@ -1,1 +1,0 @@
-ALTER TABLE "event_store"."relations" ADD CONSTRAINT "relations_key_stream_unique" UNIQUE("key","stream");

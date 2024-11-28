@@ -4,11 +4,10 @@ import { and, eq, gt, inArray, lt, SQL, sql } from "drizzle-orm";
 import type { EventRecord } from "~types/event.ts";
 import type { EventReadOptions } from "~types/event-store.ts";
 
-import type { PostgresDatabase, Transaction as PGTransaction } from "../database.ts";
-import type { PGEventTable } from "../schemas/events.ts";
+import type { EventsTable, PostgresDatabase, Transaction as PGTransaction } from "../schema.ts";
 
 export class EventProvider<TRecord extends EventRecord> {
-  constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: PGEventTable) {}
+  constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: EventsTable) {}
 
   /**
    * Access drizzle query features for event provider.

@@ -1,11 +1,10 @@
 import { takeOne } from "@valkyr/drizzle";
 import { and, eq } from "drizzle-orm";
 
-import type { PostgresDatabase, Transaction as PGTransaction } from "../database.ts";
-import type { PGSnapshotTable, Snapshot } from "../schemas/snapshots.ts";
+import type { PostgresDatabase, Snapshot, SnapshotsTable, Transaction as PGTransaction } from "../schema.ts";
 
 export class SnapshotProvider {
-  constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: PGSnapshotTable) {}
+  constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: SnapshotsTable) {}
 
   /**
    * Access drizzle query features for snapshot provider.

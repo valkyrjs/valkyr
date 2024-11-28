@@ -6,21 +6,7 @@
       "idx": 0,
       "version": "7",
       "when": 1721944831812,
-      "tag": "0000_mysterious_captain_stacy",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1730309267182,
-      "tag": "0001_clean_xavin",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1731357019851,
-      "tag": "0002_wet_sentinel",
+      "tag": "0000_event_store",
       "breakpoints": true
     }
   ]

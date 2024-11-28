@@ -7,11 +7,14 @@
  * ```ts
  * import psql from "postgres";
  *
- * import { PGEventStore } from "@valkyr/event-store/pg";
+ * import { PostgresEventStore } from "@valkyr/event-store/pg";
  * import { z } from "zod";
  *
  * const eventStore = new PGEventStore<MyEvents>({
- *   database: "postgres://{user}:{password}@{url}:{port}/{database}",
+ *   database: {
+ *     schema: "event_store",
+ *     connection: "postgres://{user}:{password}@{url}:{port}/{database}",
+ *   },
  *   events: Set<[
  *     "EventA",
  *     "EventB"
@@ -42,16 +45,10 @@ import type { EventReadOptions, EventsInsertSettings, EventStore, EventStoreHook
 import type { InferReducerState, Reducer, ReducerLeftFold, ReducerState } from "~types/reducer.ts";
 import type { ExcludeEmptyFields } from "~types/utilities.ts";
 
-import { type EventStoreSchema, schema, type Transaction } from "./database.ts";
 import { EventProvider } from "./providers/event.ts";
 import { RelationsProvider } from "./providers/relations.ts";
 import { SnapshotProvider } from "./providers/snapshot.ts";
-import { events } from "./schemas/events.ts";
-import { relations } from "./schemas/relations.ts";
-import { snapshots } from "./schemas/snapshots.ts";
-
-export { migrate } from "./database.ts";
-export { journal } from "./migrations/journal.ts";
+import { type EventStoreSchema, getEventStoreSchema, type Transaction } from "./schema.ts";
 
 /*
  |--------------------------------------------------------------------------------
@@ -75,14 +72,15 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
   readonly snapshots: SnapshotProvider;
 
   constructor(config: Config<TEvent, TRecord>, tx?: Transaction) {
-    this.#database = new PostgresDatabase<EventStoreSchema>(config.database, schema);
+    const schema = getEventStoreSchema(config.database.schema);
+    this.#database = new PostgresDatabase<EventStoreSchema>(config.database.connection, schema);
     this.#events = config.events;
     this.#validators = config.validators;
     this.#snapshot = config.snapshot ?? "manual";
     this.#hooks = config.hooks ?? {};
-    this.relations = new RelationsProvider(tx ?? this.#database, relations);
-    this.events = new EventProvider(tx ?? this.#database, events);
-    this.snapshots = new SnapshotProvider(tx ?? this.#database, snapshots);
+    this.relations = new RelationsProvider(tx ?? this.#database, schema.relations);
+    this.events = new EventProvider(tx ?? this.#database, schema.events);
+    this.snapshots = new SnapshotProvider(tx ?? this.#database, schema.snapshots);
   }
 
   /*
@@ -317,7 +315,10 @@ export class PostgresEventStore<TEvent extends Event, TRecord extends EventRecor
  */
 
 type Config<TEvent extends Event, TRecord extends EventRecord> = {
-  database: PostgresConnection;
+  database: {
+    schema: string;
+    connection: PostgresConnection;
+  };
   events: EventList<TEvent>;
   validators: ValidatorConfig<TEvent>;
   snapshot?: "manual" | "auto";

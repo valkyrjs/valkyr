@@ -3,8 +3,8 @@ import type { PostgresConnection } from "@valkyr/drizzle";
 import { PostgresTestContainer } from "@valkyr/testcontainers/postgres";
 
 import { Projector } from "~libraries/projector.ts";
-import { migrate } from "~stores/postgres/database.ts";
 import { PostgresEventStore } from "~stores/postgres/event-store.ts";
+import { migrate } from "~stores/postgres/migrations/migrate.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 
 import { type Event, type EventRecord, events, validators } from "./mocks/events.ts";
@@ -67,8 +67,8 @@ describe("PostgresEventStore", () => {
  |--------------------------------------------------------------------------------
  */
 
-async function getEventStore(database: PostgresConnection, { hooks = {} }: { hooks?: EventStoreHooks<EventRecord> }) {
-  const store = new PostgresEventStore<Event>({ database, events, validators, hooks });
+async function getEventStore(connection: PostgresConnection, { hooks = {} }: { hooks?: EventStoreHooks<EventRecord> }) {
+  const store = new PostgresEventStore<Event>({ database: { schema: "event_store", connection }, events, validators, hooks });
 
   const projector = new Projector<EventRecord>();
 

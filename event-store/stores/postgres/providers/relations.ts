@@ -2,11 +2,10 @@ import { and, eq, inArray, or } from "drizzle-orm";
 
 import type { Relation, RelationPayload } from "~types/relation.ts";
 
-import type { PostgresDatabase, Transaction as PGTransaction } from "../database.ts";
-import type { PGRelationsTable } from "../schemas/relations.ts";
+import type { PostgresDatabase, RelationsTable, Transaction as PGTransaction } from "../schema.ts";
 
 export class RelationsProvider {
-  constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: PGRelationsTable) {}
+  constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: RelationsTable) {}
 
   /**
    * Access drizzle query features for relations provider.
