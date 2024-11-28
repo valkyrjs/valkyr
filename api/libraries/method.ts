@@ -3,7 +3,7 @@ import type { z, ZodArray, ZodTypeAny } from "zod";
 
 import { dedent } from "~utilities/dedent.ts";
 
-import type { Action, RequestContext } from "./action.ts";
+import { ActionResult, Actions } from "./action.ts";
 
 /*
  |--------------------------------------------------------------------------------
@@ -17,17 +17,16 @@ import type { Action, RequestContext } from "./action.ts";
  */
 
 export class Method<
-  TContext extends RequestContext = RequestContext,
-  TActions extends Action<any>[] = any,
-  TParams extends ZodMethodType = ZodMethodType,
-  TResult extends ZodMethodType | undefined = any,
+  TActions extends Actions | undefined = undefined,
+  TParams extends ZodMethodType | undefined = undefined,
+  TResult extends ZodMethodType | undefined = undefined,
 > {
   readonly description: string;
   readonly notification: boolean;
-  readonly actions: TActions;
+  readonly actions?: TActions;
   readonly params?: ZodTypeAny;
   readonly result?: TResult;
-  readonly handler: MethodHandler<TContext, TActions, TParams, TResult>;
+  readonly handler: MethodHandler<TActions, TParams, TResult>;
   readonly examples?: string[];
 
   #meta?: {
@@ -36,10 +35,10 @@ export class Method<
     location: string[];
   };
 
-  constructor(options: MethodOptions<TContext, TActions, TParams, TResult>) {
+  constructor(options: MethodOptions<TActions, TParams, TResult>) {
     this.description = options.description;
     this.notification = options.notification ?? false;
-    this.actions = options.actions ?? [] as unknown as TActions;
+    this.actions = options.actions;
     this.params = options.params;
     this.result = options.result;
     this.handler = options.handler;
@@ -107,10 +106,9 @@ export class Method<
 export type AnyMethod = Method<any, any, any>;
 
 export type MethodOptions<
-  TContext extends RequestContext = RequestContext,
-  TActions extends Action<any>[] = [],
-  TParams extends ZodMethodType = ZodMethodType,
-  TResult extends ZodMethodType | undefined = any,
+  TActions extends Actions | undefined = undefined,
+  TParams extends ZodMethodType | undefined = undefined,
+  TResult extends ZodMethodType | undefined = undefined,
 > = {
   /**
    * Describes the intent of the methods behavior used by client genreation
@@ -178,7 +176,7 @@ export type MethodOptions<
    *   }
    * });
    */
-  handler: MethodHandler<TContext, TActions, TParams, TResult>;
+  handler: MethodHandler<TActions, TParams, TResult>;
 
   /**
    * Examples for how to call the method.
@@ -187,19 +185,19 @@ export type MethodOptions<
 };
 
 type MethodHandler<
-  TContext extends RequestContext = RequestContext,
-  TActions extends Action<any>[] = [],
+  TActions extends Actions | undefined = undefined,
   TParams extends ZodMethodType | undefined = undefined,
-  TResult extends ZodMethodType | undefined = any,
+  TResult extends ZodMethodType | undefined = undefined,
 > = (
-  context:
-    & TContext
-    & (TParams extends ZodMethodType ? { params: z.infer<TParams> } : object)
-    & (TActions extends [] ? object
-      : {
-        [K in keyof TActions]: TActions[K] extends Action<infer P> ? P : never;
-      }[number]),
+  context: RequestContext<TActions, TParams>,
 ) => TResult extends ZodMethodType ? Promise<z.infer<TResult> | RpcError>
   : Promise<RpcError | void>;
+
+type RequestContext<
+  TActions extends Actions | undefined = undefined,
+  TParams extends ZodMethodType | undefined = undefined,
+> =
+  & (TParams extends ZodMethodType ? { params: z.infer<TParams> } : object)
+  & (TActions extends Actions ? ActionResult<TActions["actions"]> : object);
 
 type ZodMethodType = ZodTypeAny | ZodArray<ZodTypeAny>;

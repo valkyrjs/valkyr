@@ -9,11 +9,10 @@ import {
   type SuccessResponse,
 } from "@valkyr/json-rpc";
 
-import { type RequestContext, response } from "./action.ts";
-import type { Method } from "./method.ts";
+import type { AnyMethod } from "./method.ts";
 
-export class Api<TContext extends RequestContext = RequestContext> {
-  readonly #methods = new Map<string, Method<TContext>>();
+export class Api {
+  readonly #methods = new Map<string, AnyMethod>();
 
   readonly #options: Options;
 
@@ -24,7 +23,7 @@ export class Api<TContext extends RequestContext = RequestContext> {
   /**
    * List of registered API methods in the form of `[name, method]` tuples.
    */
-  get methods(): [string, Method<TContext>][] {
+  get methods(): [string, AnyMethod][] {
     return Array.from(this.#methods.entries());
   }
 
@@ -39,7 +38,7 @@ export class Api<TContext extends RequestContext = RequestContext> {
    *
    * @param method - Method instance.
    */
-  register(method: Method<TContext>): void {
+  register(method: AnyMethod): void {
     this.#methods.set(method.method, method);
   }
 
@@ -54,12 +53,8 @@ export class Api<TContext extends RequestContext = RequestContext> {
    * the result will be `undefined`.
    *
    * @param request - JSON RPC request or notification.
-   * @param context - Request context to be passed to the method handler.
    */
-  async handle(
-    request: RequestCandidate,
-    context: TContext,
-  ): Promise<SuccessResponse | ErrorResponse | undefined> {
+  async handle(request: RequestCandidate): Promise<SuccessResponse | ErrorResponse | undefined> {
     try {
       assertJsonRpcRequest(request);
     } catch (error) {
@@ -96,20 +91,21 @@ export class Api<TContext extends RequestContext = RequestContext> {
       }
     }
 
+    // ### Context
+
+    let context = {
+      request,
+      params,
+    };
+
     // ### Run Actions
 
-    for (const action of method.actions ?? []) {
-      const result = await (action as any)(context, response);
-      if (result.status === "reject") {
-        return {
-          jsonrpc: "2.0",
-          error: result.error,
-          id: (request as any).id ?? null,
-        };
-      }
-      for (const key in result.params) {
-        (request.params as any)[key] = result.params[key];
-      }
+    const props = await method.actions?.run(context);
+    if (props) {
+      context = {
+        ...context,
+        ...props,
+      };
     }
 
     // ### Handle Request
@@ -119,7 +115,7 @@ export class Api<TContext extends RequestContext = RequestContext> {
       try {
         result = {
           jsonrpc: "2.0",
-          result: await method.handler({ params, ...context }),
+          result: await method.handler(context),
           id: request.id,
         };
       } catch (error) {
@@ -133,7 +129,7 @@ export class Api<TContext extends RequestContext = RequestContext> {
       return result;
     }
 
-    method?.handler({ params, ...context });
+    method?.handler(context);
   }
 }
 

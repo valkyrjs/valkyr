@@ -1,29 +1,56 @@
-import type { RpcError } from "@valkyr/json-rpc";
+import { AnyZodObject, TypeOf, ZodTypeAny } from "zod";
 
-/*
- |--------------------------------------------------------------------------------
- | Response
- |--------------------------------------------------------------------------------
- |
- | Simplify the response object by providing a function to create the response
- | format returned as part of request actions.
- |
- */
+import { BadRequestError } from "~libraries/errors.ts";
 
-export const response: ActionResponse = {
-  accept(params = {}) {
-    return {
-      status: "accept",
-      params,
-    };
-  },
-  reject(error) {
-    return {
-      status: "reject",
-      error,
-    };
-  },
-} as const;
+export class Action<
+  TProps extends ZodTypeAny | undefined = undefined,
+  TOutput extends AnyZodObject | undefined = undefined,
+> {
+  readonly name: string;
+
+  #props?: TProps;
+  #handler: ActionHandler<TProps, TOutput>;
+
+  constructor(options: ActionOptions<TProps, TOutput>) {
+    this.name = options.name;
+    this.#props = options.props;
+    this.#handler = options.handler;
+  }
+
+  async handle(context: any) {
+    const result = (await this.#props?.spa(context)) ?? { success: true, data: context };
+    if (result.success === false) {
+      throw new BadRequestError(
+        "Invalid action properties",
+        result.error.flatten().fieldErrors,
+      );
+    }
+    return this.#handler(result.data);
+  }
+}
+
+export class Actions<TActions extends Action<any, any>[] = any> {
+  constructor(readonly actions: TActions) {}
+
+  declare readonly $inferOutput: ActionResult<TActions>;
+
+  /**
+   * Runs through each action that has been registered and returns any combined
+   * output generated.
+   *
+   * @param args - Arguments to pass to the action handlers.
+   */
+  async run(args: any): Promise<ActionResult<TActions>> {
+    let props: any = {};
+    for (const action of this.actions) {
+      const result = await action.handle(args);
+      if (result !== undefined) {
+        props = { ...props, ...(result as any) };
+      }
+    }
+    return props;
+  }
+}
 
 /*
  |--------------------------------------------------------------------------------
@@ -31,46 +58,30 @@ export const response: ActionResponse = {
  |--------------------------------------------------------------------------------
  */
 
-type ActionResponse = {
-  accept(params?: Record<string, unknown>): Accept;
-  reject(error: RpcError): Reject;
+type ActionOptions<
+  TProps extends ZodTypeAny | undefined = undefined,
+  TOutput extends AnyZodObject | undefined = undefined,
+> = {
+  name: string;
+  props?: TProps;
+  output?: TOutput;
+  handler: ActionHandler<TProps, TOutput>;
 };
 
-/**
- * Actions can be added to the actions of a route allowing for middleware like
- * operations before the route handler is executed. An action return an object
- * which extends the incoming parameters with additional data.
- */
-export type Action<P extends Record<string, unknown> = Empty> = (
-  req: Partial<RequestContext>,
-  res: Response<P>,
-) => Promise<Accept<P> | Reject> | (Accept<P> | Reject);
+type ActionHandler<
+  TProps extends ZodTypeAny | undefined = undefined,
+  TOutput extends AnyZodObject | undefined = undefined,
+> = TProps extends ZodTypeAny ? (props: TProps) => TOutput extends AnyZodObject ? Promise<TypeOf<TOutput>>
+    : Promise<void>
+  : () => TOutput extends AnyZodObject ? Promise<TypeOf<TOutput>>
+    : Promise<void>;
 
-/**
- * Request context is passed into every method allowing external implementation
- * to pass in shared context functionality and values.
- */
-export type RequestContext = Record<string, unknown>;
+export type ActionResult<TActions extends Action[]> = UnionToIntersection<GetActionProps<TActions>>;
 
-type Response<P extends Record<string, unknown> = Empty> = P extends Empty ? {
-    accept(): Accept;
-    reject(error: RpcError): Reject;
-  }
-  : {
-    accept(params: P): Accept<P>;
-    reject(error: RpcError): Reject;
-  };
+type GetActionProps<TActions extends Action[]> = TActions[number] extends Action<infer _, infer TOutput> ? TOutput extends AnyZodObject ? TypeOf<TOutput> : object
+  : object;
 
-type Accept<Params extends Record<string, unknown> = Record<string, unknown>> = {
-  status: "accept";
-  params: {
-    [K in keyof Params]: Params[K];
-  };
-};
+export type Empty = Record<string, never>;
 
-type Reject = {
-  status: "reject";
-  error: RpcError;
-};
-
-type Empty = Record<string, never>;
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I extends U) => void ? I
+  : never;
