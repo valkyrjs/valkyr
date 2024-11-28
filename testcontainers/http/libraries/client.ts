@@ -1,3 +1,5 @@
+import { existsSync } from "@std/fs";
+
 import { Request, type RequestMethod } from "./request.ts";
 import type { Response } from "./response.ts";
 
@@ -13,6 +15,10 @@ export class Client {
    */
   get connection(): Promise<Deno.UnixConn> | Promise<Deno.TcpConn> {
     if ("path" in this.options) {
+      const hasDockerSock = existsSync(this.options.path);
+      if (hasDockerSock === false) {
+        throw new Error(`Failed to resolve '${this.options.path}' unix connection path.`);
+      }
       return Deno.connect(this.options);
     }
     return Deno.connect(this.options);
