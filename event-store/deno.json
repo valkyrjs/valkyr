@@ -1,6 +1,6 @@
 {
   "name": "@valkyr/event-store",
-  "version": "1.16.2",
+  "version": "1.16.3",
   "exports": {
     ".": "./mod.ts",
     "./printer": "./printers/printer.ts",
