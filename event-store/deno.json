@@ -1,9 +1,10 @@
 {
   "name": "@valkyr/event-store",
-  "version": "1.16.3",
+  "version": "1.16.4",
   "exports": {
     ".": "./mod.ts",
     "./printer": "./printers/printer.ts",
+    "./postgres/schema": "./stores/postgres/schema.ts",
     "./postgres": "./stores/postgres/event-store.ts",
     "./browser": "./stores/browser/event-store.ts"
   },
