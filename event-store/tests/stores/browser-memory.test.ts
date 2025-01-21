@@ -50,10 +50,11 @@ function getEventStore({ hooks = {} }: { hooks?: EventStoreHooks<EventRecord> })
   if (hooks.onEventsInserted === undefined) {
     store.onEventsInserted(async (records, { batch }) => {
       if (batch !== undefined) {
-        return projector.pushMany(batch, records);
-      }
-      for (const record of records) {
-        await projector.push(record, { hydrated: false, outdated: false });
+        await projector.pushMany(batch, records);
+      } else {
+        for (const record of records) {
+          await projector.push(record, { hydrated: false, outdated: false });
+        }
       }
     });
   }

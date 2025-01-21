@@ -93,10 +93,7 @@ export class Api {
 
     // ### Context
 
-    let context = {
-      request,
-      params,
-    };
+    let context = { request, params };
 
     // ### Run Actions
 
