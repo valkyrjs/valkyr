@@ -1,12 +1,13 @@
 import { takeOne } from "@valkyr/drizzle";
 import { and, eq, gt, inArray, lt, SQL, sql } from "drizzle-orm";
 
-import type { EventRecord } from "~types/event.ts";
+import type { Event, EventToRecord } from "~types/event.ts";
 import type { EventReadOptions } from "~types/event-store.ts";
+import { EventProvider } from "~types/providers/event.ts";
 
 import type { EventsTable, PostgresDatabase, Transaction as PGTransaction } from "../schema.ts";
 
-export class EventProvider<TRecord extends EventRecord> {
+export class PostgresEventProvider<TEvent extends Event> implements EventProvider<TEvent> {
   constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: EventsTable) {}
 
   /**
@@ -22,7 +23,7 @@ export class EventProvider<TRecord extends EventRecord> {
    * @param record - Event record to insert.
    * @param tx     - Transaction to insert the record within. (Optional)
    */
-  async insert(record: TRecord): Promise<void> {
+  async insert(record: EventToRecord<TEvent>): Promise<void> {
     await this.db.insert(this.schema).values(record);
   }
 
@@ -32,7 +33,7 @@ export class EventProvider<TRecord extends EventRecord> {
    * @param records   - Event records to insert.
    * @param batchSize - Batch size for the insert loop.
    */
-  async insertMany(records: TRecord[], batchSize: number = 1_000): Promise<void> {
+  async insertMany(records: EventToRecord<TEvent>[], batchSize: number = 1_000): Promise<void> {
     await this.db.transaction(async (tx) => {
       for (let i = 0; i < records.length; i += batchSize) {
         await tx.insert(this.schema).values(records.slice(i, i + batchSize));
@@ -46,12 +47,12 @@ export class EventProvider<TRecord extends EventRecord> {
    *
    * @param options - Find options.
    */
-  async get(options: EventReadOptions<TRecord> = {}): Promise<TRecord[]> {
+  async get(options: EventReadOptions<TEvent> = {}): Promise<EventToRecord<TEvent>[]> {
     const filters = this.#withFilters(options);
     if (filters.length !== 0) {
-      return await this.db.select().from(this.schema).where(and(...filters)).orderBy(this.schema.created) as TRecord[];
+      return await this.db.select().from(this.schema).where(and(...filters)).orderBy(this.schema.created) as EventToRecord<TEvent>[];
     }
-    return await this.db.select().from(this.schema).orderBy(this.schema.created) as TRecord[];
+    return await this.db.select().from(this.schema).orderBy(this.schema.created) as EventToRecord<TEvent>[];
   }
 
   /**
@@ -60,12 +61,12 @@ export class EventProvider<TRecord extends EventRecord> {
    * @param stream  - Stream to fetch events for.
    * @param options - Read options for modifying the result.
    */
-  async getByStream(stream: string, options: EventReadOptions<TRecord> = {}): Promise<TRecord[]> {
+  async getByStream(stream: string, options: EventReadOptions<TEvent> = {}): Promise<EventToRecord<TEvent>[]> {
     const filters = this.#withFilters(options, [eq(this.schema.stream, stream)]);
     if (filters.length > 1) {
-      return await this.db.select().from(this.schema).where(and(...filters)).orderBy(this.schema.created) as TRecord[];
+      return await this.db.select().from(this.schema).where(and(...filters)).orderBy(this.schema.created) as EventToRecord<TEvent>[];
     }
-    return await this.db.select().from(this.schema).where(filters[0]).orderBy(this.schema.created) as TRecord[];
+    return await this.db.select().from(this.schema).where(filters[0]).orderBy(this.schema.created) as EventToRecord<TEvent>[];
   }
 
   /**
@@ -74,12 +75,12 @@ export class EventProvider<TRecord extends EventRecord> {
    * @param streams - Stream to get events for.
    * @param options - Read options for modifying the result.
    */
-  async getByStreams(streams: string[], options: EventReadOptions<TRecord> = {}): Promise<TRecord[]> {
+  async getByStreams(streams: string[], options: EventReadOptions<TEvent> = {}): Promise<EventToRecord<TEvent>[]> {
     const filters = this.#withFilters(options, [inArray(this.schema.stream, streams)]);
     if (filters.length > 1) {
-      return await this.db.select().from(this.schema).where(and(...filters)).orderBy(this.schema.created) as TRecord[];
+      return await this.db.select().from(this.schema).where(and(...filters)).orderBy(this.schema.created) as EventToRecord<TEvent>[];
     }
-    return await this.db.select().from(this.schema).where(filters[0]).orderBy(this.schema.created) as TRecord[];
+    return await this.db.select().from(this.schema).where(filters[0]).orderBy(this.schema.created) as EventToRecord<TEvent>[];
   }
 
   /**
@@ -87,14 +88,14 @@ export class EventProvider<TRecord extends EventRecord> {
    *
    * @param id - Event id.
    */
-  async getById(id: string): Promise<TRecord | undefined> {
-    return await this.db.select().from(this.schema).where(eq(this.schema.id, id)).then(takeOne) as TRecord | undefined;
+  async getById(id: string): Promise<EventToRecord<TEvent> | undefined> {
+    return await this.db.select().from(this.schema).where(eq(this.schema.id, id)).then(takeOne) as EventToRecord<TEvent> | undefined;
   }
 
   /**
    * Check if the given event is outdated in relation to the local event data.
    */
-  async checkOutdated({ stream, type, created }: TRecord): Promise<boolean> {
+  async checkOutdated({ stream, type, created }: EventToRecord<TEvent>): Promise<boolean> {
     const { count } = await this.db.select({ count: sql<number>`count(*)` }).from(this.schema).where(and(
       eq(this.schema.stream, stream),
       eq(this.schema.type, type),
@@ -109,7 +110,7 @@ export class EventProvider<TRecord extends EventRecord> {
    |--------------------------------------------------------------------------------
    */
 
-  #withFilters<TRecord extends EventRecord>({ filter, cursor, direction }: EventReadOptions<TRecord>, filters: SQL<unknown>[] = []) {
+  #withFilters({ filter, cursor, direction }: EventReadOptions<TEvent>, filters: SQL<unknown>[] = []) {
     if (filter?.types !== undefined) {
       filters.push(this.#withTypes(filter.types));
     }

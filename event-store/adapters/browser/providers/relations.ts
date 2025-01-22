@@ -1,10 +1,11 @@
 import type { Collection } from "@valkyr/db";
 
+import { RelationsProvider } from "~types/providers/relations.ts";
 import type { Relation as Operation, RelationPayload } from "~types/relation.ts";
 
 import type { Relation } from "../database.ts";
 
-export class RelationsProvider {
+export class BrowserRelationsProvider implements RelationsProvider {
   constructor(readonly relations: Collection<Relation>) {}
 
   /**

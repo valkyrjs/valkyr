@@ -14,7 +14,7 @@ export type EventToRecord<TEvent> = TEvent extends Event ? EventRecord<TEvent> :
 /**
  * Event that has been persisted to a event store solution.
  */
-export type EventRecord<TEvent extends Event = Event> = {
+export type EventRecord<TEvent extends Event = any> = {
   /**
    * A unique event identifier.
    */

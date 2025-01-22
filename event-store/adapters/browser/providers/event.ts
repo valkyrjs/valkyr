@@ -1,10 +1,11 @@
 import type { Collection } from "@valkyr/db";
 
-import type { EventRecord } from "~types/event.ts";
+import type { Event, EventToRecord } from "~types/event.ts";
 import type { EventReadOptions } from "~types/event-store.ts";
+import { EventProvider } from "~types/providers/event.ts";
 
-export class EventProvider<TRecord extends EventRecord> {
-  constructor(readonly events: Collection<EventRecord>) {}
+export class BrowserEventProvider<const TEvent extends Event> implements EventProvider<TEvent> {
+  constructor(readonly events: Collection<EventToRecord<TEvent>>) {}
 
   /**
    * Insert a new event record to the events table.
@@ -12,7 +13,7 @@ export class EventProvider<TRecord extends EventRecord> {
    * @param record - Event record to insert.
    * @param tx     - Transaction to insert the record within. (Optional)
    */
-  async insert(record: TRecord): Promise<void> {
+  async insert(record: EventToRecord<TEvent>): Promise<void> {
     await this.events.insertOne(record);
   }
 
@@ -22,7 +23,7 @@ export class EventProvider<TRecord extends EventRecord> {
    * @param records   - Event records to insert.
    * @param batchSize - Batch size for the insert loop.
    */
-  async insertMany(records: TRecord[], batchSize: number = 1_000): Promise<void> {
+  async insertMany(records: EventToRecord<TEvent>[], batchSize: number = 1_000): Promise<void> {
     for (let i = 0; i < records.length; i += batchSize) {
       await this.events.insertMany(records.slice(i, i + batchSize));
     }
@@ -34,7 +35,7 @@ export class EventProvider<TRecord extends EventRecord> {
    *
    * @param options - Find options.
    */
-  async get({ filter, cursor, direction }: EventReadOptions<TRecord> = {}): Promise<TRecord[]> {
+  async get({ filter, cursor, direction }: EventReadOptions<EventToRecord<TEvent>> = {}): Promise<EventToRecord<TEvent>[]> {
     const query: any = {};
     if (filter?.types !== undefined) {
       withTypes(query, filter.types);
@@ -42,7 +43,7 @@ export class EventProvider<TRecord extends EventRecord> {
     if (cursor !== undefined) {
       withCursor(query, cursor, direction);
     }
-    return await this.events.find(query, { sort: { created: 1 } }) as TRecord[];
+    return await this.events.find(query, { sort: { created: 1 } }) as EventToRecord<TEvent>[];
   }
 
   /**
@@ -51,7 +52,7 @@ export class EventProvider<TRecord extends EventRecord> {
    * @param stream  - Stream to fetch events for.
    * @param options - Read options for modifying the result.
    */
-  async getByStream(stream: string, { filter, cursor, direction }: EventReadOptions<TRecord> = {}): Promise<TRecord[]> {
+  async getByStream(stream: string, { filter, cursor, direction }: EventReadOptions<EventToRecord<TEvent>> = {}): Promise<EventToRecord<TEvent>[]> {
     const query: any = { stream };
     if (filter?.types !== undefined) {
       withTypes(query, filter.types);
@@ -59,7 +60,7 @@ export class EventProvider<TRecord extends EventRecord> {
     if (cursor !== undefined) {
       withCursor(query, cursor, direction);
     }
-    return await this.events.find(query, { sort: { created: 1 } }) as TRecord[];
+    return await this.events.find(query, { sort: { created: 1 } }) as EventToRecord<TEvent>[];
   }
 
   /**
@@ -67,7 +68,7 @@ export class EventProvider<TRecord extends EventRecord> {
    *
    * @param streams - Stream to get events for.
    */
-  async getByStreams(streams: string[], { filter, cursor, direction }: EventReadOptions<TRecord> = {}): Promise<TRecord[]> {
+  async getByStreams(streams: string[], { filter, cursor, direction }: EventReadOptions<EventToRecord<TEvent>> = {}): Promise<EventToRecord<TEvent>[]> {
     const query: any = { stream: { $in: streams } };
     if (filter?.types !== undefined) {
       withTypes(query, filter.types);
@@ -75,7 +76,7 @@ export class EventProvider<TRecord extends EventRecord> {
     if (cursor !== undefined) {
       withCursor(query, cursor, direction ?? "asc");
     }
-    return await this.events.find(query, { sort: { created: 1 } }) as TRecord[];
+    return await this.events.find(query, { sort: { created: 1 } }) as EventToRecord<TEvent>[];
   }
 
   /**
@@ -83,21 +84,21 @@ export class EventProvider<TRecord extends EventRecord> {
    *
    * @param id - Event id.
    */
-  async getById(id: string): Promise<TRecord | undefined> {
-    return await this.events.findById(id) as TRecord | undefined;
+  async getById(id: string): Promise<EventToRecord<TEvent> | undefined> {
+    return await this.events.findById(id) satisfies EventToRecord<TEvent> | undefined;
   }
 
   /**
    * Check if the given event is outdated in relation to the local event data.
    */
-  async checkOutdated({ stream, type, created }: TRecord): Promise<boolean> {
+  async checkOutdated({ stream, type, created }: EventToRecord<TEvent>): Promise<boolean> {
     const count = await this.events.count({
       stream,
       type,
       created: {
         $gt: created,
       },
-    });
+    } as any);
     return count > 0;
   }
 }

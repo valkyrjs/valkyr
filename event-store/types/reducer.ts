@@ -1,11 +1,10 @@
 import type { AggregateRoot } from "~libraries/aggregate.ts";
 import type { Unknown } from "~types/common.ts";
-
-import type { EventRecord } from "./event.ts";
+import type { Event, EventToRecord } from "~types/event.ts";
 
 export type Reducer<
-  TRecord extends EventRecord = any,
-  TState extends (Record<string, unknown> | AggregateRoot<TRecord>) = any,
+  TEvent extends Event = any,
+  TState extends (Record<string, unknown> | AggregateRoot<TEvent>) = any,
 > = {
   /**
    * Return result directly from a snapshot that does not have any subsequent
@@ -21,7 +20,7 @@ export type Reducer<
    * @param events   - Events to reduce.
    * @param snapshot - Initial snapshot state to apply to the reducer.
    */
-  reduce(events: TRecord[], snapshot?: Unknown): TState;
+  reduce(events: EventToRecord<TEvent>[], snapshot?: Unknown): TState;
 };
 
 /**
@@ -41,9 +40,9 @@ export type Reducer<
  * })
  * ```
  */
-export type ReducerLeftFold<TState extends Record<string, unknown> = any, TRecord extends EventRecord = any> = (
+export type ReducerLeftFold<TState extends Record<string, unknown> = any, TEvent extends Event = any> = (
   state: TState,
-  event: TRecord,
+  event: EventToRecord<TEvent>,
 ) => TState;
 
 export type ReducerState<TState extends Unknown> = () => TState;

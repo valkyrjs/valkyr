@@ -1,17 +1,9 @@
-import { takeOne } from "@valkyr/drizzle";
-import { and, eq } from "drizzle-orm";
+import type { Collection } from "@valkyr/db";
 
-import type { PostgresDatabase, Snapshot, SnapshotsTable, Transaction as PGTransaction } from "../schema.ts";
+import { Snapshot, SnapshotProvider } from "~types/providers/snapshot.ts";
 
-export class SnapshotProvider {
-  constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: SnapshotsTable) {}
-
-  /**
-   * Access drizzle query features for snapshot provider.
-   */
-  get query(): this["db"]["query"] {
-    return this.db.query;
-  }
+export class BrowserSnapshotProvider implements SnapshotProvider {
+  constructor(readonly snapshots: Collection<Snapshot>) {}
 
   /**
    * Add snapshot state under given reducer stream.
@@ -22,7 +14,7 @@ export class SnapshotProvider {
    * @param state  - State of the reduced events.
    */
   async insert(name: string, stream: string, cursor: string, state: Record<string, unknown>): Promise<void> {
-    await this.db.insert(this.schema).values({ name, stream, cursor, state });
+    await this.snapshots.insertOne({ name, stream, cursor, state });
   }
 
   /**
@@ -32,7 +24,7 @@ export class SnapshotProvider {
    * @param stream - Stream the state was reduced for.
    */
   async getByStream(name: string, stream: string): Promise<Snapshot | undefined> {
-    return this.db.select().from(this.schema).where(and(eq(this.schema.name, name), eq(this.schema.stream, stream))).then(takeOne);
+    return this.snapshots.findOne({ name, stream });
   }
 
   /**
@@ -42,6 +34,6 @@ export class SnapshotProvider {
    * @param stream - Stream to remove from snapshots.
    */
   async remove(name: string, stream: string): Promise<void> {
-    await this.db.delete(this.schema).where(and(eq(this.schema.name, name), eq(this.schema.stream, stream)));
+    await this.snapshots.remove({ name, stream });
   }
 }

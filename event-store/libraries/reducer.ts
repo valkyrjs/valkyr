@@ -1,6 +1,6 @@
 import type { AggregateRoot } from "~libraries/aggregate.ts";
 import type { Unknown } from "~types/common.ts";
-import type { EventRecord } from "~types/event.ts";
+import type { Event, EventToRecord } from "~types/event.ts";
 import type { Reducer, ReducerLeftFold, ReducerState } from "~types/reducer.ts";
 
 /**
@@ -9,14 +9,14 @@ import type { Reducer, ReducerLeftFold, ReducerState } from "~types/reducer.ts";
  *
  * @param aggregate - Aggregate to instantiate and create an instance of.
  */
-export function makeAggregateReducer<TRecord extends EventRecord, TAggregateRoot extends typeof AggregateRoot<TRecord>>(
+export function makeAggregateReducer<TEvent extends Event, TAggregateRoot extends typeof AggregateRoot<any>>(
   aggregate: TAggregateRoot,
-): Reducer<TRecord, InstanceType<TAggregateRoot>> {
+): Reducer<TEvent, InstanceType<TAggregateRoot>> {
   return {
     from(snapshot: Unknown) {
       return aggregate.from(snapshot);
     },
-    reduce(events: TRecord[], snapshot?: Unknown) {
+    reduce(events: EventToRecord<TEvent>[], snapshot?: Unknown) {
       const instance = aggregate.from(snapshot);
       for (const event of events) {
         instance.with(event);
@@ -32,15 +32,15 @@ export function makeAggregateReducer<TRecord extends EventRecord, TAggregateRoot
  * @param foldFn  - Method which handles the event reduction.
  * @param stateFn - Default state factory.
  */
-export function makeReducer<TRecord extends EventRecord, TState extends Unknown>(
-  foldFn: ReducerLeftFold<TState, TRecord>,
+export function makeReducer<TEvent extends Event, TState extends Unknown>(
+  foldFn: ReducerLeftFold<TState, TEvent>,
   stateFn: ReducerState<TState>,
-): Reducer<TRecord, TState> {
+): Reducer<TEvent, TState> {
   return {
     from(snapshot: TState) {
       return snapshot;
     },
-    reduce(events: TRecord[], snapshot?: TState) {
+    reduce(events: EventToRecord<TEvent>[], snapshot?: TState) {
       return events.reduce(foldFn, snapshot ?? (stateFn() as TState));
     },
   };

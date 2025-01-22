@@ -1,11 +1,13 @@
 import "fake-indexeddb/auto";
 
-import { describe } from "@std/testing/bdd";
+import { delay } from "@std/async";
+import { afterAll, describe } from "@std/testing/bdd";
 
+import { EventStore } from "~libraries/event-store.ts";
 import { Projector } from "~libraries/projector.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 
-import { BrowserEventStore } from "../../stores/browser/event-store.ts";
+import { BrowserEventStoreAdapter } from "../../adapters/browser/adapter.ts";
 import { type Event, type EventRecord, events, validators } from "./mocks/events.ts";
 import testAddEvent from "./store/add-event.ts";
 import testCreateSnapshot from "./store/create-snapshot.ts";
@@ -18,11 +20,21 @@ const eventStoreFn = async (options: { hooks?: EventStoreHooks<EventRecord> } = 
 
 /*
  |--------------------------------------------------------------------------------
+ | Lifecycle
+ |--------------------------------------------------------------------------------
+ */
+
+afterAll(async () => {
+  await delay(250);
+});
+
+/*
+ |--------------------------------------------------------------------------------
  | Tests
  |--------------------------------------------------------------------------------
  */
 
-describe("Browser Event Store (Memory)", () => {
+describe("Browser Event Store (IndexedDB)", () => {
   testAddEvent(eventStoreFn);
   testCreateSnapshot(eventStoreFn);
   testMakeReducer(eventStoreFn);
@@ -38,8 +50,8 @@ describe("Browser Event Store (Memory)", () => {
  */
 
 function getEventStore({ hooks = {} }: { hooks?: EventStoreHooks<EventRecord> }) {
-  const store = new BrowserEventStore<Event>({
-    database: "memorydb",
+  const store = new EventStore<Event>({
+    adapter: new BrowserEventStoreAdapter("indexedb"),
     events,
     validators,
     hooks,

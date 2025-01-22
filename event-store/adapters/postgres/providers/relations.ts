@@ -1,10 +1,11 @@
 import { and, eq, inArray, or } from "drizzle-orm";
 
+import { RelationsProvider } from "~types/providers/relations.ts";
 import type { Relation, RelationPayload } from "~types/relation.ts";
 
 import type { PostgresDatabase, RelationsTable, Transaction as PGTransaction } from "../schema.ts";
 
-export class RelationsProvider {
+export class PostgresRelationsProvider implements RelationsProvider {
   constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: RelationsTable) {}
 
   /**

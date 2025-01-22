@@ -10,11 +10,11 @@ export default describe<Event, EventRecord>(".makeAggregateReducer", (getEventSt
     const { store } = await getEventStore();
 
     const userA = await User
-      .create({ given: "John", family: "Doe" }, "john.doe@fixture.none", store)
+      .create({ given: "John", family: "Doe" }, "john.doe@fixture.none")
       .setGivenName("Jane")
       .commit(store);
 
-    await userA.snapshot();
+    await userA.snapshot(store);
 
     await userA
       .setFamilyName("Smith")
