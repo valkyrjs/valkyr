@@ -2,6 +2,7 @@ import { makeEventRecord } from "~libraries/event.ts";
 import type { EventStore } from "~libraries/event-store.ts";
 import type { Unknown } from "~types/common.ts";
 import type { Event, EventToRecord } from "~types/event.ts";
+import { EventsInsertSettings } from "~types/event-store.ts";
 import { ExcludeEmptyFields } from "~types/utilities.ts";
 
 export abstract class AggregateRoot<const TEvent extends Event> {
@@ -63,10 +64,11 @@ export abstract class AggregateRoot<const TEvent extends Event> {
    * Commits all pending events to the given event store.
    *
    * @param eventStore        - Event store to commit pending events too.
+   * @param settings          - Event insert settings.
    * @param cleanPendingState - Empty the pending event list after event store push.
    */
-  async commit<TEventStore extends EventStore<TEvent>>(eventStore: TEventStore, cleanPendingState = true): Promise<this> {
-    await eventStore.pushManyEvents(this.#pending);
+  async commit<TEventStore extends EventStore<TEvent>>(eventStore: TEventStore, settings?: EventsInsertSettings, cleanPendingState = true): Promise<this> {
+    await eventStore.pushManyEvents(this.#pending, settings);
     if (cleanPendingState === true) {
       this.#pending = [];
     }
