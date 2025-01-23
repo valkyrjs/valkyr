@@ -6,7 +6,7 @@ import { EventStore } from "~libraries/event-store.ts";
 import { Projector } from "~libraries/projector.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 
-import { PostgresEventStoreAdapter } from "../../adapters/postgres/adapter.ts";
+import { makePostgresEventStore } from "../../adapters/postgres/adapter.ts";
 import { migrate } from "../../adapters/postgres/migrations/migrate.ts";
 import { type Event, type EventRecord, events, validators } from "./mocks/events.ts";
 import testAddEvent from "./store/add-event.ts";
@@ -69,7 +69,13 @@ describe("PostgresEventStore", () => {
  */
 
 async function getEventStore(connection: PostgresConnection, { hooks = {} }: { hooks?: EventStoreHooks<EventRecord> }) {
-  const store = new EventStore<Event>({ adapter: new PostgresEventStoreAdapter(connection, "event_store"), events, validators, hooks });
+  const store = makePostgresEventStore<Event>({
+    connection,
+    schema: "event_store",
+    events,
+    validators,
+    hooks,
+  });
 
   const projector = new Projector<EventRecord>();
 

@@ -4,7 +4,7 @@ import type { EventRecord } from "~types/event.ts";
 
 export function getEventStoreDatabase(name: string, adapter: Adapter): EventStoreDB {
   switch (adapter) {
-    case "indexedb": {
+    case "indexeddb": {
       return new IndexedDatabase<Collections>({
         name,
         version: 1,
@@ -56,7 +56,7 @@ export function getEventStoreDatabase(name: string, adapter: Adapter): EventStor
 
 export type EventStoreDB = IndexedDatabase<Collections> | MemoryDatabase<Collections>;
 
-export type Adapter = "indexedb" | "memorydb";
+export type Adapter = "indexeddb" | "memorydb";
 
 export type Collections = {
   events: EventRecord;

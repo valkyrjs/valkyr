@@ -1,11 +1,11 @@
 import { takeOne } from "@valkyr/drizzle";
 import { and, eq } from "drizzle-orm";
 
-import { SnapshotProvider } from "~types/providers/snapshot.ts";
+import { SnapshotsProvider } from "~types/providers/snapshots.ts";
 
 import type { PostgresDatabase, Snapshot, SnapshotsTable, Transaction as PGTransaction } from "../schema.ts";
 
-export class PostgresSnapshotProvider implements SnapshotProvider {
+export class PostgresSnapshotsProvider implements SnapshotsProvider {
   constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: SnapshotsTable) {}
 
   /**

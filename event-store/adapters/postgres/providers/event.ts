@@ -3,11 +3,11 @@ import { and, eq, gt, inArray, lt, SQL, sql } from "drizzle-orm";
 
 import type { Event, EventToRecord } from "~types/event.ts";
 import type { EventReadOptions } from "~types/event-store.ts";
-import { EventProvider } from "~types/providers/event.ts";
+import { EventsProvider } from "~types/providers/events.ts";
 
 import type { EventsTable, PostgresDatabase, Transaction as PGTransaction } from "../schema.ts";
 
-export class PostgresEventProvider<TEvent extends Event> implements EventProvider<TEvent> {
+export class PostgresEventsProvider<TEvent extends Event> implements EventsProvider<TEvent> {
   constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: EventsTable) {}
 
   /**

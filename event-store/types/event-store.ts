@@ -1,13 +1,13 @@
 import type { AnyZodObject } from "zod";
 
 import type { Event, EventToRecord } from "./event.ts";
-import { EventProvider } from "./providers/event.ts";
+import { EventsProvider } from "./providers/events.ts";
 import { RelationsProvider } from "./providers/relations.ts";
-import { SnapshotProvider } from "./providers/snapshot.ts";
+import { SnapshotsProvider } from "./providers/snapshots.ts";
 import type { Reducer } from "./reducer.ts";
 
-export type EventStoreConfig<TEvent extends Event> = {
-  adapter: EventStoreAdapter<TEvent>;
+export type EventStoreConfig<TEvent extends Event, TEventStoreAdapter extends EventStoreAdapter<TEvent>> = {
+  adapter: TEventStoreAdapter;
   events: EventList<TEvent>;
   validators: ValidatorConfig<TEvent>;
   snapshot?: "manual" | "auto";
@@ -15,10 +15,10 @@ export type EventStoreConfig<TEvent extends Event> = {
 };
 
 export type EventStoreAdapter<TEvent extends Event> = {
-  providers: {
-    event: EventProvider<TEvent>;
-    relations: RelationsProvider;
-    snapshot: SnapshotProvider;
+  readonly providers: {
+    readonly events: EventsProvider<TEvent>;
+    readonly relations: RelationsProvider;
+    readonly snapshots: SnapshotsProvider;
   };
 };
 

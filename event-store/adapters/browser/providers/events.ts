@@ -2,9 +2,9 @@ import type { Collection } from "@valkyr/db";
 
 import type { Event, EventToRecord } from "~types/event.ts";
 import type { EventReadOptions } from "~types/event-store.ts";
-import { EventProvider } from "~types/providers/event.ts";
+import { EventsProvider } from "~types/providers/events.ts";
 
-export class BrowserEventProvider<const TEvent extends Event> implements EventProvider<TEvent> {
+export class BrowserEventsProvider<const TEvent extends Event> implements EventsProvider<TEvent> {
   constructor(readonly events: Collection<EventToRecord<TEvent>>) {}
 
   /**

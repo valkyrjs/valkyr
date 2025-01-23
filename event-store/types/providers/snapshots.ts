@@ -1,10 +1,4 @@
-import type { Collection } from "@valkyr/db";
-
-import { Snapshot, SnapshotProvider } from "~types/providers/snapshot.ts";
-
-export class BrowserSnapshotProvider implements SnapshotProvider {
-  constructor(readonly snapshots: Collection<Snapshot>) {}
-
+export type SnapshotsProvider = {
   /**
    * Add snapshot state under given reducer stream.
    *
@@ -13,9 +7,7 @@ export class BrowserSnapshotProvider implements SnapshotProvider {
    * @param cursor - Cursor timestamp for the last event used in the snapshot.
    * @param state  - State of the reduced events.
    */
-  async insert(name: string, stream: string, cursor: string, state: Record<string, unknown>): Promise<void> {
-    await this.snapshots.insertOne({ name, stream, cursor, state });
-  }
+  insert(name: string, stream: string, cursor: string, state: Record<string, unknown>): Promise<void>;
 
   /**
    * Get snapshot state by stream.
@@ -23,9 +15,7 @@ export class BrowserSnapshotProvider implements SnapshotProvider {
    * @param name   - Name of the reducer which the state was created.
    * @param stream - Stream the state was reduced for.
    */
-  async getByStream(name: string, stream: string): Promise<Snapshot | undefined> {
-    return this.snapshots.findOne({ name, stream });
-  }
+  getByStream(name: string, stream: string): Promise<Snapshot | undefined>;
 
   /**
    * Removes a snapshot for the given reducer stream.
@@ -33,7 +23,13 @@ export class BrowserSnapshotProvider implements SnapshotProvider {
    * @param name   - Name of the reducer the snapshot is attached to.
    * @param stream - Stream to remove from snapshots.
    */
-  async remove(name: string, stream: string): Promise<void> {
-    await this.snapshots.remove({ name, stream });
-  }
-}
+  remove(name: string, stream: string): Promise<void>;
+};
+
+export type Snapshot = {
+  id: number;
+  stream: string;
+  name: string;
+  cursor: string;
+  state: Record<string, unknown>;
+};

@@ -1,25 +1,48 @@
 import { type PostgresConnection, PostgresDatabase } from "@valkyr/drizzle";
 
-import { Event } from "~types/event.ts";
-import { EventStoreAdapter } from "~types/event-store.ts";
+import type { Event } from "~types/event.ts";
+import type { EventStoreAdapter, EventStoreConfig } from "~types/event-store.ts";
 
-import { PostgresEventProvider } from "./providers/event.ts";
+import { PostgresEventsProvider } from "./providers/event.ts";
 import { PostgresRelationsProvider } from "./providers/relations.ts";
-import { PostgresSnapshotProvider } from "./providers/snapshot.ts";
+import { PostgresSnapshotsProvider } from "./providers/snapshot.ts";
 import { EventStoreSchema, getEventStoreSchema } from "./schema.ts";
+import { EventStore } from "~libraries/event-store.ts";
 
-export class PostgresEventStoreAdapter<TEvent extends Event> implements EventStoreAdapter<TEvent> {
+export class PostgresAdapter<const TEvent extends Event> implements EventStoreAdapter<TEvent> {
+  readonly providers: {
+    readonly events: PostgresEventsProvider<TEvent>;
+    readonly relations: PostgresRelationsProvider;
+    readonly snapshots: PostgresSnapshotsProvider;
+  };
+
   #database: PostgresDatabase<EventStoreSchema>;
-
-  providers: EventStoreAdapter<TEvent>["providers"];
 
   constructor(readonly connection: PostgresConnection, readonly schemaKey: string) {
     const schema = getEventStoreSchema(schemaKey);
     this.#database = new PostgresDatabase<EventStoreSchema>(connection, schema);
     this.providers = {
-      event: new PostgresEventProvider(this.#database, schema.events),
+      events: new PostgresEventsProvider<TEvent>(this.#database, schema.events),
       relations: new PostgresRelationsProvider(this.#database, schema.relations),
-      snapshot: new PostgresSnapshotProvider(this.#database, schema.snapshots),
+      snapshots: new PostgresSnapshotsProvider(this.#database, schema.snapshots),
     };
   }
+}
+
+/**
+ * Create a new postgres supported event store.
+ *
+ * @param config - Event store config.
+ */
+export function makePostgresEventStore<const TEvent extends Event>(
+  { connection, schema, events, validators, hooks }:
+    & { connection: PostgresConnection; schema: string }
+    & Omit<EventStoreConfig<TEvent, PostgresAdapter<TEvent>>, "adapter">,
+): EventStore<TEvent, PostgresAdapter<TEvent>> {
+  return new EventStore<TEvent, PostgresAdapter<TEvent>>({
+    adapter: new PostgresAdapter(connection, schema),
+    events,
+    validators,
+    hooks,
+  });
 }

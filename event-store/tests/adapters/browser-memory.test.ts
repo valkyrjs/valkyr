@@ -2,11 +2,10 @@ import "fake-indexeddb/auto";
 
 import { describe } from "@std/testing/bdd";
 
-import { EventStore } from "~libraries/event-store.ts";
 import { Projector } from "~libraries/projector.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 
-import { BrowserEventStoreAdapter } from "../../adapters/browser/adapter.ts";
+import { makeBrowserEventStore } from "../../adapters/browser/adapter.ts";
 import { type Event, type EventRecord, events, validators } from "./mocks/events.ts";
 import testAddEvent from "./store/add-event.ts";
 import testCreateSnapshot from "./store/create-snapshot.ts";
@@ -39,8 +38,8 @@ describe("Browser Event Store (Memory)", () => {
  */
 
 function getEventStore({ hooks = {} }: { hooks?: EventStoreHooks<EventRecord> }) {
-  const store = new EventStore<Event>({
-    adapter: new BrowserEventStoreAdapter("memorydb"),
+  const store = makeBrowserEventStore<Event>({
+    database: "memorydb",
     events,
     validators,
     hooks,

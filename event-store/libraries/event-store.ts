@@ -52,12 +52,8 @@ import type {
   ReduceQuery,
   ValidatorConfig,
 } from "~types/event-store.ts";
-import { EventProvider } from "~types/providers/event.ts";
-import { SnapshotProvider } from "~types/providers/snapshot.ts";
 import type { InferReducerState, Reducer, ReducerLeftFold, ReducerState } from "~types/reducer.ts";
 import type { ExcludeEmptyFields } from "~types/utilities.ts";
-
-import { RelationsProvider } from "../types/providers/relations.ts";
 
 /*
  |--------------------------------------------------------------------------------
@@ -66,17 +62,17 @@ import { RelationsProvider } from "../types/providers/relations.ts";
  */
 
 /**
- * Provides a solution to easily validate, generate, and project events to a
- * postgres database.
+ * Provides a common interface to interact with a event storage solution. Its built
+ * on an adapter pattern to allow for multiple different storage drivers.
  */
-export class EventStore<const TEvent extends Event> {
-  readonly #adapter: EventStoreAdapter<TEvent>;
+export class EventStore<const TEvent extends Event, TEventStoreAdapter extends EventStoreAdapter<TEvent> = EventStoreAdapter<TEvent>> {
+  readonly #adapter: TEventStoreAdapter;
   readonly #events: EventList<TEvent>;
   readonly #validators: ValidatorConfig<TEvent>;
   readonly #snapshot: "manual" | "auto";
   readonly #hooks: EventStoreHooks<TEvent>;
 
-  constructor(config: EventStoreConfig<TEvent>) {
+  constructor(config: EventStoreConfig<TEvent, TEventStoreAdapter>) {
     this.#adapter = config.adapter;
     this.#events = config.events;
     this.#validators = config.validators;
@@ -94,16 +90,16 @@ export class EventStore<const TEvent extends Event> {
     return Array.from(this.#events);
   }
 
-  get events(): EventProvider<TEvent> {
-    return this.#adapter.providers.event;
+  get events(): TEventStoreAdapter["providers"]["events"] {
+    return this.#adapter.providers.events;
   }
 
-  get relations(): RelationsProvider {
+  get relations(): TEventStoreAdapter["providers"]["relations"] {
     return this.#adapter.providers.relations;
   }
 
-  get snapshots(): SnapshotProvider {
-    return this.#adapter.providers.snapshot;
+  get snapshots(): TEventStoreAdapter["providers"]["snapshots"] {
+    return this.#adapter.providers.snapshots;
   }
 
   /*

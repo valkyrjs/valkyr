@@ -1,25 +1,27 @@
-import z, { type AnyZodObject } from "zod";
+// This is an auto generated file. Do not modify this file!
+// deno-fmt-ignore-file
 
-import type { Empty } from "~types/common.ts";
-import type { Event as TEvent, EventToRecord } from "~types/event.ts";
+import { type Empty, type Event as TEvent, type EventToRecord } from "@valkyr/event-store";
+import { type AnyZodObject, z } from "zod";
 
-export const events = new Set(
-  [
-    "post:created",
-    "post:removed",
-    "user:activated",
-    "user:created",
-    "user:deactivated",
-    "user:email-set",
-    "user:meta-added",
-    "user:name:family-set",
-    "user:name:given-set",
-  ] as const,
-);
+export const events = new Set([
+  "post:created",
+  "post:removed",
+  "user:activated",
+  "user:created",
+  "user:deactivated",
+  "user:email-set",
+  "user:meta-added",
+  "user:name:family-set",
+  "user:name:given-set",
+] as const);
 
 export const validators = {
   data: new Map<Event["type"], AnyZodObject>([
-    ["post:created", z.object({ title: z.string(), body: z.string() }).strict()],
+    [
+      "post:created",
+      z.object({ title: z.string(), body: z.string(), comments: z.array(z.any()), modules: z.array(z.any()) }).strict(),
+    ],
     [
       "user:created",
       z
@@ -54,7 +56,11 @@ export type Event =
   | UserNameFamilySet
   | UserNameGivenSet;
 
-export type PostCreated = TEvent<"post:created", { title: string; body: string }, { auditor: string }>;
+export type PostCreated = TEvent<
+  "post:created",
+  { title: string; body: string; comments: Comment[]; modules: Module[] },
+  { auditor: string }
+>;
 
 export type PostRemoved = TEvent<"post:removed", Empty, Empty>;
 
@@ -75,3 +81,7 @@ export type UserMetaAdded = TEvent<"user:meta-added", { meta: any }, Empty>;
 export type UserNameFamilySet = TEvent<"user:name:family-set", { family: string }, Empty>;
 
 export type UserNameGivenSet = TEvent<"user:name:given-set", { given: string }, Empty>;
+
+export type Comment = { body: string; children: Comment[] };
+
+export type Module = "comments" | "likes" | "count";

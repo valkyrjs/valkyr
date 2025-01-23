@@ -3,11 +3,10 @@ import "fake-indexeddb/auto";
 import { delay } from "@std/async";
 import { afterAll, describe } from "@std/testing/bdd";
 
-import { EventStore } from "~libraries/event-store.ts";
 import { Projector } from "~libraries/projector.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 
-import { BrowserEventStoreAdapter } from "../../adapters/browser/adapter.ts";
+import { makeBrowserEventStore } from "../../adapters/browser/adapter.ts";
 import { type Event, type EventRecord, events, validators } from "./mocks/events.ts";
 import testAddEvent from "./store/add-event.ts";
 import testCreateSnapshot from "./store/create-snapshot.ts";
@@ -50,8 +49,8 @@ describe("Browser Event Store (IndexedDB)", () => {
  */
 
 function getEventStore({ hooks = {} }: { hooks?: EventStoreHooks<EventRecord> }) {
-  const store = new EventStore<Event>({
-    adapter: new BrowserEventStoreAdapter("indexedb"),
+  const store = makeBrowserEventStore<Event>({
+    database: "indexeddb",
     events,
     validators,
     hooks,

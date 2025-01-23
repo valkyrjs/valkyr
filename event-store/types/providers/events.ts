@@ -1,7 +1,7 @@
 import type { Event, EventToRecord } from "../event.ts";
 import type { EventReadOptions } from "../event-store.ts";
 
-export type EventProvider<TEvent extends Event> = {
+export type EventsProvider<TEvent extends Event> = {
   /**
    * Insert a new event record to the events table.
    *
