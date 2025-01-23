@@ -1,5 +1,6 @@
 import { type PostgresConnection, PostgresDatabase } from "@valkyr/drizzle";
 
+import { EventStore } from "~libraries/event-store.ts";
 import type { Event } from "~types/event.ts";
 import type { EventStoreAdapter, EventStoreConfig } from "~types/event-store.ts";
 
@@ -7,7 +8,6 @@ import { PostgresEventsProvider } from "./providers/event.ts";
 import { PostgresRelationsProvider } from "./providers/relations.ts";
 import { PostgresSnapshotsProvider } from "./providers/snapshot.ts";
 import { EventStoreSchema, getEventStoreSchema } from "./schema.ts";
-import { EventStore } from "~libraries/event-store.ts";
 
 export class PostgresAdapter<const TEvent extends Event> implements EventStoreAdapter<TEvent> {
   readonly providers: {

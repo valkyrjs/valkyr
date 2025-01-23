@@ -2,7 +2,6 @@ import { afterAll, afterEach, beforeAll, describe } from "@std/testing/bdd";
 import type { PostgresConnection } from "@valkyr/drizzle";
 import { PostgresTestContainer } from "@valkyr/testcontainers/postgres";
 
-import { EventStore } from "~libraries/event-store.ts";
 import { Projector } from "~libraries/projector.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 

@@ -1,5 +1,6 @@
 import type { IndexedDatabase } from "@valkyr/db";
 
+import { EventStore } from "~libraries/event-store.ts";
 import { Event } from "~types/event.ts";
 import { EventStoreAdapter, EventStoreConfig } from "~types/event-store.ts";
 
@@ -7,7 +8,6 @@ import { Adapter, Collections, getEventStoreDatabase } from "./database.ts";
 import { BrowserEventsProvider } from "./providers/events.ts";
 import { BrowserRelationsProvider } from "./providers/relations.ts";
 import { BrowserSnapshotsProvider } from "./providers/snapshots.ts";
-import { EventStore } from "~libraries/event-store.ts";
 
 export class BrowserAdapter<TEvent extends Event> implements EventStoreAdapter<TEvent> {
   readonly #database: IndexedDatabase<Collections>;
