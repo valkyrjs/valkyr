@@ -74,4 +74,13 @@ export abstract class AggregateRoot<const TEvent extends Event> {
     }
     return this;
   }
+
+  /**
+   * Returns the aggregate pending event record list. This allows for
+   * extraction of the pending commit list so that it can be used in
+   * event submission across multiple aggregates.
+   */
+  toPending(): EventToRecord<TEvent>[] {
+    return this.#pending;
+  }
 }
