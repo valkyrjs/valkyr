@@ -1,6 +1,6 @@
 import { toPascalCase } from "@std/text";
 
-import type { Config } from "./asserts/events.ts";
+import type { EventSchema } from "./asserts/events.ts";
 import { jsonSchema } from "./utilities/json-schema.ts";
 
 /**
@@ -8,7 +8,7 @@ import { jsonSchema } from "./utilities/json-schema.ts";
  *
  * @param event - Event to print.
  */
-export function getEventType(event: Config["event"]) {
+export function getEventType(event: EventSchema) {
   let data = "Empty";
   if (event.data !== undefined && Object.keys(event.data).length > 0) {
     data = jsonSchema.compile({

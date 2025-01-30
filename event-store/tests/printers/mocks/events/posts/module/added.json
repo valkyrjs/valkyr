@@ -1,8 +1,8 @@
 {
-  "type": "user:email-set",
+  "type": "post:module:added",
   "data": {
-    "email": {
-      "type": "string"
+    "type": {
+      "$ref": "#/definitions/ModuleType"
     }
   },
   "meta": {

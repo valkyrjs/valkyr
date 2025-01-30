@@ -1,0 +1,10 @@
+{
+  "CommentType": {
+    "type": "string",
+    "enum": ["origin", "reply"]
+  },
+  "ModuleType": {
+    "type": "string",
+    "enum": ["comments", "likes", "count"]
+  }
+}

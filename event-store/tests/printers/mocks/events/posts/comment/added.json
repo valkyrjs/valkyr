@@ -1,7 +1,10 @@
 {
-  "type": "user:email-set",
+  "type": "post:comment:added",
   "data": {
-    "email": {
+    "type": {
+      "$ref": "#/definitions/CommentType"
+    },
+    "body": {
       "type": "string"
     }
   },

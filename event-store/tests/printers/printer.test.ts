@@ -1,6 +1,6 @@
 import { join } from "node:path";
 
-import { assertArrayIncludes } from "@std/assert";
+import { assertArrayIncludes, assertRejects } from "@std/assert";
 import { afterAll, describe, it } from "@std/testing/bdd";
 
 import { printEvents } from "../../printers/printer.ts";
@@ -10,7 +10,7 @@ describe("Events Printer", () => {
   const output = join(temp, "events.ts");
 
   afterAll(async () => {
-    await Deno.remove(temp, { recursive: true });
+    // await Deno.remove(temp, { recursive: true });
   });
 
   it("should create a new events.ts file", async () => {
@@ -42,5 +42,9 @@ describe("Events Printer", () => {
       "user:activated",
       "user:email-set",
     ]);
+
+    await assertRejects(
+      async () => validators.data.get("post:comment:added").parseAsync({ type: "invalid", body: "Hello World" }),
+    );
   });
 });

@@ -8,7 +8,7 @@ export const jsonSchema = {
 
 function compile(schema: JSONSchema4): string {
   if (schema.$ref) {
-    return toPascalCase(schema.$ref);
+    return toPascalCase(schema.$ref.replace("#/definitions/", ""));
   }
   switch (schema.type) {
     case "object": {

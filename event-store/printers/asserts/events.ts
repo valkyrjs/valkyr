@@ -7,55 +7,55 @@ class EventConfigAssertionError extends Error {
   }
 }
 
-export function assertConfigs(configs: any[]): asserts configs is Config[] {
-  for (const config of configs) {
-    assertConfig(config.event);
+export function assertEventSchemas(schemas: any[]): asserts schemas is EventSchema[] {
+  for (const schema of schemas) {
+    assertEventSchema(schema);
   }
 }
 
-export function assertConfig(config: any): asserts config is Config {
-  if (config.event.type === undefined) {
+export function assertEventSchema(schema: any): asserts schema is EventSchema {
+  if (schema.type === undefined) {
     throw new EventConfigAssertionError("Missing required 'type' key");
   }
-  if (config.event.data) {
+  if (schema.data) {
     try {
       new Ajv().addSchema({
         type: "object",
-        properties: config.event.data,
+        properties: schema.data,
       });
     } catch (error) {
       throw new EventConfigAssertionError("Invalid 'data' provided, must be valid JSONSchema", error);
     }
   }
-  if (config.event.meta) {
+  if (schema.meta) {
     try {
       new Ajv().addSchema({
         type: "object",
-        properties: config.event.meta,
+        properties: schema.meta,
       });
     } catch (error) {
       throw new EventConfigAssertionError("Invalid 'meta' provided, must be valid JSONSchema", error);
     }
   }
-  if (config.definitions) {
-    for (const key in config.definitions) {
-      try {
-        new Ajv().addSchema(config.definitions[key]);
-      } catch (error) {
-        throw new EventConfigAssertionError("Invalid 'definitions' provided, must be valid JSONSchema", error);
-      }
+}
+
+export function assertDefinitionSchema(schema: any): asserts schema is DefinitionSchema {
+  for (const key in schema) {
+    try {
+      new Ajv().addSchema(schema[key]);
+    } catch (error) {
+      throw new EventConfigAssertionError("Invalid 'definitions' provided, must be valid JSONSchema", error);
     }
   }
 }
 
-export type Config = {
-  event: {
-    type: string;
-    data?: JSONSchemaProperties;
-    meta?: JSONSchemaProperties;
-  };
-  definitions: JSONSchemaProperties;
+export type EventSchema = {
+  type: string;
+  data?: JSONSchemaProperties;
+  meta?: JSONSchemaProperties;
 };
+
+export type DefinitionSchema = JSONSchemaProperties;
 
 type JSONSchemaProperties = {
   [key: string]: JSONSchema4;

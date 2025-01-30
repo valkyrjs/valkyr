@@ -1,10 +1,8 @@
 {
-  "event": {
-    "type": "user:activated",
-    "meta": {
-      "auditor": {
-        "type": "string"
-      }
+  "type": "user:activated",
+  "meta": {
+    "auditor": {
+      "type": "string"
     }
   }
 }

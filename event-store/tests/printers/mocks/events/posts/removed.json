@@ -1,5 +1,3 @@
 {
-  "event": {
-    "type": "post:removed"
-  }
+  "type": "post:removed"
 }

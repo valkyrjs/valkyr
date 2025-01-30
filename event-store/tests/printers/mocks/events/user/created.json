@@ -1,21 +1,19 @@
 {
-  "event": {
-    "type": "user:created",
-    "data": {
-      "name": {
-        "type": "object",
-        "properties": {
-          "given": {
-            "type": ["string", "null"]
-          },
-          "family": {
-            "type": ["string", "null"]
-          }
+  "type": "user:created",
+  "data": {
+    "name": {
+      "type": "object",
+      "properties": {
+        "given": {
+          "type": ["string", "null"]
+        },
+        "family": {
+          "type": ["string", "null"]
         }
-      },
-      "email": {
-        "type": "string"
       }
+    },
+    "email": {
+      "type": "string"
     }
   }
 }

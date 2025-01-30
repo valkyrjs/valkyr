@@ -7,8 +7,8 @@ import { resolveRefs } from "json-refs";
 import { jsonSchemaToZod } from "json-schema-to-zod";
 import { format } from "prettier";
 
-import { assertConfig, type Config } from "./asserts/events.ts";
-import { getDefinitions, getEventType, getImports } from "./types.ts";
+import { assertDefinitionSchema, assertEventSchema, DefinitionSchema, EventSchema } from "./asserts/events.ts";
+import { getDefinitions, getEventType } from "./types.ts";
 import { jsonSchema } from "./utilities/json-schema.ts";
 
 /**
@@ -60,7 +60,13 @@ export async function printEvents({ inputs, outputs }: Options) {
 
       export type Event = ${names.sort().map((name) => toPascalCase(name)).join(" | ")};
 
+      // ### Events
+      // Event definitions for all available event types.
+
       ${types.sort().join("\n\n")}
+
+      // ### Definitions
+      // List of all shared schema definitions for shared event types.
 
       ${definitions.join("\n\n")}
     `,
@@ -102,71 +108,104 @@ async function getEventStoreContainer(inputs: string[]): Promise<EventStoreConta
   };
 
   const defs = new Map<string, any>();
+  for (const definitions of await getLocalDefinitions(inputs)) {
+    for (const key in definitions) {
+      if (defs.has(key)) {
+        throw new Error(`Config Duplicate Definition Error: Key '${key}' is already defined`);
+      }
+      defs.set(key, definitions[key]);
+    }
+  }
 
-  const configs = await getLocalConfigs(inputs);
-  for (const { event, definitions } of configs) {
+  const definitions = defs.entries().reduce((defs, [key, schema]) => {
+    defs[key] = schema;
+    return defs;
+  }, {} as any);
+
+  container.definitions = getDefinitions(defs);
+
+  for (const event of await getLocalEvents(inputs)) {
     const type = event.type;
     container.names.push(type);
     container.types.push(getEventType(event));
     if (event.data !== undefined) {
       container.props.add({ name: type, props: jsonSchema.propertyNames(event.data) });
-      container.validators.data.set(type, await getEventValidator(type, event.data));
+      container.validators.data.set(type, await getEventValidator(type, event.data, definitions));
     }
     if (event.meta !== undefined) {
-      container.validators.meta.set(type, await getEventValidator(type, event.meta));
-    }
-    if (definitions !== undefined) {
-      for (const key in definitions) {
-        if (defs.has(key)) {
-          throw new Error(`Config Duplicate Definition Error: Key '${key}' is already defined`);
-        }
-        defs.set(key, definitions[key]);
-      }
+      container.validators.meta.set(type, await getEventValidator(type, event.meta, definitions));
     }
   }
-
-  container.imports = getImports(configs);
-  container.definitions = getDefinitions(defs);
 
   return container;
 }
 
-async function getLocalConfigs(paths: string[], events: Config[] = []): Promise<Config[]> {
+async function getLocalEvents(paths: string[], events: EventSchema[] = []): Promise<EventSchema[]> {
   for (const path of paths) {
     for (const entity of await readdir(path, { withFileTypes: true })) {
       if (entity.isDirectory()) {
-        await resolveLocalConfigs(join(path, entity.name), events);
+        await resolveLocalEvents(join(path, entity.name), events);
       }
-      if (entity.isFile() === true && entity.name.endsWith(".json")) {
-        const config = JSON.parse(new TextDecoder().decode(await readFile(join(path, entity.name))));
-        assertConfig(config);
-        events.push(config);
+      if (entity.isFile() === true && entity.name.endsWith(".json") && entity.name !== "$definitions.json") {
+        const schema = JSON.parse(new TextDecoder().decode(await readFile(join(path, entity.name))));
+        assertEventSchema(schema);
+        events.push(schema);
       }
     }
   }
   return events;
 }
 
-async function resolveLocalConfigs(path: string, events: Config[]) {
+async function resolveLocalEvents(path: string, events: EventSchema[]) {
   for (const entity of await readdir(path, { withFileTypes: true })) {
     if (entity.isDirectory()) {
-      await resolveLocalConfigs(join(path, entity.name), events);
+      await resolveLocalEvents(join(path, entity.name), events);
     }
-    if (entity.isFile() === true && entity.name.endsWith(".json")) {
-      const config = JSON.parse(new TextDecoder().decode(await readFile(join(path, entity.name))));
-      assertConfig(config);
-      events.push(config);
+    if (entity.isFile() === true && entity.name.endsWith(".json") && entity.name !== "$definitions.json") {
+      const schema = JSON.parse(new TextDecoder().decode(await readFile(join(path, entity.name))));
+      assertEventSchema(schema);
+      events.push(schema);
     }
   }
 }
 
-async function getEventValidator(name: string, data: any) {
+async function getLocalDefinitions(paths: string[], definitions: DefinitionSchema[] = []): Promise<DefinitionSchema[]> {
+  for (const path of paths) {
+    for (const entity of await readdir(path, { withFileTypes: true })) {
+      if (entity.isDirectory()) {
+        await resolveLocalDefinitions(join(path, entity.name), definitions);
+      }
+      if (entity.isFile() === true && entity.name === "$definitions.json") {
+        const schema = JSON.parse(new TextDecoder().decode(await readFile(join(path, entity.name))));
+        assertDefinitionSchema(schema);
+        definitions.push(schema);
+      }
+    }
+  }
+  return definitions;
+}
+
+async function resolveLocalDefinitions(path: string, definitions: DefinitionSchema[]) {
+  for (const entity of await readdir(path, { withFileTypes: true })) {
+    if (entity.isDirectory()) {
+      await resolveLocalDefinitions(join(path, entity.name), definitions);
+    }
+    if (entity.isFile() === true && entity.name === "$definitions.json") {
+      const schema = JSON.parse(new TextDecoder().decode(await readFile(join(path, entity.name))));
+      assertDefinitionSchema(schema);
+      definitions.push(schema);
+    }
+  }
+}
+
+async function getEventValidator(name: string, data: any, definitions: any) {
   const schema = {
     $schema: "http://json-schema.org/draft-04/schema#",
     id: `valkyrjs/schemas/v1/${name}.json`,
     title: name,
     type: "object",
     properties: populateProperties(data),
+    definitions,
     required: Object.keys(data),
     additionalProperties: false,
   };
