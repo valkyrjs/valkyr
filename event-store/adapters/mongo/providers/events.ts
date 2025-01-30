@@ -1,21 +1,22 @@
-import type { Collection, FindCursor, MongoClient } from "mongodb";
+import type { Collection, FindCursor } from "mongodb";
 
 import type { Event, EventToRecord } from "~types/event.ts";
 import type { EventReadOptions } from "~types/event-store.ts";
 import { EventsProvider } from "~types/providers/events.ts";
 
 import { type EventSchema, schema } from "../collections/events.ts";
+import { DatabaseAccessor } from "../types.ts";
 import { toParsedRecord, toParsedRecords } from "../utilities.ts";
 
 export class MongoEventsProvider<TEvent extends Event> implements EventsProvider<TEvent> {
-  readonly #collection: Collection<EventSchema>;
+  readonly #accessor: DatabaseAccessor;
 
-  constructor(readonly client: MongoClient, db: string) {
-    this.#collection = client.db(db).collection<EventSchema>("events");
+  constructor(accessor: DatabaseAccessor) {
+    this.#accessor = accessor;
   }
 
   get collection(): Collection<EventSchema> {
-    return this.#collection;
+    return this.#accessor.db.collection<EventSchema>("events");
   }
 
   /**

@@ -72,8 +72,8 @@ describe("Adapter > MongoDb", () => {
 
 async function getEventStore({ hooks = {} }: { hooks?: EventStoreHooks<EventRecord> }) {
   const store = makeMongoEventStore<Event>({
-    client: container.client,
-    db: DB_NAME,
+    connection: () => container.client,
+    database: DB_NAME,
     events,
     validators,
     hooks,

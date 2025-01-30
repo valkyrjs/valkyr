@@ -1,20 +1,21 @@
-import type { Collection, MongoClient } from "mongodb";
+import type { Collection } from "mongodb";
 
 import { RelationsProvider } from "~types/providers/relations.ts";
 import type { Relation, RelationPayload } from "~types/relation.ts";
 
 import { type RelationSchema, schema } from "../collections/relations.ts";
+import { DatabaseAccessor } from "../types.ts";
 import { toParsedRecord, toParsedRecords } from "../utilities.ts";
 
 export class MongoRelationsProvider implements RelationsProvider {
-  readonly #collection: Collection<RelationSchema>;
+  readonly #accessor: DatabaseAccessor;
 
-  constructor(readonly client: MongoClient, db: string) {
-    this.#collection = client.db(db).collection<RelationSchema>("relations");
+  constructor(accessor: DatabaseAccessor) {
+    this.#accessor = accessor;
   }
 
   get collection(): Collection<RelationSchema> {
-    return this.#collection;
+    return this.#accessor.db.collection<RelationSchema>("relations");
   }
 
   /**

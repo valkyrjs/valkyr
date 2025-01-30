@@ -1,4 +1,5 @@
-import type { Db, MongoClient } from "mongodb";
+import type { MongoConnectionUrl } from "@valkyr/testcontainers/mongodb";
+import { Db, MongoClient } from "mongodb";
 
 import { EventStore } from "~libraries/event-store.ts";
 import type { Event } from "~types/event.ts";
@@ -8,6 +9,7 @@ import { registrars } from "./collections/mod.ts";
 import { MongoEventsProvider } from "./providers/events.ts";
 import { MongoRelationsProvider } from "./providers/relations.ts";
 import { MongoSnapshotsProvider } from "./providers/snapshots.ts";
+import { DatabaseAccessor } from "./types.ts";
 import { getCollectionsSet } from "./utilities.ts";
 
 export class MongoAdapter<const TEvent extends Event> implements EventStoreAdapter<TEvent> {
@@ -17,14 +19,12 @@ export class MongoAdapter<const TEvent extends Event> implements EventStoreAdapt
     readonly snapshots: MongoSnapshotsProvider;
   };
 
-  #client: MongoClient;
-
-  constructor(readonly client: MongoClient, db: string) {
-    this.#client = client;
+  constructor(connection: MongoConnection, db: string) {
+    const accessor = getDatabaseAccessor(connection, db);
     this.providers = {
-      events: new MongoEventsProvider<TEvent>(this.#client, db),
-      relations: new MongoRelationsProvider(this.#client, db),
-      snapshots: new MongoSnapshotsProvider(this.#client, db),
+      events: new MongoEventsProvider<TEvent>(accessor),
+      relations: new MongoRelationsProvider(accessor),
+      snapshots: new MongoSnapshotsProvider(accessor),
     };
   }
 }
@@ -35,12 +35,12 @@ export class MongoAdapter<const TEvent extends Event> implements EventStoreAdapt
  * @param config - Event store config.
  */
 export function makeMongoEventStore<const TEvent extends Event>(
-  { client, db, events, validators, hooks }:
-    & { client: MongoClient; db: string }
+  { connection, database, events, validators, hooks }:
+    & { connection: MongoConnection; database: string }
     & Omit<EventStoreConfig<TEvent, MongoAdapter<TEvent>>, "adapter">,
 ): EventStore<TEvent, MongoAdapter<TEvent>> {
   return new EventStore<TEvent, MongoAdapter<TEvent>>({
-    adapter: new MongoAdapter(client, db),
+    adapter: new MongoAdapter(connection, database),
     events,
     validators,
     hooks,
@@ -68,3 +68,26 @@ export async function register(db: Db, logger?: (...args: any[]) => any) {
     logger?.("Mongo Event Store > Collection '%s' is registered", name);
   }
 }
+
+function getDatabaseAccessor(connection: MongoConnection, database: string): DatabaseAccessor {
+  let instance: Db | undefined;
+  return {
+    get db(): Db {
+      if (instance === undefined) {
+        instance = this.client.db(database);
+      }
+      return instance;
+    },
+    get client(): MongoClient {
+      if (typeof connection === "string") {
+        return new MongoClient(connection);
+      }
+      if (connection instanceof MongoClient) {
+        return connection;
+      }
+      return connection();
+    },
+  };
+}
+
+export type MongoConnection = MongoConnectionUrl | MongoClient | (() => MongoClient);

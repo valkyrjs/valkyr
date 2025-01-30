@@ -1,19 +1,20 @@
-import type { Collection, MongoClient } from "mongodb";
+import type { Collection } from "mongodb";
 
 import { SnapshotsProvider } from "~types/providers/snapshots.ts";
 
 import { schema, type SnapshotSchema } from "../collections/snapshots.ts";
+import { DatabaseAccessor } from "../types.ts";
 import { toParsedRecord } from "../utilities.ts";
 
 export class MongoSnapshotsProvider implements SnapshotsProvider {
-  readonly #collection: Collection<SnapshotSchema>;
+  readonly #accessor: DatabaseAccessor;
 
-  constructor(readonly client: MongoClient, db: string) {
-    this.#collection = client.db(db).collection<SnapshotSchema>("snapshots");
+  constructor(accessor: DatabaseAccessor) {
+    this.#accessor = accessor;
   }
 
   get collection(): Collection<SnapshotSchema> {
-    return this.#collection;
+    return this.#accessor.db.collection<SnapshotSchema>("snapshots");
   }
 
   /**
