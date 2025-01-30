@@ -27,7 +27,6 @@ export type SnapshotsProvider = {
 };
 
 export type Snapshot = {
-  id: number;
   stream: string;
   name: string;
   cursor: string;

@@ -29,7 +29,7 @@ export type RelationsProvider = {
    *
    * @param key - Relational key to get event streams for.
    */
-  getByKey(key: string): Promise<{ stream: string; key: string }[]>;
+  getByKey(key: string): Promise<string[]>;
 
   /**
    * Get a list of event streams registered under the given relational keys.

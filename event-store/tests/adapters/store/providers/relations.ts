@@ -12,9 +12,9 @@ export default describe<Event, EventRecord>("relations", (getEventStore) => {
     const key = "sample";
     const stream = nanoid();
 
-    await store.relations.insert("sample", stream);
+    await store.relations.insert(key, stream);
 
-    assertEquals(await store.relations.getByKey("sample"), [{ key, stream }]);
+    assertEquals(await store.relations.getByKey(key), [stream]);
   });
 
   it("should ignore duplicate relations", async () => {
@@ -25,6 +25,6 @@ export default describe<Event, EventRecord>("relations", (getEventStore) => {
 
     await store.relations.insertMany([{ key, stream }, { key, stream }]);
 
-    assertEquals(await store.relations.getByKey("sample"), [{ key, stream }]);
+    assertEquals(await store.relations.getByKey(key), [stream]);
   });
 });

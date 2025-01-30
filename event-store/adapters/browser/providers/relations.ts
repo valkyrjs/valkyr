@@ -47,8 +47,8 @@ export class BrowserRelationsProvider implements RelationsProvider {
    *
    * @param key - Relational key to get event streams for.
    */
-  async getByKey(key: string): Promise<Relation[]> {
-    return this.relations.find({ key });
+  async getByKey(key: string): Promise<string[]> {
+    return this.relations.find({ key }).then((relations) => relations.map(({ stream }) => stream));
   }
 
   /**

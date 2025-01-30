@@ -56,8 +56,10 @@ export class PostgresRelationsProvider implements RelationsProvider {
    *
    * @param key - Relational key to get event streams for.
    */
-  async getByKey(key: string): Promise<{ stream: string; key: string }[]> {
-    return this.db.select({ key: this.schema.key, stream: this.schema.stream }).from(this.schema).where(eq(this.schema.key, key));
+  async getByKey(key: string): Promise<string[]> {
+    return this.db.select({ key: this.schema.key, stream: this.schema.stream }).from(this.schema).where(eq(this.schema.key, key)).then((rows) =>
+      rows.map(({ stream }) => stream)
+    );
   }
 
   /**

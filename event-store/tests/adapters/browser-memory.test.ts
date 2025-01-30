@@ -22,7 +22,7 @@ const eventStoreFn = async (options: { hooks?: EventStoreHooks<EventRecord> } = 
  |--------------------------------------------------------------------------------
  */
 
-describe("Browser Event Store (Memory)", () => {
+describe("Adapter > Browser (memory)", () => {
   testAddEvent(eventStoreFn);
   testCreateSnapshot(eventStoreFn);
   testMakeReducer(eventStoreFn);

@@ -1,11 +1,11 @@
 import { afterAll, afterEach, beforeAll, describe } from "@std/testing/bdd";
-import type { PostgresConnection } from "@valkyr/drizzle";
 import { PostgresTestContainer } from "@valkyr/testcontainers/postgres";
 
 import { Projector } from "~libraries/projector.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 
 import { makePostgresEventStore } from "../../adapters/postgres/adapter.ts";
+import { PostgresConnection } from "../../adapters/postgres/database.ts";
 import { migrate } from "../../adapters/postgres/migrations/migrate.ts";
 import { type Event, type EventRecord, events, validators } from "./mocks/events.ts";
 import testAddEvent from "./store/add-event.ts";
@@ -20,7 +20,7 @@ import testReplayEvents from "./store/replay-events.ts";
 
 const DB_NAME = "sandbox";
 
-const container = await PostgresTestContainer.start("postgres:14");
+const container = await PostgresTestContainer.start("postgres:17");
 
 const eventStoreFn = async (options: { hooks?: EventStoreHooks<EventRecord> } = {}) => getEventStore(container.url(DB_NAME), options);
 
@@ -49,7 +49,7 @@ afterAll(async () => {
  |--------------------------------------------------------------------------------
  */
 
-describe("PostgresEventStore", () => {
+describe("Adapter > Postgres", () => {
   testRelationsProvider(eventStoreFn);
   testAddEvent(eventStoreFn);
   testAddManyEvents(eventStoreFn);

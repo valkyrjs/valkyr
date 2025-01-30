@@ -2,7 +2,6 @@
   "workspace": [
     "./api",
     "./auth",
-    "./drizzle",
     "./event-emitter",
     "./event-store",
     "./inverse",

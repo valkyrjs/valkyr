@@ -80,15 +80,14 @@ for `sqlite`, `postgres`, and `valkyr/db` which all works the same way. So for t
 store.
 
 ```ts
-import { PostgresEventStore } from "@valkyr/event-store/postgres";
+import { makePostgresEventStore } from "@valkyr/event-store/postgres";
 import psql from "postgres";
 
 import { type Event, type EventRecord, events, validators } from "./generated/events.ts";
 
-export const eventStore = new PostgresEventStore<Event>({
-  database: () => {
-    return psql("url");
-  },
+export const eventStore = makePostgresEventStore<Event>({
+  database: () => psql("url"),
+  schema: "event_store",
   events,
   validators,
   hooks: {

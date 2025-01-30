@@ -249,11 +249,11 @@ export class EventStore<const TEvent extends Event, TEventStoreAdapter extends E
   /**
    * Retrieve events from the events table under the given streams.
    *
-   * @param stream  - Stream to retrieve events for.
-   * @param options - Stream logic options. (Optional)
+   * @param streams - Streams to retrieve events for.
+   * @param options - Read options to pass to the provider. (Optional)
    */
-  async getEventsByStreams(stream: string[], options?: EventReadOptions<TEvent>): Promise<EventToRecord<TEvent>[]> {
-    return this.events.getByStreams(stream, options);
+  async getEventsByStreams(streams: string[], options?: EventReadOptions<TEvent>): Promise<EventToRecord<TEvent>[]> {
+    return this.events.getByStreams(streams, options);
   }
 
   /**

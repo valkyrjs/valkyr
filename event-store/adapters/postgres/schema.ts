@@ -1,8 +1,8 @@
-import { PostgresDatabase as DrizzlePostgresDatabase } from "@valkyr/drizzle";
 import { index, jsonb, type PgColumn, pgSchema, type PgTableWithColumns, serial, unique, varchar } from "drizzle-orm/pg-core";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 import type { EventRecord } from "../../types/event.ts";
+import { PostgresDatabase as DrizzlePostgresDatabase } from "./database.ts";
 
 export function getEventStoreSchema<TName extends string>(name: TName): EventStoreSchema<TName> {
   const schema = pgSchema(name);

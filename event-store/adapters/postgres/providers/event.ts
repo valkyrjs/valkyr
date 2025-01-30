@@ -1,10 +1,10 @@
-import { takeOne } from "@valkyr/drizzle";
 import { and, eq, gt, inArray, lt, SQL, sql } from "drizzle-orm";
 
 import type { Event, EventToRecord } from "~types/event.ts";
 import type { EventReadOptions } from "~types/event-store.ts";
 import { EventsProvider } from "~types/providers/events.ts";
 
+import { takeOne } from "../database.ts";
 import type { EventsTable, PostgresDatabase, Transaction as PGTransaction } from "../schema.ts";
 
 export class PostgresEventsProvider<TEvent extends Event> implements EventsProvider<TEvent> {

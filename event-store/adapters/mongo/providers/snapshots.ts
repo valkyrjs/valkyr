@@ -1,18 +1,19 @@
-import { and, eq } from "drizzle-orm";
+import type { Collection, MongoClient } from "mongodb";
 
 import { SnapshotsProvider } from "~types/providers/snapshots.ts";
 
-import { takeOne } from "../database.ts";
-import type { PostgresDatabase, Snapshot, SnapshotsTable, Transaction as PGTransaction } from "../schema.ts";
+import { schema, type SnapshotSchema } from "../collections/snapshots.ts";
+import { toParsedRecord } from "../utilities.ts";
 
-export class PostgresSnapshotsProvider implements SnapshotsProvider {
-  constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: SnapshotsTable) {}
+export class MongoSnapshotsProvider implements SnapshotsProvider {
+  readonly #collection: Collection<SnapshotSchema>;
 
-  /**
-   * Access drizzle query features for snapshot provider.
-   */
-  get query(): this["db"]["query"] {
-    return this.db.query;
+  constructor(readonly client: MongoClient, db: string) {
+    this.#collection = client.db(db).collection<SnapshotSchema>("snapshots");
+  }
+
+  get collection(): Collection<SnapshotSchema> {
+    return this.#collection;
   }
 
   /**
@@ -24,7 +25,7 @@ export class PostgresSnapshotsProvider implements SnapshotsProvider {
    * @param state  - State of the reduced events.
    */
   async insert(name: string, stream: string, cursor: string, state: Record<string, unknown>): Promise<void> {
-    await this.db.insert(this.schema).values({ name, stream, cursor, state });
+    await this.collection.updateOne({ name }, { $set: { stream, cursor, state } }, { upsert: true });
   }
 
   /**
@@ -33,8 +34,8 @@ export class PostgresSnapshotsProvider implements SnapshotsProvider {
    * @param name   - Name of the reducer which the state was created.
    * @param stream - Stream the state was reduced for.
    */
-  async getByStream(name: string, stream: string): Promise<Snapshot | undefined> {
-    return this.db.select().from(this.schema).where(and(eq(this.schema.name, name), eq(this.schema.stream, stream))).then(takeOne);
+  async getByStream(name: string, stream: string): Promise<SnapshotSchema | undefined> {
+    return this.collection.findOne({ name, stream }).then(toParsedRecord(schema));
   }
 
   /**
@@ -44,6 +45,6 @@ export class PostgresSnapshotsProvider implements SnapshotsProvider {
    * @param stream - Stream to remove from snapshots.
    */
   async remove(name: string, stream: string): Promise<void> {
-    await this.db.delete(this.schema).where(and(eq(this.schema.name, name), eq(this.schema.stream, stream)));
+    await this.collection.deleteOne({ name, stream });
   }
 }

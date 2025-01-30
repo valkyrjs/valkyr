@@ -1,9 +1,8 @@
-import { type PostgresConnection, PostgresDatabase } from "@valkyr/drizzle";
-
 import { EventStore } from "~libraries/event-store.ts";
 import type { Event } from "~types/event.ts";
 import type { EventStoreAdapter, EventStoreConfig } from "~types/event-store.ts";
 
+import { type PostgresConnection, PostgresDatabase } from "./database.ts";
 import { PostgresEventsProvider } from "./providers/event.ts";
 import { PostgresRelationsProvider } from "./providers/relations.ts";
 import { PostgresSnapshotsProvider } from "./providers/snapshot.ts";
