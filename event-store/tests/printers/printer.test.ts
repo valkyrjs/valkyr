@@ -10,7 +10,7 @@ describe("Events Printer", () => {
   const output = join(temp, "events.ts");
 
   afterAll(async () => {
-    // await Deno.remove(temp, { recursive: true });
+    await Deno.remove(temp, { recursive: true });
   });
 
   it("should create a new events.ts file", async () => {
