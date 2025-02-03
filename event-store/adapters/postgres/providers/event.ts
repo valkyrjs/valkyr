@@ -13,8 +13,8 @@ export class PostgresEventsProvider<TEvent extends Event> implements EventsProvi
   /**
    * Access drizzle query features for event provider.
    */
-  get query(): this["db"]["query"] {
-    return this.db.query;
+  get query(): this["db"]["query"]["events"] {
+    return this.db.query.events;
   }
 
   /**

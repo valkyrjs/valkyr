@@ -11,8 +11,8 @@ export class PostgresSnapshotsProvider implements SnapshotsProvider {
   /**
    * Access drizzle query features for snapshot provider.
    */
-  get query(): this["db"]["query"] {
-    return this.db.query;
+  get query(): this["db"]["query"]["snapshots"] {
+    return this.db.query.snapshots;
   }
 
   /**

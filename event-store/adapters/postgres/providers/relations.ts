@@ -11,8 +11,8 @@ export class PostgresRelationsProvider implements RelationsProvider {
   /**
    * Access drizzle query features for relations provider.
    */
-  get query(): this["db"]["query"] {
-    return this.db.query;
+  get query(): this["db"]["query"]["relations"] {
+    return this.db.query.relations;
   }
 
   /**
