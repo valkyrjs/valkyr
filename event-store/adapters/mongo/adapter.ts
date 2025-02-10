@@ -12,6 +12,15 @@ import { MongoSnapshotsProvider } from "./providers/snapshots.ts";
 import { DatabaseAccessor } from "./types.ts";
 import { getCollectionsSet } from "./utilities.ts";
 
+/**
+ * A server-based event store adapter that integrates database-specific providers.
+ *
+ * The `MongoAdapter` enables event sourcing in a back end environment by utilizing
+ * MongoDB for storage. It provides implementations for event storage, relations,
+ * and snapshots, allowing seamless integration with the shared event store interface.
+ *
+ * @template TEvent - The type of events managed by the event store.
+ */
 export class MongoAdapter<const TEvent extends Event> implements EventStoreAdapter<TEvent> {
   readonly providers: {
     readonly events: MongoEventsProvider<TEvent>;
@@ -90,4 +99,8 @@ function getDatabaseAccessor(connection: MongoConnection, database: string): Dat
   };
 }
 
+/**
+ * Connection which the adapter supports, this can be a `url`, a `client` instance
+ * or a lazy method that provided `client` instance on demand.
+ */
 export type MongoConnection = MongoConnectionUrl | MongoClient | (() => MongoClient);

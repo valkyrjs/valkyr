@@ -40,6 +40,16 @@ const FILTER_ALL = Object.freeze<ProjectionFilter>({
  |--------------------------------------------------------------------------------
  */
 
+/**
+ * Manages event projections by handling and distributing events to registered listeners.
+ *
+ * The `Projector` class is responsible for processing event records and invoking
+ * projection handlers based on predefined filters. It supports different projection
+ * patterns, including one-time projections, continuous projections, and catch-all projections.
+ * Additionally, it enables batched event processing for optimized handling of multiple events.
+ *
+ * @template Record - The type of event records processed by this projector.
+ */
 export class Projector<Record extends EventRecord = EventRecord> {
   #listeners: ProjectorListeners<Record> = {};
   #batchedListeners: BatchedProjectorListeners<Record> = {};

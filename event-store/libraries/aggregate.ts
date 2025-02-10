@@ -5,6 +5,16 @@ import type { Event, EventToRecord } from "~types/event.ts";
 import { EventsInsertSettings } from "~types/event-store.ts";
 import { ExcludeEmptyFields } from "~types/utilities.ts";
 
+/**
+ * Represents an aggregate root in an event-sourced system.
+ *
+ * This abstract class serves as a base for domain aggregates that manage
+ * state changes through events. It provides functionality for creating
+ * instances from snapshots, handling pending events, and committing
+ * changes to an event store.
+ *
+ * @template TEvent - The type of events associated with this aggregate.
+ */
 export abstract class AggregateRoot<const TEvent extends Event> {
   #pending: EventToRecord<TEvent>[] = [];
 
@@ -70,8 +80,16 @@ export abstract class AggregateRoot<const TEvent extends Event> {
   async commit<TEventStore extends EventStore<TEvent>>(eventStore: TEventStore, settings?: EventsInsertSettings, cleanPendingState = true): Promise<this> {
     await eventStore.pushManyEvents(this.#pending, settings);
     if (cleanPendingState === true) {
-      this.#pending = [];
+      this.flush();
     }
+    return this;
+  }
+
+  /**
+   * Removes all events from the aggregate #pending list.
+   */
+  flush(): this {
+    this.#pending = [];
     return this;
   }
 

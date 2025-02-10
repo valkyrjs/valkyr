@@ -213,6 +213,39 @@ export class EventStore<const TEvent extends Event, TEventStoreAdapter extends E
   }
 
   /**
+   * Takes in an aggregate and commits any pending events to the event store.
+   *
+   * @param aggregate - Aggregate to push events from.
+   * @param settings  - Event settings which can modify insertion behavior.
+   */
+  async pushAggregate(aggregate: AggregateRoot<TEvent>, settings?: EventsInsertSettings): Promise<void> {
+    await aggregate.commit(this, settings);
+  }
+
+  /**
+   * Takes a list of aggregates and commits any pending events to the event store.
+   * Events are committed in order so its important to ensure that the aggregates
+   * are placed in the correct index position of the array.
+   *
+   * This method allows for a simpler way to commit many events over many
+   * aggregates in a single transaction. Ensuring atomicity of a larger group
+   * of events.
+   *
+   * @param aggregates - Aggregates to push events from.
+   * @param settings   - Event settings which can modify insertion behavior.
+   */
+  async pushManyAggregates(aggregates: AggregateRoot<TEvent>[], settings?: EventsInsertSettings): Promise<void> {
+    const events: EventToRecord<TEvent>[] = [];
+    for (const aggregate of aggregates) {
+      events.push(...aggregate.toPending());
+    }
+    await this.pushManyEvents(events, settings);
+    for (const aggregate of aggregates) {
+      aggregate.flush();
+    }
+  }
+
+  /**
    * Enable the ability to check an incoming events status in relation to the local
    * ledger. This is to determine what actions to take upon the ledger based on the
    * current status.

@@ -9,6 +9,15 @@ import { BrowserEventsProvider } from "./providers/events.ts";
 import { BrowserRelationsProvider } from "./providers/relations.ts";
 import { BrowserSnapshotsProvider } from "./providers/snapshots.ts";
 
+/**
+ * A browser-based event store adapter that integrates database-specific providers.
+ *
+ * The `BrowserAdapter` enables event sourcing in a browser environment by utilizing
+ * IndexedDB for storage. It provides implementations for event storage, relations,
+ * and snapshots, allowing seamless integration with the shared event store interface.
+ *
+ * @template TEvent - The type of events managed by the event store.
+ */
 export class BrowserAdapter<TEvent extends Event> implements EventStoreAdapter<TEvent> {
   readonly #database: IndexedDatabase<Collections>;
 

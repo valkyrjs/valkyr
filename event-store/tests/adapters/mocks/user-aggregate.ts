@@ -1,5 +1,6 @@
 import { AggregateRoot } from "~libraries/aggregate.ts";
 import { EventStore } from "~libraries/event-store.ts";
+import { makeId } from "~libraries/nanoid.ts";
 import { makeAggregateReducer } from "~libraries/reducer.ts";
 import { EventToRecord } from "~types/event.ts";
 
@@ -28,6 +29,7 @@ export class User extends AggregateRoot<Event> {
     const user = new User();
     user.push({
       type: "user:created",
+      stream: makeId(),
       data: { name, email },
     });
     return user;

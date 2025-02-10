@@ -5,7 +5,7 @@ import type { EventReadOptions } from "~types/event-store.ts";
 import { EventsProvider } from "~types/providers/events.ts";
 
 import { takeOne } from "../database.ts";
-import type { EventsTable, PostgresDatabase, Transaction as PGTransaction } from "../schema.ts";
+import type { EventsTable, PostgresDatabase, Transaction as PGTransaction } from "../types.ts";
 
 export class PostgresEventsProvider<TEvent extends Event> implements EventsProvider<TEvent> {
   constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: EventsTable) {}

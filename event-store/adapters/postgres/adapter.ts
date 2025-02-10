@@ -6,8 +6,18 @@ import { type PostgresConnection, PostgresDatabase } from "./database.ts";
 import { PostgresEventsProvider } from "./providers/event.ts";
 import { PostgresRelationsProvider } from "./providers/relations.ts";
 import { PostgresSnapshotsProvider } from "./providers/snapshot.ts";
-import { EventStoreSchema, getEventStoreSchema } from "./schema.ts";
+import { getEventStoreSchema } from "./schema.ts";
+import type { EventStoreSchema } from "./types.ts";
 
+/**
+ * A server-based event store adapter that integrates database-specific providers.
+ *
+ * The `PostgresAdapter` enables event sourcing in a back end environment by utilizing
+ * PostgreSql for storage. It provides implementations for event storage, relations,
+ * and snapshots, allowing seamless integration with the shared event store interface.
+ *
+ * @template TEvent - The type of events managed by the event store.
+ */
 export class PostgresAdapter<const TEvent extends Event> implements EventStoreAdapter<TEvent> {
   readonly providers: {
     readonly events: PostgresEventsProvider<TEvent>;

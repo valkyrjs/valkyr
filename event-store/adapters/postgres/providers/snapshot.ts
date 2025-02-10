@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { SnapshotsProvider } from "~types/providers/snapshots.ts";
 
 import { takeOne } from "../database.ts";
-import type { PostgresDatabase, Snapshot, SnapshotsTable, Transaction as PGTransaction } from "../schema.ts";
+import type { PostgresDatabase, Snapshot, SnapshotsTable, Transaction as PGTransaction } from "../types.ts";
 
 export class PostgresSnapshotsProvider implements SnapshotsProvider {
   constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: SnapshotsTable) {}
