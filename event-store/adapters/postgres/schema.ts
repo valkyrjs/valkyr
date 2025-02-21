@@ -12,6 +12,7 @@ import type { EventStoreSchema } from "./types.ts";
 export function getEventStoreSchema<TName extends string>(name: TName): EventStoreSchema<TName> {
   const schema = pgSchema(name);
   return {
+    schema,
     events: schema.table("events", {
       id: varchar("id").primaryKey(),
       stream: varchar("stream").notNull(),

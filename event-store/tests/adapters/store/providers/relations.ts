@@ -24,6 +24,7 @@ export default describe<Event, EventRecord>("relations", (getEventStore) => {
     const stream = nanoid();
 
     await store.relations.insertMany([{ key, stream }, { key, stream }]);
+    await store.relations.insert(key, stream);
 
     assertEquals(await store.relations.getByKey(key), [stream]);
   });

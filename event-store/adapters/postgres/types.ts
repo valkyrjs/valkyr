@@ -1,4 +1,4 @@
-import type { PgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
+import type { PgColumn, PgSchema, PgTableWithColumns } from "drizzle-orm/pg-core";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 import type { PostgresDatabase as DrizzlePostgresDatabase } from "./database.ts";
@@ -26,6 +26,7 @@ export type EventStoreDatabase = PostgresJsDatabase<EventStoreSchema>;
 export type Transaction = Parameters<Parameters<EventStoreDatabase["transaction"]>[0]>[0];
 
 export type EventStoreSchema<TName extends string = string> = {
+  schema: PgSchema<TName>;
   events: EventsTable<TName>;
   relations: RelationsTable<TName>;
   snapshots: SnapshotsTable<TName>;

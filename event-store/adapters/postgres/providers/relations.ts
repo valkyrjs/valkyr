@@ -34,7 +34,7 @@ export class PostgresRelationsProvider implements RelationsProvider {
    * @param stream - Stream to add to the key.
    */
   async insert(key: string, stream: string): Promise<void> {
-    await this.db.insert(this.schema).values({ key, stream });
+    await this.db.insert(this.schema).values({ key, stream }).onConflictDoNothing();
   }
 
   /**
