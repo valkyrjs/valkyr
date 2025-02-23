@@ -43,12 +43,12 @@ export async function printEvents({ inputs, outputs }: Options) {
       // deno-fmt-ignore-file
       
       import { type Empty, type Event as TEvent, type EventToRecord } from "@valkyr/event-store";
-      import { type AnyZodObject, z } from "zod";
+      import { type AnyZodObject, z, type ZodUnion } from "zod";
   
       export const events = new Set([${names.sort().map((event) => `"${event}"`).join(",")}] as const);
 
       export const validators = {
-        data: new Map<Event["type"], AnyZodObject>([
+        data: new Map<Event["type"], AnyZodObject | ZodUnion<any>>([
           ${Array.from(validators.data.entries()).sort(([a], [b]) => a > b ? 1 : -1).map(([key, value]) => `["${key}", ${value}]`).join(",")}
         ]),
         meta: new Map<Event["type"], AnyZodObject>([
@@ -118,7 +118,7 @@ async function getEventStoreContainer(inputs: string[]): Promise<EventStoreConta
   }
 
   const definitions = defs.entries().reduce((defs, [key, schema]) => {
-    defs[key] = schema;
+    defs[key] = populateSchema(schema);
     return defs;
   }, {} as any);
 
@@ -199,29 +199,65 @@ async function resolveLocalDefinitions(path: string, definitions: DefinitionSche
 }
 
 async function getEventValidator(name: string, data: any, definitions: any) {
-  const schema = {
+  const schema: any = {
     $schema: "http://json-schema.org/draft-04/schema#",
     id: `valkyrjs/schemas/v1/${name}.json`,
     title: name,
-    type: "object",
-    properties: populateProperties(data),
     definitions,
-    required: Object.keys(data),
     additionalProperties: false,
   };
-  const { resolved } = await resolveRefs(schema);
-  return jsonSchemaToZod(resolved);
+
+  const isUnionSchema = data.anyOf !== undefined;
+  if (isUnionSchema === true) {
+    schema.anyOf = toMappedAnyOf(data.anyOf);
+  } else {
+    schema.type = "object";
+    schema.properties = populateProperties(data);
+    schema.required = getRequiredKeys(data);
+  }
+
+  return jsonSchemaToZod(await resolveRefs(schema).then(({ resolved }) => resolved));
 }
 
 function populateProperties(props: any) {
   for (const key in props) {
-    const prop = props[key];
-    if (prop.type === "object") {
-      prop.required = Object.keys(prop.properties);
-      prop.additionalProperties = prop.additionalProperties === true;
-    }
+    populateSchema(props[key]);
   }
   return props;
+}
+
+function populateSchema(schema: any): any {
+  if (schema.anyOf !== undefined) {
+    schema.anyOf = toMappedAnyOf(schema.anyOf);
+  }
+  if (schema.type === "object") {
+    schema.properties = populateProperties(schema.properties);
+    schema.required = getRequiredKeys(schema.properties);
+    schema.additionalProperties = schema.additionalProperties === true;
+  }
+  return schema;
+}
+
+function toMappedAnyOf(schemas: any[]): any[] {
+  return schemas.map((schema: any) => {
+    if (schema.type === "object") {
+      schema.properties = populateProperties(schema.properties);
+      schema.required = getRequiredKeys(schema.properties);
+      schema.additionalProperties = false;
+    }
+    return schema;
+  });
+}
+
+function getRequiredKeys(props: any): string[] {
+  const required: string[] = [];
+  for (const key of Object.keys(props)) {
+    const config = props[key];
+    if (config.optional !== true) {
+      required.push(key);
+    }
+  }
+  return required;
 }
 
 /*

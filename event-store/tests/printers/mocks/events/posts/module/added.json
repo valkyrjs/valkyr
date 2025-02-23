@@ -1,9 +1,33 @@
 {
   "type": "post:module:added",
   "data": {
-    "type": {
-      "$ref": "#/definitions/ModuleType"
-    }
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "comments"
+          },
+          "replies": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "likes"
+          },
+          "positive": {
+            "type": "boolean"
+          },
+          "negative": {
+            "type": "boolean"
+          }
+        }
+      }
+    ]
   },
   "meta": {
     "auditor": {

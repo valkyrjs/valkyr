@@ -11,10 +11,12 @@ import { jsonSchema } from "./utilities/json-schema.ts";
 export function getEventType(event: EventSchema) {
   let data = "Empty";
   if (event.data !== undefined && Object.keys(event.data).length > 0) {
-    data = jsonSchema.compile({
-      type: "object",
-      properties: event.data,
-    });
+    data = jsonSchema.compile(
+      event.data.anyOf !== undefined ? event.data : {
+        type: "object",
+        properties: event.data,
+      },
+    );
   }
   let meta = "Empty";
   if (event.meta !== undefined && Object.keys(event.meta).length > 0) {

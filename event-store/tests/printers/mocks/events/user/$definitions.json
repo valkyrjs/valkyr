@@ -1,0 +1,30 @@
+{
+  "UserName": {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "given": {
+            "type": "string"
+          },
+          "family": {
+            "type": "string",
+            "optional": true
+          }
+        }
+      },
+      {
+        "type": "object",
+        "properties": {
+          "given": {
+            "type": "string",
+            "optional": true
+          },
+          "family": {
+            "type": "string"
+          }
+        }
+      }
+    ]
+  }
+}

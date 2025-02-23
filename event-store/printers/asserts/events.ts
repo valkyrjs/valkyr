@@ -18,11 +18,14 @@ export function assertEventSchema(schema: any): asserts schema is EventSchema {
     throw new EventConfigAssertionError("Missing required 'type' key");
   }
   if (schema.data) {
+    const isUnionSchema = schema.data.anyOf !== undefined;
     try {
-      new Ajv().addSchema({
-        type: "object",
-        properties: schema.data,
-      });
+      new Ajv().addSchema(
+        isUnionSchema ? schema.data : {
+          type: "object",
+          properties: schema.data,
+        },
+      );
     } catch (error) {
       throw new EventConfigAssertionError("Invalid 'data' provided, must be valid JSONSchema", error);
     }

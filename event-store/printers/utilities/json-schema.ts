@@ -10,6 +10,19 @@ function compile(schema: JSONSchema4): string {
   if (schema.$ref) {
     return toPascalCase(schema.$ref.replace("#/definitions/", ""));
   }
+  if (schema.anyOf !== undefined) {
+    return `(${schema.anyOf.map(compile).join(" | ")})`;
+  }
+  if (schema.const !== undefined) {
+    switch (typeof schema.const) {
+      case "number": {
+        return schema.const;
+      }
+      default: {
+        return `"${schema.const}"`;
+      }
+    }
+  }
   switch (schema.type) {
     case "object": {
       if (schema.properties === undefined) {

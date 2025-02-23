@@ -2,15 +2,8 @@
   "type": "user:created",
   "data": {
     "name": {
-      "type": "object",
-      "properties": {
-        "given": {
-          "type": ["string", "null"]
-        },
-        "family": {
-          "type": ["string", "null"]
-        }
-      }
+      "$ref": "#/definitions/UserName",
+      "optional": true
     },
     "email": {
       "type": "string"
