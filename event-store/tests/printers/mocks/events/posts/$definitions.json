@@ -1,6 +1,5 @@
 {
   "CommentType": {
-    "type": "string",
     "enum": ["origin", "reply"]
   }
 }

@@ -2,7 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { ensureFile } from "@std/fs";
-import { toPascalCase } from "@std/text";
+import { toCamelCase, toPascalCase } from "@std/text";
 import { resolveRefs } from "json-refs";
 import { jsonSchemaToZod } from "json-schema-to-zod";
 import { format } from "prettier";
@@ -66,7 +66,9 @@ export async function printEvents({ inputs, outputs }: Options) {
       ${types.sort().join("\n\n")}
 
       // ### Definitions
-      // List of all shared schema definitions for shared event types.
+      // List of all shared schema definitions.
+
+      ${Array.from(validators.defs.entries()).map(([key, value]) => `export const ${key} = ${value};`).join("\n\n")}
 
       ${definitions.join("\n\n")}
     `,
@@ -100,6 +102,7 @@ async function getEventStoreContainer(inputs: string[]): Promise<EventStoreConta
     types: [],
     props: new Set(),
     validators: {
+      defs: new Map<string, any>(),
       data: new Map<string, any>(),
       meta: new Map<string, any>(),
     },
@@ -122,6 +125,10 @@ async function getEventStoreContainer(inputs: string[]): Promise<EventStoreConta
     return defs;
   }, {} as any);
 
+  for (const [key, schema] of defs.entries()) {
+    container.validators.defs.set(toCamelCase(key), await toZodDefinition(key, schema, definitions));
+  }
+
   container.definitions = getDefinitions(defs);
 
   for (const event of await getLocalEvents(inputs)) {
@@ -130,10 +137,10 @@ async function getEventStoreContainer(inputs: string[]): Promise<EventStoreConta
     container.types.push(getEventType(event));
     if (event.data !== undefined) {
       container.props.add({ name: type, props: jsonSchema.propertyNames(event.data) });
-      container.validators.data.set(type, await getEventValidator(type, event.data, definitions));
+      container.validators.data.set(type, await toZodValidation(type, event.data, definitions));
     }
     if (event.meta !== undefined) {
-      container.validators.meta.set(type, await getEventValidator(type, event.meta, definitions));
+      container.validators.meta.set(type, await toZodValidation(type, event.meta, definitions));
     }
   }
 
@@ -198,7 +205,19 @@ async function resolveLocalDefinitions(path: string, definitions: DefinitionSche
   }
 }
 
-async function getEventValidator(name: string, data: any, definitions: any) {
+async function toZodDefinition(name: string, data: any, definitions: any) {
+  return jsonSchemaToZod(
+    await resolveRefs({
+      $schema: "http://json-schema.org/draft-04/schema#",
+      id: `valkyrjs/schemas/v1/${name}.json`,
+      title: name,
+      definitions,
+      ...populateSchema(data),
+    }).then(({ resolved }) => resolved),
+  );
+}
+
+async function toZodValidation(name: string, data: any, definitions: any) {
   const schema: any = {
     $schema: "http://json-schema.org/draft-04/schema#",
     id: `valkyrjs/schemas/v1/${name}.json`,
@@ -207,8 +226,7 @@ async function getEventValidator(name: string, data: any, definitions: any) {
     additionalProperties: false,
   };
 
-  const isUnionSchema = data.anyOf !== undefined;
-  if (isUnionSchema === true) {
+  if (data.anyOf !== undefined) {
     schema.anyOf = toMappedAnyOf(data.anyOf);
   } else {
     schema.type = "object";
@@ -306,6 +324,7 @@ type EventStoreContainer = {
   types: string[];
   props: Set<{ name: string; props: string[] }>;
   validators: {
+    defs: Map<string, any>;
     data: Map<string, any>;
     meta: Map<string, any>;
   };
