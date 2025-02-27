@@ -168,14 +168,8 @@ import type { EventRecord } from "./generated/events.ts";
 import { eventStore } from "./event-store.ts";
 
 export class User extends AggregateRoot<EventRecord> {
-  name: {
-    given: string;
-    family: string;
-  } = {
-    given: ""
-    family: ""
-  }
-  email = "";
+  name!: Name;
+  email!: string;
 
   // -------------------------------------------------------------------------
   // Factories
@@ -194,8 +188,7 @@ export class User extends AggregateRoot<EventRecord> {
   with(event: EventRecord) {
     switch (event.type) {
       case "UserCreated": {
-        this.name.given = event.data.name.given;
-        this.name.family = event.data.name.family;
+        this.name = event.data.name;
         this.email = event.data.email;
         break;
       }
@@ -213,6 +206,11 @@ export class User extends AggregateRoot<EventRecord> {
   fullName() {
     return `${this.name.given} ${this.name.family}`;
   }
+}
+
+type Name = {
+  given: string;
+  family: string;
 }
 ```
 
@@ -237,6 +235,16 @@ projector.on("UserCreated", async (record) => {
   });
 });
 ```
+
+### Hydration in Event Processing
+
+When handling events in a distributed system or during event replay operations, it is important to differentiate between **new events** and **rehydrated events**.  
+
+- **New Events (`hydrate: false`)**: These events are being processed for the first time. They will trigger all projection handlers, including `.once()`, `.on()`, and `.all()`.  
+- **Rehydrated Events (`hydrate: true`)**: These events are being replayed, either as part of a stream synchronization, system recovery, or reprocessing in a distributed environment. They **will not trigger** `.once()` handlers to avoid redundant side effects but will still be processed by `.on()` and `.all()` handlers where applicable.  
+
+This mechanism ensures that critical one-time operations (such as sending emails or initiating external API calls) are **not repeated** unnecessarily while still allowing stateful projections to update their read models correctly.
+
 
 #### `.once("UserCreated", (event) => Promise<void>)`
 

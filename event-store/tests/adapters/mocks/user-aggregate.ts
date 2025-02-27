@@ -47,8 +47,8 @@ export class User extends AggregateRoot<Event> {
     switch (event.type) {
       case "user:created": {
         this.id = event.stream;
-        this.name.given = event.data.name.given ?? "";
-        this.name.family = event.data.name.family ?? "";
+        this.name.given = event.data.name?.given ?? "";
+        this.name.family = event.data.name?.family ?? "";
         this.email = event.data.email;
         break;
       }

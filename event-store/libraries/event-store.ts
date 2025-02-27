@@ -34,7 +34,7 @@
  * ```
  */
 
-import type { AnyZodObject } from "zod";
+import type { AnyZodObject, ZodUnion } from "zod";
 
 import type { AggregateRoot } from "~libraries/aggregate.ts";
 import { EventInsertionError, EventMissingError, EventParserError } from "~libraries/errors.ts";
@@ -561,8 +561,8 @@ export class EventStore<const TEvent extends Event, TEventStoreAdapter extends E
    * @param type - Event to get validator for.
    */
   getValidator(type: TEvent["type"]): {
-    data?: AnyZodObject;
-    meta?: AnyZodObject;
+    data?: AnyZodObject | ZodUnion<any>;
+    meta?: AnyZodObject | ZodUnion<any>;
   } {
     return {
       data: this.#validators.data.get(type),

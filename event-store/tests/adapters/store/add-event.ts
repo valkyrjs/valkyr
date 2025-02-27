@@ -71,7 +71,7 @@ export default describe<Event, EventRecord>(".addEvent", (getEventStore) => {
     let projectedResult: string = "";
 
     projector.on("user:created", async (record) => {
-      projectedResult = `${record.data.name.given} ${record.data.name.family} | ${record.data.email}`;
+      projectedResult = `${record.data.name?.given} ${record.data.name?.family} | ${record.data.email}`;
     });
 
     await store.addEvent(event);

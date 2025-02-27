@@ -1,4 +1,4 @@
-import type { AnyZodObject } from "zod";
+import type { AnyZodObject, ZodUnion } from "zod";
 
 import type { Event, EventToRecord } from "./event.ts";
 import { EventsProvider } from "./providers/events.ts";
@@ -23,8 +23,8 @@ export type EventStoreAdapter<TEvent extends Event> = {
 };
 
 export type ValidatorConfig<TEvent extends Event> = {
-  data: Map<TEvent["type"], AnyZodObject>;
-  meta: Map<TEvent["type"], AnyZodObject>;
+  data: Map<TEvent["type"], AnyZodObject | ZodUnion<any>>;
+  meta: Map<TEvent["type"], AnyZodObject | ZodUnion<any>>;
 };
 
 export type EventList<E extends Event> = Set<E["type"]>;
