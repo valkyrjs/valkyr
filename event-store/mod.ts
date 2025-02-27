@@ -6,4 +6,4 @@ export { Projector } from "./libraries/projector.ts";
 export { makeAggregateReducer, makeReducer } from "./libraries/reducer.ts";
 export * from "./libraries/time.ts";
 export type { Empty } from "./types/common.ts";
-export type { Event, EventRecord, EventToRecord } from "./types/event.ts";
+export type { Event, EventData, EventMeta, EventRecord, EventToRecord } from "./types/event.ts";
