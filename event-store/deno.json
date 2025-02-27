@@ -1,6 +1,6 @@
 {
   "name": "@valkyr/event-store",
-  "version": "1.19.7",
+  "version": "1.19.8",
   "exports": {
     ".": "./mod.ts",
     "./browser": "./adapters/browser/adapter.ts",

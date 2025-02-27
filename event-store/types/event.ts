@@ -118,18 +118,14 @@ export type Event<Type extends string = string, Data extends EventContent = any,
   meta: Meta extends EventContent ? Meta : Empty;
 };
 
-/*
- |--------------------------------------------------------------------------------
- | Meta
- |--------------------------------------------------------------------------------
+/**
+ * Data type of the provided event.
  */
+export type EventData<TEvent extends Event> = TEvent extends Event<infer _, infer TData> ? TData : never;
 
 /**
- * Assigned to meta data of events representing an identifier of the source that
- * created the event.
+ * Meta type of the provided event.
  */
-export type EventAuditor = {
-  auditor: string;
-};
+export type EventMeta<TEvent extends Event> = TEvent extends Event<infer _, infer __, infer TMeta> ? TMeta : never;
 
 type EventContent = Record<string, unknown>;
