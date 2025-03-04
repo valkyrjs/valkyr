@@ -549,7 +549,7 @@ export class EventStore<const TEvent extends Event, TEventStoreAdapter extends E
         }
       }
       if (errors.length > 0) {
-        throw new EventParserError(errors);
+        throw new EventParserError(record, errors);
       }
     }
   }

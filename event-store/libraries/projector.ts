@@ -48,13 +48,13 @@ const FILTER_ALL = Object.freeze<ProjectionFilter>({
  * patterns, including one-time projections, continuous projections, and catch-all projections.
  * Additionally, it enables batched event processing for optimized handling of multiple events.
  *
- * @template Record - The type of event records processed by this projector.
+ * @template TEventRecord - TType of event records processed by this projector.
  */
-export class Projector<Record extends EventRecord = EventRecord> {
-  #listeners: ProjectorListeners<Record> = {};
-  #batchedListeners: BatchedProjectorListeners<Record> = {};
+export class Projector<TEventRecord extends EventRecord = EventRecord> {
+  #listeners: ProjectorListeners<TEventRecord> = {};
+  #batchedListeners: BatchedProjectorListeners<TEventRecord> = {};
   #queues: {
-    [stream: string]: Queue<ProjectorMessage<Record>>;
+    [stream: string]: Queue<ProjectorMessage<TEventRecord>>;
   } = {};
 
   constructor() {
@@ -77,7 +77,7 @@ export class Projector<Record extends EventRecord = EventRecord> {
    |--------------------------------------------------------------------------------
    */
 
-  async push(record: Record, status: ProjectionStatus): Promise<boolean> {
+  async push(record: TEventRecord, status: ProjectionStatus): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       if (this.#queues[record.stream] === undefined) {
         this.#makeQueue(record.stream);
@@ -86,7 +86,7 @@ export class Projector<Record extends EventRecord = EventRecord> {
     });
   }
 
-  async pushMany(key: string, records: Record[]): Promise<void> {
+  async pushMany(key: string, records: TEventRecord[]): Promise<void> {
     await Promise.all(Array.from(this.#batchedListeners[key] || []).map((fn) => fn(records)));
   }
 
@@ -103,7 +103,7 @@ export class Projector<Record extends EventRecord = EventRecord> {
    * @param key     - Batch key being projected.
    * @param handler - Handler method to execute when events are projected.
    */
-  batch(key: string, handler: BatchedProjectionHandler<Record>): Subscription {
+  batch(key: string, handler: BatchedProjectionHandler<TEventRecord>): Subscription {
     const listeners = (this.#batchedListeners[key] ?? (this.#batchedListeners[key] = new Set())).add(handler);
     return {
       unsubscribe() {
@@ -128,11 +128,19 @@ export class Projector<Record extends EventRecord = EventRecord> {
    * @param type    - Event type being projected.
    * @param handler - Handler method to execute when event is projected.
    */
-  once<Type extends Record["type"], R extends Record = Extract<Record, { type: Type }>>(
-    type: Type,
-    handler: ProjectionHandler<R>,
+  once<
+    TType extends TEventRecord["type"],
+    TRecord extends TEventRecord = Extract<TEventRecord, { type: TType }>,
+    TSuccessData extends Record<string, any> = any,
+  >(
+    type: TType,
+    handler: ProjectionHandler<TRecord, TSuccessData>,
+    effects: {
+      onError(error: unknown, record: TRecord): Promise<void>;
+      onSuccess(data: TSuccessData, record: TRecord): Promise<void>;
+    },
   ): Subscription {
-    return this.#subscribe(type, FILTER_ONCE, handler as ProjectionHandler);
+    return this.#subscribe(type, FILTER_ONCE, handler as any, effects);
   }
 
   /**
@@ -158,11 +166,11 @@ export class Projector<Record extends EventRecord = EventRecord> {
    * @param type    - Event type being projected.
    * @param handler - Handler method to execute when event is projected.
    */
-  on<Type extends Record["type"], R extends Record = Extract<Record, { type: Type }>>(
-    type: Type,
-    handler: ProjectionHandler<R>,
+  on<TType extends TEventRecord["type"], TRecord extends TEventRecord = Extract<TEventRecord, { type: TType }>>(
+    type: TType,
+    handler: ProjectionHandler<TRecord>,
   ): Subscription {
-    return this.#subscribe(type, FILTER_CONTINUOUS, handler as ProjectionHandler);
+    return this.#subscribe(type, FILTER_CONTINUOUS, handler as any);
   }
 
   /**
@@ -177,11 +185,11 @@ export class Projector<Record extends EventRecord = EventRecord> {
    * @param type    - Event type being projected.
    * @param handler - Handler method to execute when event is projected.
    */
-  all<Type extends Record["type"], R extends Record = Extract<Record, { type: Type }>>(
-    type: Type,
-    handler: ProjectionHandler<R>,
+  all<TType extends TEventRecord["type"], TRecord extends TEventRecord = Extract<TEventRecord, { type: TType }>>(
+    type: TType,
+    handler: ProjectionHandler<TRecord>,
   ): Subscription {
-    return this.#subscribe(type, FILTER_ALL, handler as ProjectionHandler);
+    return this.#subscribe(type, FILTER_ALL, handler as any);
   }
 
   /*
@@ -197,11 +205,22 @@ export class Projector<Record extends EventRecord = EventRecord> {
    * @param filter  - Projection filter to validate against.
    * @param handler - Handler to execute.
    */
-  #subscribe(type: string, filter: ProjectionFilter, handler: ProjectionHandler): { unsubscribe: () => void } {
+  #subscribe(type: string, filter: ProjectionFilter, handler: ProjectionHandler<TEventRecord>, effects?: {
+    onError(error: unknown, record: TEventRecord): Promise<void>;
+    onSuccess(data: unknown, record: TEventRecord): Promise<void>;
+  }): { unsubscribe: () => void } {
     return {
       unsubscribe: this.#addEventListener(type, async (record, state) => {
         if (this.#hasValidState(filter, state)) {
-          await handler(record);
+          await handler(record).then((data: unknown) => {
+            effects?.onSuccess(data, record);
+          }).catch((error) => {
+            if (effects !== undefined) {
+              effects.onError(error, record);
+            } else {
+              throw error;
+            }
+          });
         }
       }),
     };
@@ -213,7 +232,7 @@ export class Projector<Record extends EventRecord = EventRecord> {
    * @param type - Event type to listen for.
    * @param fn   - Listener fn to execute.
    */
-  #addEventListener(type: string, fn: ProjectorListenerFn<Record>): () => void {
+  #addEventListener(type: string, fn: ProjectorListenerFn<TEventRecord>): () => void {
     const listeners = (this.#listeners[type] ?? (this.#listeners[type] = new Set())).add(fn);
     return () => {
       listeners.delete(fn);

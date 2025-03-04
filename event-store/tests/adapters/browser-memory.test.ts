@@ -11,6 +11,7 @@ import testAddEvent from "./store/add-event.ts";
 import testCreateSnapshot from "./store/create-snapshot.ts";
 import testMakeAggregateReducer from "./store/make-aggregate-reducer.ts";
 import testMakeReducer from "./store/make-reducer.ts";
+import testOnceProjection from "./store/once-projection.ts";
 import testPushAggregate from "./store/push-aggregate.ts";
 import testPushManyAggregates from "./store/push-many-aggregates.ts";
 import testReduce from "./store/reduce.ts";
@@ -31,6 +32,7 @@ describe("Adapter > Browser (memory)", () => {
   testMakeAggregateReducer(eventStoreFn);
   testReplayEvents(eventStoreFn);
   testReduce(eventStoreFn);
+  testOnceProjection(eventStoreFn);
 
   testPushAggregate(eventStoreFn);
   testPushManyAggregates(eventStoreFn);

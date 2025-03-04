@@ -11,20 +11,27 @@ export default describe<Event, EventRecord>(".addEvent", (getEventStore) => {
   it("should throw a 'EventParserError' when providing bad event data", async () => {
     const { store } = await getEventStore();
 
+    const event = store.makeEvent({
+      type: "user:created",
+      data: {
+        name: {
+          given: "John",
+          familys: "Doe",
+        },
+        email: "john.doe@fixture.none",
+      },
+    } as any);
+
     await assertRejects(
-      async () =>
-        store.addEvent({
-          type: "user:created",
-          data: {
-            name: {
-              given: "John",
-              familys: "Doe",
-            },
-            email: "john.doe@fixture.none",
-          },
-        } as any),
+      async () => store.pushEvent(event),
       EventParserError,
-      new EventParserError({}).message,
+      new EventParserError(event, [
+        {
+          "name": [
+            "Unrecognized key(s) in object: 'familys'",
+          ],
+        },
+      ]).message,
     );
   });
 

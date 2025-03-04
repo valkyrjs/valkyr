@@ -1,20 +1,4 @@
 /**
- * General error thrown when an issue occurs within the event store.
- *
- * This serves as a base error for event store-related failures, providing
- * a descriptive message about what went wrong.
- *
- * @property type - The type of error, always `"EventStoreError"`.
- */
-export class EventStoreError extends Error {
-  readonly type = "EventStoreError";
-
-  constructor(message: string) {
-    super(`EventStore Error: ${message}`);
-  }
-}
-
-/**
  * Error thrown when an expected event is missing from the event store.
  *
  * This occurs when an event type has not been registered or cannot be found
@@ -48,21 +32,9 @@ export class EventMissingError extends Error {
 export class EventParserError extends Error {
   readonly type = "EventParserError";
 
-  constructor(readonly data: unknown) {
-    super("Invalid event provided");
+  constructor(readonly event: any, readonly data: unknown) {
+    super(`Invalid event provided\nEvent:\n${JSON.stringify(event, null, 2)}\nIssues:\n${JSON.stringify(data, null, 2)}`);
   }
-}
-
-/**
- * Error thrown when an event fails validation.
- *
- * This error indicates that an event does not meet the required validation
- * criteria before being processed or stored.
- *
- * @property type - The type of error, always `"EventValidationError"`.
- */
-export class EventValidationError extends Error {
-  readonly type = "EventValidationError";
 }
 
 /**

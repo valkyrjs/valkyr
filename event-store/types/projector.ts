@@ -22,7 +22,9 @@ export type ProjectorListenerFn<TRecord extends EventRecord = EventRecord> = (
   status: ProjectionStatus,
 ) => void;
 
-export type ProjectionHandler<TRecord extends EventRecord = EventRecord> = (record: TRecord) => Promise<void>;
+export type ProjectionHandler<TRecord extends EventRecord = EventRecord, TSuccessData extends Record<string, any> | undefined = undefined> = TSuccessData extends
+  undefined ? (record: TRecord) => Promise<void>
+  : (record: TRecord) => Promise<TSuccessData>;
 
 export type BatchedProjectionHandler<TRecord extends EventRecord = EventRecord> = (records: TRecord[]) => Promise<void>;
 

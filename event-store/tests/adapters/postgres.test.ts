@@ -14,6 +14,7 @@ import testCreateSnapshot from "./store/create-snapshot.ts";
 import testMakeAggregateReducer from "./store/make-aggregate-reducer.ts";
 import testMakeEvent from "./store/make-event.ts";
 import testMakeReducer from "./store/make-reducer.ts";
+import testOnceProjection from "./store/once-projection.ts";
 import testRelationsProvider from "./store/providers/relations.ts";
 import testPushAggregate from "./store/push-aggregate.ts";
 import testPushManyAggregates from "./store/push-many-aggregates.ts";
@@ -61,6 +62,7 @@ describe("Adapter > Postgres", () => {
   testMakeAggregateReducer(eventStoreFn);
   testReplayEvents(eventStoreFn);
   testReduce(eventStoreFn);
+  testOnceProjection(eventStoreFn);
 
   testPushAggregate(eventStoreFn);
   testPushManyAggregates(eventStoreFn);

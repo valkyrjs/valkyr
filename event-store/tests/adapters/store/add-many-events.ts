@@ -63,41 +63,48 @@ export default describe<Event, EventRecord>(".addSequence", (getEventStore) => {
     const { store } = await getEventStore();
     const stream = nanoid();
 
-    const events = [
-      {
-        stream,
-        type: "user:created",
-        data: {
-          name: {
-            given: "Jane",
-            family: "Doe",
-          },
-          email: "jane.doe@fixture.none",
-        },
-      } as const,
-      {
-        stream,
-        type: "user:name:given-set",
-        data: {
-          givens: "John",
-        },
-      } as any,
-      {
-        stream,
-        type: "user:email-set",
-        data: {
-          email: "john@doe.com",
-        },
-        meta: {
-          auditor: "admin",
-        },
-      } as const,
-    ];
+    const badEvent = store.makeEvent({
+      stream,
+      type: "user:name:given-set",
+      data: {
+        givens: "John",
+      },
+    } as any);
 
     await assertRejects(
-      async () => store.addManyEvents(events),
+      async () =>
+        store.pushManyEvents([
+          store.makeEvent({
+            stream,
+            type: "user:created",
+            data: {
+              name: {
+                given: "Jane",
+                family: "Doe",
+              },
+              email: "jane.doe@fixture.none",
+            },
+          }),
+          badEvent,
+          store.makeEvent({
+            stream,
+            type: "user:email-set",
+            data: {
+              email: "john@doe.com",
+            },
+            meta: {
+              auditor: "admin",
+            },
+          }),
+        ]),
       EventParserError,
-      new EventParserError({}).message,
+      new EventParserError(badEvent, [
+        {
+          "given": [
+            "Required",
+          ],
+        },
+      ]).message,
     );
 
     const records = await store.getEventsByStreams([stream]);
