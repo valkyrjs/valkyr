@@ -131,14 +131,18 @@ export class Projector<TEventRecord extends EventRecord = EventRecord> {
   once<
     TType extends TEventRecord["type"],
     TRecord extends TEventRecord = Extract<TEventRecord, { type: TType }>,
-    TSuccessData extends Record<string, any> = any,
+    TSuccessData extends Record<string, any> | void = void,
   >(
     type: TType,
     handler: ProjectionHandler<TRecord, TSuccessData>,
-    effects: {
-      onError(error: unknown, record: TRecord): Promise<void>;
-      onSuccess(data: TSuccessData, record: TRecord): Promise<void>;
-    },
+    effects: TSuccessData extends void ? {
+        onError(res: { error: unknown; record: TRecord }): Promise<void>;
+        onSuccess(res: { record: TRecord }): Promise<void>;
+      }
+      : {
+        onError(res: { error: unknown; record: TRecord }): Promise<void>;
+        onSuccess(res: { data: TSuccessData; record: TRecord }): Promise<void>;
+      },
   ): Subscription {
     return this.#subscribe(type, FILTER_ONCE, handler as any, effects);
   }
@@ -206,17 +210,17 @@ export class Projector<TEventRecord extends EventRecord = EventRecord> {
    * @param handler - Handler to execute.
    */
   #subscribe(type: string, filter: ProjectionFilter, handler: ProjectionHandler<TEventRecord>, effects?: {
-    onError(error: unknown, record: TEventRecord): Promise<void>;
-    onSuccess(data: unknown, record: TEventRecord): Promise<void>;
+    onError(res: { error: unknown; record: TEventRecord }): Promise<void>;
+    onSuccess(res: { data?: unknown; record: TEventRecord }): Promise<void>;
   }): { unsubscribe: () => void } {
     return {
       unsubscribe: this.#addEventListener(type, async (record, state) => {
         if (this.#hasValidState(filter, state)) {
           await handler(record).then((data: unknown) => {
-            effects?.onSuccess(data, record);
+            effects?.onSuccess({ data, record });
           }).catch((error) => {
             if (effects !== undefined) {
-              effects.onError(error, record);
+              effects.onError({ error, record });
             } else {
               throw error;
             }

@@ -28,10 +28,10 @@ export default describe<Event, EventRecord>("projector.once", (getEventStore) =>
     projector.once("user:created", async () => {
       return { id: "fake-email-id" };
     }, {
-      async onError(error: Error) {
-        emailId = error;
+      async onError({ error }) {
+        emailId = error as Error;
       },
-      async onSuccess(data) {
+      async onSuccess({ data }) {
         emailId = data.id;
       },
     });
@@ -61,15 +61,12 @@ export default describe<Event, EventRecord>("projector.once", (getEventStore) =>
     let emailId: string | Error | undefined;
 
     projector.once("user:created", async () => {
-      throw new Error("Failed to send email!");
-      return { id: "fake-email-id" };
+      fakeEmail();
     }, {
-      async onError(error: Error) {
-        emailId = error;
+      async onError({ error }) {
+        emailId = error as Error;
       },
-      async onSuccess(data) {
-        emailId = data.id;
-      },
+      async onSuccess() {},
     });
 
     await store.addEvent(event);
@@ -78,3 +75,7 @@ export default describe<Event, EventRecord>("projector.once", (getEventStore) =>
     assertEquals(emailId, new Error("Failed to send email!"));
   });
 });
+
+function fakeEmail() {
+  throw new Error("Failed to send email!");
+}
