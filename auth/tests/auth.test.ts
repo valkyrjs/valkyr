@@ -42,51 +42,35 @@ describe("Auth", () => {
     assertEquals(session.accountId, "abc");
   });
 
-  it("should generate a single role access instance", () => {
+  it("should generate a single role access instance", async () => {
     const access = auth.access([{
-      id: "role-1",
-      name: "Role #1",
+      id: "admin",
+      name: "admin",
       permissions: {
         users: {
-          create: {
-            conditions: {
-              tenantId: TENANT_ID,
-            },
-          },
-          read: {
-            filter: ["name"],
-          },
+          create: "pass",
+          read: true,
           update: true,
           delete: true,
         },
       },
     }]);
 
-    assertEquals(access.check("users", "create", { tenantId: TENANT_ID }).granted, true);
-    assertEquals(access.check("users", "read").granted, true);
-    assertEquals(access.check("users", "update").granted, true);
-    assertEquals(access.check("users", "delete").granted, true);
-    assertEquals(
-      access.check("users", "read").filter({
-        name: "John Doe",
-        email: "john.doe@fixture.none",
-      }),
-      {
-        name: "John Doe",
-      } as any,
-    );
+    assertEquals((await access.has("users", "create", { tenantId: TENANT_ID })).granted, true);
+    assertEquals((await access.has("users", "read")).granted, true);
+    assertEquals((await access.has("users", "update")).granted, true);
+    assertEquals((await access.has("users", "delete")).granted, true);
   });
 
-  it("should generate a multi role access instance", () => {
+  it("should generate a multi role access instance", async () => {
     const access = auth.access([
       {
         id: "moderator",
         name: "moderator",
         permissions: {
           users: {
-            read: {
-              filter: ["name", "email"],
-            },
+            create: "fail",
+            read: true,
             update: true,
             delete: true,
           },
@@ -97,29 +81,17 @@ describe("Auth", () => {
         name: "user",
         permissions: {
           users: {
-            read: {
-              filter: ["name"],
-            },
+            read: true,
             update: true,
           },
         },
       },
     ]);
 
-    assertEquals(access.check("users", "create", { tenantId: TENANT_ID }).granted, false);
-    assertEquals(access.check("users", "read").granted, true);
-    assertEquals(access.check("users", "update").granted, true);
-    assertEquals(access.check("users", "delete").granted, true);
-    assertEquals(
-      access.check("users", "read").filter({
-        name: "John Doe",
-        email: "john.doe@fixture.none",
-      }),
-      {
-        name: "John Doe",
-        email: "john.doe@fixture.none",
-      } as any,
-    );
+    assertEquals((await access.has("users", "create", { tenantId: TENANT_ID })).granted, false);
+    assertEquals((await access.has("users", "read")).granted, true);
+    assertEquals((await access.has("users", "update")).granted, true);
+    assertEquals((await access.has("users", "delete")).granted, true);
   });
 });
 

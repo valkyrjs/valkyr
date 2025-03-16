@@ -1,22 +1,20 @@
 import { z } from "zod";
 
-import { ActionFilter, ActionValidator, type Permissions } from "~libraries/types.ts";
+import { AccessGuard } from "~libraries/guard.ts";
+import type { Permissions } from "~libraries/types.ts";
 
 export const permissions = {
   users: {
-    create: {
-      validator: new ActionValidator({
-        data: z.object({ tenantId: z.string() }),
-        conditions: z.object({ tenantId: z.string() }),
-        validate: (data, conditions) => {
-          return data.tenantId === conditions.tenantId;
-        },
-        error: "You do not have required permissions to add new users to this tenant.",
-      }),
-    },
-    read: {
-      filter: new ActionFilter(["name", "email"] as const),
-    },
+    create: new AccessGuard({
+      input: z.object({ tenantId: z.string() }),
+      flag: z.union([z.literal("pass"), z.literal("fail")]),
+      check: async ({ tenantId }, flag) => {
+        if (flag === "fail") {
+          throw new Error(`Session does not have permission to add user for tenant '${tenantId}'.`);
+        }
+      },
+    }),
+    read: true,
     update: true,
     delete: true,
   },
