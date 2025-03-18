@@ -2,30 +2,30 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { assertEquals, assertNotEquals } from "@std/assert";
-import { beforeAll, describe, it } from "@std/testing/bdd";
+import { describe, it } from "@std/testing/bdd";
+import { z } from "npm:zod@3.24.1";
 
 import { Auth } from "~libraries/auth.ts";
 
-import { type AppPermissions, permissions } from "./permissions.ts";
+import { permissions } from "./permissions.ts";
 
 const TENANT_ID = "tenant-a";
 
+const auth = new Auth({
+  settings: {
+    algorithm: "RS256",
+    privateKey: readFileSync(join(import.meta.dirname!, "keys", "private"), "utf-8"),
+    publicKey: readFileSync(join(import.meta.dirname!, "keys", "public"), "utf-8"),
+    issuer: "https://valkyrjs.com",
+    audience: "https://valkyrjs.com",
+  },
+  session: z.object({
+    accountId: z.string(),
+  }),
+  permissions,
+});
+
 describe("Auth", () => {
-  let auth: Auth<AppPermissions, Session>;
-
-  beforeAll(() => {
-    auth = new Auth<AppPermissions, Session>({
-      permissions,
-      auth: {
-        algorithm: "RS256",
-        privateKey: readFileSync(join(import.meta.dirname!, "keys", "private"), "utf-8"),
-        publicKey: readFileSync(join(import.meta.dirname!, "keys", "public"), "utf-8"),
-        issuer: "https://valkyrjs.com",
-        audience: "https://valkyrjs.com",
-      },
-    });
-  });
-
   it("should sign a session", async () => {
     const token = await auth.generate({ accountId: "abc" });
 
@@ -94,7 +94,3 @@ describe("Auth", () => {
     assertEquals((await access.has("users", "delete")).granted, true);
   });
 });
-
-type Session = {
-  accountId: string;
-};

@@ -12,18 +12,7 @@
  * import { SQLiteAuth } from "@valkyr/auth/sqlite";
  * import { ActionFilter, type Permissions } from "@valkyr/auth";
  *
- * const permissions = {
- *   account: {
- *     read: {
- *       filter: new ActionFilter(["entityId", "email"]),
- *     },
- *     update: true,
- *   },
- * } as const satisfies Permissions;
- *
- * export const auth = new SQLiteAuth({
- *   database: "postgres://{user}:{password}@{url}:{port}/{database}",
- *   permissions,
+ * export const auth = new Auth({
  *   auth: {
  *     algorithm: "RS256",
  *     privateKey: await readFile(join(__dirname, ".keys", "private"), "utf-8"),
@@ -31,30 +20,44 @@
  *     issuer: "https://valkyrjs.com",
  *     audience: "https://valkyrjs.com",
  *   },
+ *   session: z.object({
+ *     accountId: z.string(),
+ *   }),
+ *   permissions: {
+ *     account: {
+ *       create: true,
+ *       read: true,
+ *       update: true,
+ *       delete: true,
+ *     },
+ *   },
  * });
  * ```
  */
 
 import { importPKCS8, importSPKI, jwtVerify, type KeyLike, SignJWT } from "jose";
+import z, { AnyZodObject } from "zod";
 
 import { Access } from "~libraries/access.ts";
 
-import type { Permissions, Role, Session } from "./types.ts";
+import type { Permissions, Role } from "./types.ts";
 
 /**
  * Provides a solution to manage user authentication and access control rights within an
  * application.
  */
-export class Auth<TPermissions extends Permissions, TSession extends Session> {
+export class Auth<TPermissions extends Permissions, TSession extends AnyZodObject> {
+  readonly #settings: Config<TPermissions, TSession>["settings"];
+  readonly #session: TSession;
   readonly #permissions: TPermissions;
-  readonly #auth: Config<TPermissions>["auth"];
 
   #secret?: KeyLike;
   #pubkey?: KeyLike;
 
-  constructor(config: Config<TPermissions>) {
+  constructor(config: Config<TPermissions, TSession>) {
+    this.#settings = config.settings;
+    this.#session = config.session;
     this.#permissions = config.permissions;
-    this.#auth = config.auth;
   }
 
   /*
@@ -64,12 +67,19 @@ export class Auth<TPermissions extends Permissions, TSession extends Session> {
    */
 
   /**
+   * Session zod object.
+   */
+  get session(): TSession {
+    return this.#session;
+  }
+
+  /**
    * Secret key used to sign new tokens.
    */
   get secret(): Promise<KeyLike> {
     return new Promise((resolve) => {
       if (this.#secret === undefined) {
-        importPKCS8(this.#auth.privateKey, this.#auth.algorithm).then((key) => {
+        importPKCS8(this.#settings.privateKey, this.#settings.algorithm).then((key) => {
           this.#secret = key;
           resolve(key);
         });
@@ -85,7 +95,7 @@ export class Auth<TPermissions extends Permissions, TSession extends Session> {
   get pubkey(): Promise<KeyLike> {
     return new Promise<KeyLike>((resolve) => {
       if (this.#pubkey === undefined) {
-        importSPKI(this.#auth.publicKey, this.#auth.algorithm).then((key) => {
+        importSPKI(this.#settings.publicKey, this.#settings.algorithm).then((key) => {
           this.#pubkey = key;
           resolve(key);
         });
@@ -127,12 +137,12 @@ export class Auth<TPermissions extends Permissions, TSession extends Session> {
    * @param session    - Session to sign.
    * @param expiration - Expiration date of the token. Default: 1 hour
    */
-  async generate(session: TSession, expiration: string | number | Date = "1 hour"): Promise<string> {
+  async generate(session: z.infer<TSession>, expiration: string | number | Date = "1 hour"): Promise<string> {
     return new SignJWT(session)
-      .setProtectedHeader({ alg: this.#auth.algorithm })
+      .setProtectedHeader({ alg: this.#settings.algorithm })
       .setIssuedAt()
-      .setIssuer(this.#auth.issuer)
-      .setAudience(this.#auth.audience)
+      .setIssuer(this.#settings.issuer)
+      .setAudience(this.#settings.audience)
       .setExpirationTime(expiration)
       .sign(await this.secret);
   }
@@ -142,13 +152,13 @@ export class Auth<TPermissions extends Permissions, TSession extends Session> {
    *
    * @param token - Token to resolve auth session from.
    */
-  async resolve(token: string): Promise<TSession> {
-    return (await jwtVerify<TSession>(
+  async resolve(token: string): Promise<z.infer<TSession>> {
+    return (await jwtVerify<z.infer<TSession>>(
       token,
       await this.pubkey,
       {
-        issuer: this.#auth.issuer,
-        audience: this.#auth.audience,
+        issuer: this.#settings.issuer,
+        audience: this.#settings.audience,
       },
     )).payload;
   }
@@ -170,13 +180,14 @@ export class Auth<TPermissions extends Permissions, TSession extends Session> {
  |--------------------------------------------------------------------------------
  */
 
-type Config<TPermissions extends Permissions> = {
-  permissions: TPermissions;
-  auth: {
+type Config<TPermissions extends Permissions, TSession extends AnyZodObject> = {
+  settings: {
     algorithm: string;
     privateKey: string;
     publicKey: string;
     issuer: string;
     audience: string;
   };
+  session: TSession;
+  permissions: TPermissions;
 };
