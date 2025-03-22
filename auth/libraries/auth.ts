@@ -38,8 +38,7 @@
 import { importPKCS8, importSPKI, jwtVerify, type KeyLike, SignJWT } from "jose";
 import z, { AnyZodObject } from "zod";
 
-import { Access } from "~libraries/access.ts";
-
+import { Access } from "./access.ts";
 import type { Permissions, Role } from "./types.ts";
 
 /**
@@ -53,6 +52,9 @@ export class Auth<TPermissions extends Permissions, TSession extends AnyZodObjec
 
   #secret?: KeyLike;
   #pubkey?: KeyLike;
+
+  declare readonly $inferPermissions: TPermissions;
+  declare readonly $inferSession: z.infer<TSession>;
 
   constructor(config: Config<TPermissions, TSession>) {
     this.#settings = config.settings;
@@ -153,14 +155,15 @@ export class Auth<TPermissions extends Permissions, TSession extends AnyZodObjec
    * @param token - Token to resolve auth session from.
    */
   async resolve(token: string): Promise<z.infer<TSession>> {
-    return (await jwtVerify<z.infer<TSession>>(
+    const resolved = await jwtVerify<unknown>(
       token,
       await this.pubkey,
       {
         issuer: this.#settings.issuer,
         audience: this.#settings.audience,
       },
-    )).payload;
+    );
+    return this.session.parseAsync(resolved.payload);
   }
 
   /**

@@ -5,9 +5,8 @@ import { assertEquals, assertNotEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
 import { z } from "npm:zod@3.24.1";
 
-import { Auth } from "~libraries/auth.ts";
-
-import { permissions } from "./permissions.ts";
+import { Auth } from "../libraries/auth.ts";
+import { AccessGuard } from "../libraries/guard.ts";
 
 const TENANT_ID = "tenant-a";
 
@@ -22,7 +21,22 @@ const auth = new Auth({
   session: z.object({
     accountId: z.string(),
   }),
-  permissions,
+  permissions: {
+    users: {
+      create: new AccessGuard({
+        input: z.object({ tenantId: z.string() }),
+        flag: z.union([z.literal("pass"), z.literal("fail")]),
+        check: async ({ tenantId }, flag) => {
+          if (flag === "fail") {
+            throw new Error(`Session does not have permission to add user for tenant '${tenantId}'.`);
+          }
+        },
+      }),
+      read: true,
+      update: true,
+      delete: true,
+    },
+  },
 });
 
 describe("Auth", () => {

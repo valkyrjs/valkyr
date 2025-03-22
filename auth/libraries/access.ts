@@ -1,5 +1,4 @@
-import { AccessGuard } from "~libraries/guard.ts";
-
+import { AccessGuard } from "./guard.ts";
 import { Permission } from "./permission.ts";
 import type { GetGuardInput, Permissions, Role } from "./types.ts";
 
