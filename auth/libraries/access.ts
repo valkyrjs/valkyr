@@ -1,5 +1,4 @@
-import { AccessGuard } from "~libraries/guard.ts";
-
+import { AccessGuard } from "./guard.ts";
 import { Permission } from "./permission.ts";
 import type { GetGuardInput, Permissions, Role } from "./types.ts";
 
@@ -55,13 +54,13 @@ export class Access<TPermissions extends Permissions> {
           return { granted: true };
         }
 
-        const result = await guard.input.spa(data);
+        const result = guard.input.parse(data);
         if (result.success === false) {
           continue;
         }
 
         try {
-          await guard.check(result.data, flag);
+          await guard.check(result.value, flag);
         } catch (error) {
           if (error instanceof Error) {
             message = error.message;

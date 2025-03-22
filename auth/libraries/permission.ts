@@ -1,6 +1,6 @@
 export const PERMISSION_DENIED_MESSAGE = "Permission denied";
 
-import type { Permissions, Role } from "~libraries/types.ts";
+import type { Permissions, Role } from "./types.ts";
 
 export class RolePermission<TPermissions extends Permissions> {
   readonly #operations: Operation[] = [];

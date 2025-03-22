@@ -35,28 +35,31 @@
  * ```
  */
 
+import { a, type ASchema } from "@arrirpc/schema";
 import { importPKCS8, importSPKI, jwtVerify, type KeyLike, SignJWT } from "jose";
-import z, { AnyZodObject } from "zod";
 
-import { Access } from "~libraries/access.ts";
-
+import type { CompiledASchema } from "../utilities/arri.ts";
+import { Access } from "./access.ts";
 import type { Permissions, Role } from "./types.ts";
 
 /**
  * Provides a solution to manage user authentication and access control rights within an
  * application.
  */
-export class Auth<TPermissions extends Permissions, TSession extends AnyZodObject> {
+export class Auth<TPermissions extends Permissions, TSession extends ASchema> {
   readonly #settings: Config<TPermissions, TSession>["settings"];
-  readonly #session: TSession;
+  readonly #session: CompiledASchema<TSession>;
   readonly #permissions: TPermissions;
 
   #secret?: KeyLike;
   #pubkey?: KeyLike;
 
+  declare readonly $inferPermissions: TPermissions;
+  declare readonly $inferSession: a.infer<TSession>;
+
   constructor(config: Config<TPermissions, TSession>) {
     this.#settings = config.settings;
-    this.#session = config.session;
+    this.#session = a.compile(config.session);
     this.#permissions = config.permissions;
   }
 
@@ -67,9 +70,9 @@ export class Auth<TPermissions extends Permissions, TSession extends AnyZodObjec
    */
 
   /**
-   * Session zod object.
+   * Compiled arri session schema.
    */
-  get session(): TSession {
+  get session(): CompiledASchema<TSession> {
     return this.#session;
   }
 
@@ -137,7 +140,7 @@ export class Auth<TPermissions extends Permissions, TSession extends AnyZodObjec
    * @param session    - Session to sign.
    * @param expiration - Expiration date of the token. Default: 1 hour
    */
-  async generate(session: z.infer<TSession>, expiration: string | number | Date = "1 hour"): Promise<string> {
+  async generate(session: a.infer<TSession>, expiration: string | number | Date = "1 hour"): Promise<string> {
     return new SignJWT(session)
       .setProtectedHeader({ alg: this.#settings.algorithm })
       .setIssuedAt()
@@ -152,15 +155,16 @@ export class Auth<TPermissions extends Permissions, TSession extends AnyZodObjec
    *
    * @param token - Token to resolve auth session from.
    */
-  async resolve(token: string): Promise<z.infer<TSession>> {
-    return (await jwtVerify<z.infer<TSession>>(
+  async resolve(token: string): Promise<a.infer<TSession>> {
+    const resolved = await jwtVerify<unknown>(
       token,
       await this.pubkey,
       {
         issuer: this.#settings.issuer,
         audience: this.#settings.audience,
       },
-    )).payload;
+    );
+    return this.session.parseUnsafe(resolved.payload);
   }
 
   /**
@@ -180,7 +184,7 @@ export class Auth<TPermissions extends Permissions, TSession extends AnyZodObjec
  |--------------------------------------------------------------------------------
  */
 
-type Config<TPermissions extends Permissions, TSession extends AnyZodObject> = {
+type Config<TPermissions extends Permissions, TSession extends ASchema> = {
   settings: {
     algorithm: string;
     privateKey: string;

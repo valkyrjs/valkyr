@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@arrirpc/schema": "0.76.4",
     "@valkyr/db": "1.0.1",
     "ajv": "8.17.1",
     "dot-prop": "9.0.0",

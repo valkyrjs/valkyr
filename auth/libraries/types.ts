@@ -1,4 +1,6 @@
-import z, { ZodTypeAny } from "zod";
+import { a } from "@arrirpc/schema";
+
+import { AccessGuard } from "./guard.ts";
 
 /*
  |--------------------------------------------------------------------------------
@@ -13,7 +15,7 @@ export type Role<TPermissions extends Permissions> = {
     {
       [TResource in keyof TPermissions]: Partial<
         {
-          [TAction in keyof TPermissions[TResource]]: TPermissions[TResource][TAction] extends Guard<infer _, infer TFlag> ? z.infer<TFlag> : true;
+          [TAction in keyof TPermissions[TResource]]: TPermissions[TResource][TAction] extends AccessGuard<infer _, infer TFlag> ? a.infer<TFlag> : true;
         }
       >;
     }
@@ -43,8 +45,8 @@ export type Role<TPermissions extends Permissions> = {
  *   document: {
  *     create: true,
  *     read: new AccessGuard({
- *       input: z.object({ documentId: z.string() }),
- *       flag: z.union([z.literal("admin"), z.literal("user")]),
+ *       input: a.object({ documentId: a.string() }),
+ *       flag: a.union([a.literal("admin"), a.literal("user")]),
  *       handler: async ({ ownerId }, flag) => {
  *         if (flag === "admin") {
  *           return true;
@@ -78,20 +80,9 @@ export type Permissions<TPermissions extends Record<string, any> = Record<string
      * An action representing a specific operation or behavior that can be
      * performed on a resource.
      */
-    [TAction in keyof TPermissions[TResource]]: Guard<any, any> | true;
+    [TAction in keyof TPermissions[TResource]]: AccessGuard<any, any> | true;
   };
 };
 
-/*
- |--------------------------------------------------------------------------------
- | Guards
- |--------------------------------------------------------------------------------
- */
-
-type Guard<TInput extends ZodTypeAny, TFlag extends ZodTypeAny> = {
-  input: TInput;
-  flag: TFlag;
-};
-
-export type GetGuardInput<TAction> = TAction extends Guard<infer TInput, infer _> ? z.infer<TInput>
+export type GetGuardInput<TAction> = TAction extends AccessGuard<infer TInput, infer _> ? a.infer<TInput>
   : void;

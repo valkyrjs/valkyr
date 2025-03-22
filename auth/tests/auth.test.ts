@@ -1,13 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { a } from "@arrirpc/schema";
 import { assertEquals, assertNotEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
-import { z } from "npm:zod@3.24.1";
 
-import { Auth } from "~libraries/auth.ts";
-
-import { permissions } from "./permissions.ts";
+import { Auth } from "../libraries/auth.ts";
+import { AccessGuard } from "../libraries/guard.ts";
 
 const TENANT_ID = "tenant-a";
 
@@ -19,10 +18,25 @@ const auth = new Auth({
     issuer: "https://valkyrjs.com",
     audience: "https://valkyrjs.com",
   },
-  session: z.object({
-    accountId: z.string(),
+  session: a.object({
+    accountId: a.string(),
   }),
-  permissions,
+  permissions: {
+    users: {
+      create: new AccessGuard({
+        input: a.object({ tenantId: a.string() }),
+        flag: a.enumerator(["pass", "fail"]),
+        check: async ({ tenantId }, flag) => {
+          if (flag === "fail") {
+            throw new Error(`Session does not have permission to add user for tenant '${tenantId}'.`);
+          }
+        },
+      }),
+      read: true,
+      update: true,
+      delete: true,
+    },
+  },
 });
 
 describe("Auth", () => {
