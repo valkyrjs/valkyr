@@ -36,7 +36,7 @@
  */
 
 import { importPKCS8, importSPKI, jwtVerify, type KeyLike, SignJWT } from "jose";
-import z, { AnyZodObject } from "zod";
+import z, { ZodTypeAny } from "zod";
 
 import { Access } from "./access.ts";
 import type { Permissions, Role } from "./types.ts";
@@ -45,7 +45,7 @@ import type { Permissions, Role } from "./types.ts";
  * Provides a solution to manage user authentication and access control rights within an
  * application.
  */
-export class Auth<TPermissions extends Permissions, TSession extends AnyZodObject> {
+export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny> {
   readonly #settings: Config<TPermissions, TSession>["settings"];
   readonly #session: TSession;
   readonly #permissions: TPermissions;
@@ -183,7 +183,7 @@ export class Auth<TPermissions extends Permissions, TSession extends AnyZodObjec
  |--------------------------------------------------------------------------------
  */
 
-type Config<TPermissions extends Permissions, TSession extends AnyZodObject> = {
+type Config<TPermissions extends Permissions, TSession extends ZodTypeAny> = {
   settings: {
     algorithm: string;
     privateKey: string;
