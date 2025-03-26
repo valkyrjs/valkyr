@@ -7,11 +7,11 @@ export class Role<TPermissions extends Permissions> {
     readonly permissions: PartialPermissions<TPermissions>,
   ) {}
 
-  get grant() {
+  get grant(): RolePermission<TPermissions>["grant"] {
     return new RolePermission<TPermissions>(this).grant;
   }
 
-  get deny() {
+  get deny(): RolePermission<TPermissions>["deny"] {
     return new RolePermission<TPermissions>(this).deny;
   }
 }
