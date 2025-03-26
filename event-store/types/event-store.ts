@@ -104,6 +104,17 @@ export type ReduceQuery<TEvent extends Event, TReducer extends Reducer> =
   );
 
 export type EventsInsertSettings = {
+  /**
+   * Should the event store emit events after successfull insertion.
+   * This only takes false as value and by default events are always
+   * projected.
+   */
+  emit?: false;
+
+  /**
+   * Batch key that can be used to group several events in a single
+   * batched operation for performance sensitive handling.
+   */
   batch?: string;
 };
 

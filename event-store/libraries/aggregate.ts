@@ -19,7 +19,14 @@ export abstract class AggregateRoot<const TEvent extends Event> {
   #pending: EventToRecord<TEvent>[] = [];
 
   /**
-   * Create a new aggregate instance with a optional snapshot. This method
+   * Does the aggregate have pending events to submit to the event store.
+   */
+  get isDirty(): boolean {
+    return this.#pending.length > 0;
+  }
+
+  /**
+   * Create a new aggregate instance with an optional snapshot. This method
    * exists as a unified way to create new aggregates from a event store
    * adapter and not really meant for aggregate creation outside of the
    * event store.
@@ -39,7 +46,7 @@ export abstract class AggregateRoot<const TEvent extends Event> {
 
   /**
    * Push a new event record to the pending list of events to commit to
-   * an event store. This also submits the record to the `.with`
+   * a event store. This also submits the record to the `.with`
    * aggregate folder to update the aggregate state.
    *
    * @example
@@ -64,7 +71,7 @@ export abstract class AggregateRoot<const TEvent extends Event> {
   }
 
   /**
-   * Method used to left fold incoming events to the aggregate state.
+   * Processes and applies incoming events to update the aggregate state.
    *
    * @param event - Event record to fold.
    */
@@ -73,13 +80,16 @@ export abstract class AggregateRoot<const TEvent extends Event> {
   /**
    * Commits all pending events to the given event store.
    *
-   * @param eventStore        - Event store to commit pending events too.
-   * @param settings          - Event insert settings.
-   * @param cleanPendingState - Empty the pending event list after event store push.
+   * @param eventStore         - Event store to commit pending events to.
+   * @param settings           - Event insert settings.
+   * @param shouldFlushPending - Empty the pending event list after event store push.
    */
-  async commit<TEventStore extends EventStore<TEvent>>(eventStore: TEventStore, settings?: EventsInsertSettings, cleanPendingState = true): Promise<this> {
+  async commit<TEventStore extends EventStore<TEvent>>(eventStore: TEventStore, settings?: EventsInsertSettings, shouldFlushPending = true): Promise<this> {
+    if (this.isDirty === false) {
+      return this;
+    }
     await eventStore.pushManyEvents(this.#pending, settings);
-    if (cleanPendingState === true) {
+    if (shouldFlushPending === true) {
       this.flush();
     }
     return this;

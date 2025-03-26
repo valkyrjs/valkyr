@@ -185,7 +185,9 @@ export class EventStore<const TEvent extends Event, TEventStoreAdapter extends E
     await this.events.insert(record).catch((error) => {
       throw new EventInsertionError(error.message);
     });
-    await this.#hooks.onEventsInserted?.([record], settings).catch(this.#hooks.onError ?? console.error);
+    if (settings.emit !== false) {
+      await this.#hooks.onEventsInserted?.([record], settings).catch(this.#hooks.onError ?? console.error);
+    }
   }
 
   /**
@@ -209,7 +211,9 @@ export class EventStore<const TEvent extends Event, TEventStoreAdapter extends E
     await this.events.insertMany(events).catch((error) => {
       throw new EventInsertionError(error.message);
     });
-    await this.#hooks.onEventsInserted?.(events, settings).catch(this.#hooks.onError ?? console.error);
+    if (settings.emit !== false) {
+      await this.#hooks.onEventsInserted?.(events, settings).catch(this.#hooks.onError ?? console.error);
+    }
   }
 
   /**
