@@ -24,13 +24,18 @@
  *     accountId: z.string(),
  *   }),
  *   permissions: {
- *     account: {
- *       create: true,
- *       read: true,
- *       update: true,
- *       delete: true,
- *     },
- *   },
+ *     account: ["create", "read", "update", "delete"],
+ *   } as const,
+ *   guards: {
+ *     "account:manager": new AccessGuard({
+ *       input: z.object({ accountId: z.string() }),
+ *       check: async ({ accountId }, session) => {
+ *         return db
+ *           .getManagedAccounts(session.accountId)
+ *           .then((accountIds) => accountIds.includes(accountId))
+ *       },
+ *     }),
+ *   }
  * });
  * ```
  */
@@ -39,16 +44,19 @@ import { importPKCS8, importSPKI, jwtVerify, type KeyLike, SignJWT } from "jose"
 import z, { ZodTypeAny } from "zod";
 
 import { Access } from "./access.ts";
-import type { Permissions, Role } from "./types.ts";
+import { GuardsConfig } from "./guard.ts";
+import type { PartialPermissions, Permissions } from "./permissions.ts";
+import { Role } from "./role.ts";
 
 /**
  * Provides a solution to manage user authentication and access control rights within an
  * application.
  */
-export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny> {
-  readonly #settings: Config<TPermissions, TSession>["settings"];
+export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny, TGuards extends GuardsConfig<any>> {
+  readonly #settings: Config<TPermissions, TSession, TGuards>["settings"];
   readonly #session: TSession;
   readonly #permissions: TPermissions;
+  readonly #guards: TGuards;
 
   #secret?: KeyLike;
   #pubkey?: KeyLike;
@@ -56,10 +64,11 @@ export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny>
   declare readonly $inferPermissions: TPermissions;
   declare readonly $inferSession: z.infer<TSession>;
 
-  constructor(config: Config<TPermissions, TSession>) {
+  constructor(config: Config<TPermissions, TSession, TGuards>) {
     this.#settings = config.settings;
     this.#session = config.session;
     this.#permissions = config.permissions;
+    this.#guards = config.guards;
   }
 
   /*
@@ -150,7 +159,8 @@ export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny>
   }
 
   /**
-   * Resolves a new auth instance from the given token.
+   * Verifies the given JWT token using the public key, then parses and validates
+   * the session payload. Throws an error if verification fails.
    *
    * @param token - Token to resolve auth session from.
    */
@@ -167,13 +177,57 @@ export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny>
   }
 
   /**
-   * Returns a new access instance with the configured permissions and given
-   * assigned roles.
+   * Takes raw role data and returns a role instance which provides some
+   * quality of life tooling for editing permissions.
    *
-   * @param assignments - Assigned roles to add to the access instance.
+   * @param id          - Role id.
+   * @param name        - Role name.
+   * @param permissions - Permissions assigned to the role.
    */
-  access(assignments: Role<TPermissions>[]): Access<TPermissions> {
-    return new Access<TPermissions>(this.#permissions, assignments);
+  role(id: string, name: string, permissions: PartialPermissions<TPermissions>): Role<TPermissions> {
+    return new Role(id, name, permissions);
+  }
+
+  /**
+   * Returns a new access instance with the configured permissions and roles.
+   *
+   * @param session - Session the access instance is working with.
+   * @param roles   - List of roles to add to the access instance.
+   */
+  access(roles: Role<TPermissions>[]): Access<TPermissions> {
+    return new Access<TPermissions>(this.#permissions, roles);
+  }
+
+  /**
+   * Guard given input against internal states is valid.
+   *
+   * The idea with guards is that we can take untrusted external input and
+   * verify that internal states and logic matches expectations.
+   *
+   * @param name  - Guard name to validate.
+   * @param input - Input to validate.
+   *
+   * @example
+   *
+   * Lets say your account is assigned a list of users to manage. We would
+   * assign you a list of user ids that you can manage. The untrusted
+   * external input would be a userId we want to modify, we now check that
+   * against our accounts internal user list to verify that the request
+   * can indeed manage the given user.
+   *
+   * ```ts
+   * await auth.check("user:manage", { userId }); // => true | false
+   * ```
+   */
+  async check<TName extends keyof TGuards>(
+    name: TName,
+    input: z.infer<TGuards[TName]["input"]>,
+  ): Promise<boolean> {
+    const guard = this.#guards[name];
+    if (guard === undefined) {
+      return false;
+    }
+    return guard.check(input);
   }
 }
 
@@ -183,7 +237,7 @@ export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny>
  |--------------------------------------------------------------------------------
  */
 
-type Config<TPermissions extends Permissions, TSession extends ZodTypeAny> = {
+type Config<TPermissions extends Permissions, TSession extends ZodTypeAny, TGuards extends GuardsConfig<any>> = {
   settings: {
     algorithm: string;
     privateKey: string;
@@ -193,4 +247,5 @@ type Config<TPermissions extends Permissions, TSession extends ZodTypeAny> = {
   };
   session: TSession;
   permissions: TPermissions;
+  guards: TGuards;
 };

@@ -3,12 +3,21 @@ import { join } from "node:path";
 
 import { assertEquals, assertNotEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
-import { z } from "npm:zod@3.24.1";
+import { z } from "zod";
 
 import { Auth } from "../libraries/auth.ts";
-import { AccessGuard } from "../libraries/guard.ts";
+import { Guard } from "../mod.ts";
 
-const TENANT_ID = "tenant-a";
+const accountTenants = {
+  "account-a": ["tenant-a", "tenant-b"],
+  "account-b": ["tenant-a", "tenant-c"],
+} as any;
+
+const req = {
+  session: {
+    accountId: "account-a",
+  },
+};
 
 const auth = new Auth({
   settings: {
@@ -22,21 +31,34 @@ const auth = new Auth({
     accountId: z.string(),
   }),
   permissions: {
-    users: {
-      create: new AccessGuard({
-        input: z.object({ tenantId: z.string() }),
-        flag: z.union([z.literal("pass"), z.literal("fail")]),
-        check: async ({ tenantId }, flag) => {
-          if (flag === "fail") {
-            throw new Error(`Session does not have permission to add user for tenant '${tenantId}'.`);
-          }
-        },
-      }),
-      read: true,
-      update: true,
-      delete: true,
-    },
+    user: ["create", "read", "update", "delete"],
+  } as const,
+  guards: {
+    "tenant:related": new Guard({
+      input: z.object({ tenantId: z.string() }),
+      check: async ({ tenantId }) => {
+        return accountTenants[req.session.accountId]?.includes(tenantId);
+      },
+    }),
+    "account:own": new Guard({
+      input: z.object({ accountId: z.string() }),
+      check: async ({ accountId }) => {
+        return accountId === req.session.accountId;
+      },
+    }),
   },
+});
+
+const adminRole = auth.role("admin", "Admin", {
+  user: ["create", "read", "update", "delete"],
+});
+
+const moderatorRole = auth.role("moderator", "Moderator", {
+  user: ["read", "update", "delete"],
+});
+
+const userRole = auth.role("user", "User", {
+  user: ["read", "update"],
 });
 
 describe("Auth", () => {
@@ -57,54 +79,30 @@ describe("Auth", () => {
   });
 
   it("should generate a single role access instance", async () => {
-    const access = auth.access([{
-      id: "admin",
-      name: "admin",
-      permissions: {
-        users: {
-          create: "pass",
-          read: true,
-          update: true,
-          delete: true,
-        },
-      },
-    }]);
+    const access = auth.access([adminRole]);
 
-    assertEquals((await access.has("users", "create", { tenantId: TENANT_ID })).granted, true);
-    assertEquals((await access.has("users", "read")).granted, true);
-    assertEquals((await access.has("users", "update")).granted, true);
-    assertEquals((await access.has("users", "delete")).granted, true);
+    assertEquals(access.has("user", "create"), true);
+    assertEquals(access.has("user", "read"), true);
+    assertEquals(access.has("user", "update"), true);
+    assertEquals(access.has("user", "delete"), true);
   });
 
   it("should generate a multi role access instance", async () => {
-    const access = auth.access([
-      {
-        id: "moderator",
-        name: "moderator",
-        permissions: {
-          users: {
-            create: "fail",
-            read: true,
-            update: true,
-            delete: true,
-          },
-        },
-      },
-      {
-        id: "user",
-        name: "user",
-        permissions: {
-          users: {
-            read: true,
-            update: true,
-          },
-        },
-      },
-    ]);
+    const access = auth.access([moderatorRole, userRole]);
 
-    assertEquals((await access.has("users", "create", { tenantId: TENANT_ID })).granted, false);
-    assertEquals((await access.has("users", "read")).granted, true);
-    assertEquals((await access.has("users", "update")).granted, true);
-    assertEquals((await access.has("users", "delete")).granted, true);
+    assertEquals(access.has("user", "create"), false);
+    assertEquals(access.has("user", "read"), true);
+    assertEquals(access.has("user", "update"), true);
+    assertEquals(access.has("user", "delete"), true);
+  });
+
+  it("should pass guard checks", async () => {
+    assertEquals(await auth.check("account:own", { accountId: "account-a" }), true);
+    assertEquals(await auth.check("tenant:related", { tenantId: "tenant-a" }), true);
+  });
+
+  it("should fail guard checks", async () => {
+    assertEquals(await auth.check("account:own", { accountId: "account-b" }), false);
+    assertEquals(await auth.check("tenant:related", { tenantId: "tenant-c" }), false);
   });
 });

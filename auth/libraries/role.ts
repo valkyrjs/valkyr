@@ -1,6 +1,20 @@
-export const PERMISSION_DENIED_MESSAGE = "Permission denied";
+import type { PartialPermissions, Permissions } from "./permissions.ts";
 
-import type { Permissions, Role } from "./types.ts";
+export class Role<TPermissions extends Permissions> {
+  constructor(
+    readonly id: string,
+    readonly name: string,
+    readonly permissions: PartialPermissions<TPermissions>,
+  ) {}
+
+  get grant() {
+    return new RolePermission<TPermissions>(this).grant;
+  }
+
+  get deny() {
+    return new RolePermission<TPermissions>(this).deny;
+  }
+}
 
 export class RolePermission<TPermissions extends Permissions> {
   readonly #operations: Operation[] = [];
@@ -22,13 +36,9 @@ export class RolePermission<TPermissions extends Permissions> {
    *
    * @param resource - Resource to grant action for.
    * @param action   - Action to grant for the resource.
-   * @param data     - Data schema for action. _(Optional)_
    */
-  grant<R extends keyof TPermissions, A extends keyof TPermissions[R], D extends Data<TPermissions, R, A>>(
-    ...[resource, action, data = undefined]: unknown extends D ? [resource: R, action: A]
-      : [resource: R, action: A, data: D]
-  ): this {
-    this.#operations.push({ type: "set", resource, action, data } as any);
+  grant<TResource extends keyof TPermissions, TAction extends TPermissions[TResource][number]>(resource: TResource, action: TAction): this {
+    this.#operations.push({ type: "set", resource, action });
     return this;
   }
 
@@ -38,7 +48,7 @@ export class RolePermission<TPermissions extends Permissions> {
    * @param resource - Resource to deny action for.
    * @param action   - Action to deny on the resource.
    */
-  deny<R extends keyof TPermissions, A extends keyof TPermissions[R]>(resource: R, action?: A): this {
+  deny<TResource extends keyof TPermissions, TAction extends TPermissions[TResource][number]>(resource: TResource, action?: TAction): this {
     this.#operations.push({ type: "unset", resource, action } as any);
     return this;
   }
@@ -49,15 +59,6 @@ export class RolePermission<TPermissions extends Permissions> {
  | Types
  |--------------------------------------------------------------------------------
  */
-
-export type Permission = { granted: true } | { granted: false; message: string };
-
-type Data<
-  TPermissions extends Permissions,
-  TResource extends keyof TPermissions,
-  TAction extends keyof TPermissions[TResource],
-> = TPermissions[TResource][TAction] extends boolean ? unknown
-  : TPermissions[TResource][TAction];
 
 /**
  * Type defenitions detailing the operation structure of updating a roles
@@ -70,13 +71,12 @@ type Operation =
 
 type SetOperation = {
   type: "set";
-  resource: string;
-  action: string;
-  data?: Record<string, unknown>;
+  resource: any;
+  action: any;
 };
 
 type UnsetOperation = {
   type: "unset";
-  resource: string;
-  action?: string;
+  resource: any;
+  action?: any;
 };
