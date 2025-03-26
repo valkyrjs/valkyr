@@ -9,31 +9,33 @@ Authentication and Access Control solution for full stack TypeScript application
 ## Quick Start
 
 ```ts
-import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs/promises";
 import { join } from "node:path";
-import { Database } from "bun:sqlite";
 
-import { SQLiteAuth } from "@valkyr/auth/sqlite";
-import { ActionFilter, type Permissions } from "@valkyr/auth";
+import { Auth, Guard } from "@valkyr/auth";
+import { z } from "zod";
 
-const permissions = {
-  account: {
-    read: {
-      filter: new ActionFilter(["entityId", "email"]),
-    },
-    update: true,
-  },
-} as const satisfies Permissions;
-
-export const auth = new SQLiteAuth({
-  database: new Database(":memory:"),
-  permissions,
-  auth: {
+const auth = new Auth({
+  settings: {
     algorithm: "RS256",
-    privateKey: await readFile(join(__dirname, ".keys", "private"), "utf-8"),
-    publicKey: await readFile(join(__dirname, ".keys", "public"), "utf-8"),
+    privateKey: readFileSync(join(import.meta.dirname!, "keys", "private"), "utf-8"),
+    publicKey: readFileSync(join(import.meta.dirname!, "keys", "public"), "utf-8"),
     issuer: "https://valkyrjs.com",
     audience: "https://valkyrjs.com",
   },
+  session: z.object({
+    accountId: z.string(),
+  }),
+  permissions: {
+    user: ["create", "read", "update", "delete"],
+  } as const,
+  guards: [
+    new Guard("account:own", {
+      input: z.object({ accountId: z.string() }),
+      check: async ({ accountId }) => {
+        return accountId === req.session.accountId;
+      },
+    }),
+  ],
 });
 ```

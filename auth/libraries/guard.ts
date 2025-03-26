@@ -8,7 +8,7 @@ import type { z, ZodTypeAny } from "zod";
  * and are useful for very specific granular access requirements based on
  * given input.
  */
-export class Guard<TInput extends ZodTypeAny> {
+export class Guard<TName extends string, TInput extends ZodTypeAny> {
   /**
    * Represents the external, dynamic, and unknown input from third-party
    * sources (e.g., user actions, API requests).
@@ -24,9 +24,10 @@ export class Guard<TInput extends ZodTypeAny> {
   /**
    * Instantiates a new guard which can be used to verify untrusted inputs.
    *
+   * @param name     - Name of the guard.
    * @param settings - Guard settings.
    */
-  constructor(settings: {
+  constructor(readonly name: TName, settings: {
     input: TInput;
     check: GuardHandler<TInput>;
   }) {
@@ -48,9 +49,5 @@ export class Guard<TInput extends ZodTypeAny> {
     return this.#checkHandler(parsed.data);
   }
 }
-
-export type GuardsConfig<TInput extends ZodTypeAny> = {
-  [name: string]: Guard<TInput>;
-};
 
 export type GuardHandler<TInput extends ZodTypeAny> = (input: z.infer<TInput>) => Promise<boolean>;

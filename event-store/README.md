@@ -66,10 +66,8 @@ To create our `events.ts` file we have to run our configurations through our eve
 import { printEvents } from "@valkyr/event-store";
 
 await printEvents({
-  paths: [
-    "./configs/events",
-  ],
-  output: "./generated/events.ts",
+  inputs: ["./configs/events"],
+  outputs: ["./generated/events.ts"],
 });
 ```
 

@@ -44,7 +44,7 @@ import { importPKCS8, importSPKI, jwtVerify, type KeyLike, SignJWT } from "jose"
 import z, { ZodTypeAny } from "zod";
 
 import { Access } from "./access.ts";
-import { GuardsConfig } from "./guard.ts";
+import { Guard } from "./guard.ts";
 import type { PartialPermissions, Permissions } from "./permissions.ts";
 import { Role } from "./role.ts";
 
@@ -52,11 +52,11 @@ import { Role } from "./role.ts";
  * Provides a solution to manage user authentication and access control rights within an
  * application.
  */
-export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny, TGuards extends GuardsConfig<any>> {
-  readonly #settings: Config<TPermissions, TSession, TGuards>["settings"];
+export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny, TGuard extends Guard<any, any>> {
+  readonly #settings: Config<TPermissions, TSession, TGuard>["settings"];
   readonly #session: TSession;
   readonly #permissions: TPermissions;
-  readonly #guards: TGuards;
+  readonly #guards: Map<TGuard["name"], TGuard>;
 
   #secret?: KeyLike;
   #pubkey?: KeyLike;
@@ -64,11 +64,11 @@ export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny,
   declare readonly $inferPermissions: TPermissions;
   declare readonly $inferSession: z.infer<TSession>;
 
-  constructor(config: Config<TPermissions, TSession, TGuards>) {
+  constructor(config: Config<TPermissions, TSession, TGuard>) {
     this.#settings = config.settings;
     this.#session = config.session;
     this.#permissions = config.permissions;
-    this.#guards = config.guards;
+    this.#guards = config.guards.reduce((guards, guard) => guards.set(guard.name, guard), new Map<TGuard["name"], TGuard>());
   }
 
   /*
@@ -219,11 +219,11 @@ export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny,
    * await auth.check("user:manage", { userId }); // => true | false
    * ```
    */
-  async check<TName extends keyof TGuards>(
+  async check<TName extends TGuard["name"], TInput extends TGuard["input"]>(
     name: TName,
-    input: z.infer<TGuards[TName]["input"]>,
+    input: z.infer<TInput>,
   ): Promise<boolean> {
-    const guard = this.#guards[name];
+    const guard = this.#guards.get(name);
     if (guard === undefined) {
       return false;
     }
@@ -232,12 +232,17 @@ export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny,
 }
 
 /*
+TType extends TEventRecord["type"],
+TRecord extends TEventRecord = Extract<TEventRecord, { type: TType }>,
+*/
+
+/*
  |--------------------------------------------------------------------------------
  | Types
  |--------------------------------------------------------------------------------
  */
 
-type Config<TPermissions extends Permissions, TSession extends ZodTypeAny, TGuards extends GuardsConfig<any>> = {
+type Config<TPermissions extends Permissions, TSession extends ZodTypeAny, TGuard extends Guard<any, any>> = {
   settings: {
     algorithm: string;
     privateKey: string;
@@ -247,5 +252,5 @@ type Config<TPermissions extends Permissions, TSession extends ZodTypeAny, TGuar
   };
   session: TSession;
   permissions: TPermissions;
-  guards: TGuards;
+  guards: TGuard[];
 };

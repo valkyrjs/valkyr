@@ -33,20 +33,20 @@ const auth = new Auth({
   permissions: {
     user: ["create", "read", "update", "delete"],
   } as const,
-  guards: {
-    "tenant:related": new Guard({
+  guards: [
+    new Guard("tenant:related", {
       input: z.object({ tenantId: z.string() }),
       check: async ({ tenantId }) => {
         return accountTenants[req.session.accountId]?.includes(tenantId);
       },
     }),
-    "account:own": new Guard({
+    new Guard("account:own", {
       input: z.object({ accountId: z.string() }),
       check: async ({ accountId }) => {
         return accountId === req.session.accountId;
       },
     }),
-  },
+  ],
 });
 
 const adminRole = auth.role("admin", "Admin", {
