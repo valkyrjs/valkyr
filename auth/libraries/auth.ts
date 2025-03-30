@@ -195,11 +195,11 @@ export class Auth<
       return {
         valid: true,
         ...session,
-        roles,
         has: access.has.bind(access),
         $meta: {
           headers: protectedHeader,
           payload,
+          roles,
         },
       };
     } catch (error) {
@@ -297,13 +297,13 @@ type SessionResolution<TSession, TPermissions extends Permissions> =
     }
     & TSession
     & {
-      roles: Role<TPermissions>[];
       has: Access<TPermissions>["has"];
     }
     & {
       $meta: {
         headers: JWTHeaderParameters;
         payload: JWTPayload;
+        roles: Role<TPermissions>[];
       };
     }
   )
