@@ -40,23 +40,31 @@
  * ```
  */
 
-import { importPKCS8, importSPKI, jwtVerify, type KeyLike, SignJWT } from "jose";
+import { importPKCS8, importSPKI, JWTHeaderParameters, JWTPayload, jwtVerify, type KeyLike, SignJWT } from "jose";
+import { JOSEError } from "jose/errors";
 import z, { ZodTypeAny } from "zod";
 
 import { Access } from "./access.ts";
 import { Guard } from "./guard.ts";
-import type { PartialPermissions, Permissions } from "./permissions.ts";
-import { Role } from "./role.ts";
+import type { Permissions } from "./permissions.ts";
+import { Role, type RolesProvider } from "./role.ts";
 
 /**
  * Provides a solution to manage user authentication and access control rights within an
  * application.
  */
-export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny, TGuard extends Guard<any, any>> {
+export class Auth<
+  TPermissions extends Permissions,
+  TSession extends ZodTypeAny,
+  TGuard extends Guard<any, any>,
+  TProviders extends Providers<TPermissions, z.infer<TSession>>,
+> {
   readonly #settings: Config<TPermissions, TSession, TGuard>["settings"];
   readonly #session: TSession;
   readonly #permissions: TPermissions;
   readonly #guards: Map<TGuard["name"], TGuard>;
+
+  readonly #providers: TProviders;
 
   #secret?: KeyLike;
   #pubkey?: KeyLike;
@@ -64,11 +72,12 @@ export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny,
   declare readonly $inferPermissions: TPermissions;
   declare readonly $inferSession: z.infer<TSession>;
 
-  constructor(config: Config<TPermissions, TSession, TGuard>) {
+  constructor(config: Config<TPermissions, TSession, TGuard>, providers: TProviders) {
     this.#settings = config.settings;
     this.#session = config.session;
     this.#permissions = config.permissions;
     this.#guards = config.guards.reduce((guards, guard) => guards.set(guard.name, guard), new Map<TGuard["name"], TGuard>());
+    this.#providers = providers;
   }
 
   /*
@@ -82,6 +91,10 @@ export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny,
    */
   get session(): TSession {
     return this.#session;
+  }
+
+  get roles(): TProviders["roles"] {
+    return this.#providers.roles;
   }
 
   /**
@@ -118,7 +131,7 @@ export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny,
 
   /*
    |--------------------------------------------------------------------------------
-   | Utilities
+   | Session Utilities
    |--------------------------------------------------------------------------------
    */
 
@@ -159,34 +172,57 @@ export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny,
   }
 
   /**
-   * Verifies the given JWT token using the public key, then parses and validates
-   * the session payload. Throws an error if verification fails.
+   * Verifies the given JWT token using the public key, then returns a session
+   * resolution.
    *
    * @param token - Token to resolve auth session from.
    */
-  async resolve(token: string): Promise<z.infer<TSession>> {
-    const resolved = await jwtVerify<unknown>(
-      token,
-      await this.pubkey,
-      {
-        issuer: this.#settings.issuer,
-        audience: this.#settings.audience,
-      },
-    );
-    return this.session.parseAsync(resolved.payload);
+  async resolve(token: string): Promise<SessionResolution<z.infer<TSession>, TPermissions>> {
+    try {
+      const { payload, protectedHeader } = await jwtVerify<unknown>(
+        token,
+        await this.pubkey,
+        {
+          issuer: this.#settings.issuer,
+          audience: this.#settings.audience,
+        },
+      );
+
+      const session = await this.session.parseAsync(payload);
+      const roles = await this.#providers.roles.getBySession(session);
+      const access = this.access(roles.map((data) => new Role<TPermissions>(data)));
+
+      return {
+        valid: true,
+        ...session,
+        roles,
+        has: access.has.bind(access),
+        $meta: {
+          headers: protectedHeader,
+          payload,
+        },
+      };
+    } catch (error) {
+      if (error instanceof JOSEError) {
+        return {
+          valid: false,
+          code: error.code,
+          message: error.message,
+        };
+      }
+      return {
+        valid: false,
+        code: "AUTH_INTERNAL_ERROR",
+        message: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 
-  /**
-   * Takes raw role data and returns a role instance which provides some
-   * quality of life tooling for editing permissions.
-   *
-   * @param id          - Role id.
-   * @param name        - Role name.
-   * @param permissions - Permissions assigned to the role.
+  /*
+   |--------------------------------------------------------------------------------
+   | Access Control Utilities
+   |--------------------------------------------------------------------------------
    */
-  role(id: string, name: string, permissions: PartialPermissions<TPermissions>): Role<TPermissions> {
-    return new Role(id, name, permissions);
-  }
 
   /**
    * Returns a new access instance with the configured permissions and roles.
@@ -232,11 +268,6 @@ export class Auth<TPermissions extends Permissions, TSession extends ZodTypeAny,
 }
 
 /*
-TType extends TEventRecord["type"],
-TRecord extends TEventRecord = Extract<TEventRecord, { type: TType }>,
-*/
-
-/*
  |--------------------------------------------------------------------------------
  | Types
  |--------------------------------------------------------------------------------
@@ -254,3 +285,30 @@ type Config<TPermissions extends Permissions, TSession extends ZodTypeAny, TGuar
   permissions: TPermissions;
   guards: TGuard[];
 };
+
+type Providers<TPermissions extends Permissions, TSession> = {
+  roles: RolesProvider<TPermissions, TSession>;
+};
+
+type SessionResolution<TSession, TPermissions extends Permissions> =
+  | (
+    & {
+      valid: true;
+    }
+    & TSession
+    & {
+      roles: Role<TPermissions>[];
+      has: Access<TPermissions>["has"];
+    }
+    & {
+      $meta: {
+        headers: JWTHeaderParameters;
+        payload: JWTPayload;
+      };
+    }
+  )
+  | {
+    valid: false;
+    code: string;
+    message: string;
+  };

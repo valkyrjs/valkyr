@@ -3,21 +3,12 @@ import { join } from "node:path";
 
 import { assertEquals, assertNotEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
-import { z } from "zod";
 
 import { Auth } from "../libraries/auth.ts";
-import { Guard } from "../mod.ts";
-
-const accountTenants = {
-  "account-a": ["tenant-a", "tenant-b"],
-  "account-b": ["tenant-a", "tenant-c"],
-} as any;
-
-const req = {
-  session: {
-    accountId: "account-a",
-  },
-};
+import { guards } from "./mocks/guard.ts";
+import { permissions } from "./mocks/permissions.ts";
+import { mockRolesProvider } from "./mocks/providers/roles.ts";
+import { session } from "./mocks/session.ts";
 
 const auth = new Auth({
   settings: {
@@ -27,38 +18,11 @@ const auth = new Auth({
     issuer: "https://valkyrjs.com",
     audience: "https://valkyrjs.com",
   },
-  session: z.object({
-    accountId: z.string(),
-  }),
-  permissions: {
-    user: ["create", "read", "update", "delete"],
-  } as const,
-  guards: [
-    new Guard("tenant:related", {
-      input: z.object({ tenantId: z.string() }),
-      check: async ({ tenantId }) => {
-        return accountTenants[req.session.accountId]?.includes(tenantId);
-      },
-    }),
-    new Guard("account:own", {
-      input: z.object({ accountId: z.string() }),
-      check: async ({ accountId }) => {
-        return accountId === req.session.accountId;
-      },
-    }),
-  ],
-});
-
-const adminRole = auth.role("admin", "Admin", {
-  user: ["create", "read", "update", "delete"],
-});
-
-const moderatorRole = auth.role("moderator", "Moderator", {
-  user: ["read", "update", "delete"],
-});
-
-const userRole = auth.role("user", "User", {
-  user: ["read", "update"],
+  session,
+  permissions,
+  guards,
+}, {
+  roles: mockRolesProvider,
 });
 
 describe("Auth", () => {
@@ -74,26 +38,62 @@ describe("Auth", () => {
     assertNotEquals(token, undefined);
 
     const session = await auth.resolve(token);
+    if (session.valid === false) {
+      throw new Error(`Session failed to resolve with code ${session.code}`);
+    }
 
     assertEquals(session.accountId, "abc");
+    assertEquals(session.$meta.payload.iss, "https://valkyrjs.com");
+    assertEquals(session.$meta.payload.aud, "https://valkyrjs.com");
+    assertEquals(session.$meta.headers.alg, "RS256");
+  });
+
+  it("should invalidate after expiry", async () => {
+    const token = await auth.generate({ accountId: "abc" }, "1 second");
+
+    assertNotEquals(token, undefined);
+
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    const session = await auth.resolve(token);
+    if (session.valid === true) {
+      throw new Error("Expected invalid session!");
+    }
+
+    assertEquals(session.code, "ERR_JWT_EXPIRED");
+    assertEquals(session.message, `"exp" claim timestamp check failed`);
   });
 
   it("should generate a single role access instance", async () => {
-    const access = auth.access([adminRole]);
+    const token = await auth.generate({ accountId: "account-a" });
 
-    assertEquals(access.has("user", "create"), true);
-    assertEquals(access.has("user", "read"), true);
-    assertEquals(access.has("user", "update"), true);
-    assertEquals(access.has("user", "delete"), true);
+    assertNotEquals(token, undefined);
+
+    const session = await auth.resolve(token);
+    if (session.valid === false) {
+      throw new Error("Expected valid session!");
+    }
+
+    assertEquals(session.has("account", "create"), true);
+    assertEquals(session.has("account", "read"), true);
+    assertEquals(session.has("account", "update"), true);
+    assertEquals(session.has("account", "delete"), true);
   });
 
   it("should generate a multi role access instance", async () => {
-    const access = auth.access([moderatorRole, userRole]);
+    const token = await auth.generate({ accountId: "account-b" });
 
-    assertEquals(access.has("user", "create"), false);
-    assertEquals(access.has("user", "read"), true);
-    assertEquals(access.has("user", "update"), true);
-    assertEquals(access.has("user", "delete"), true);
+    assertNotEquals(token, undefined);
+
+    const session = await auth.resolve(token);
+    if (session.valid === false) {
+      throw new Error("Expected valid session!");
+    }
+
+    assertEquals(session.has("account", "create"), false);
+    assertEquals(session.has("account", "read"), true);
+    assertEquals(session.has("account", "update"), true);
+    assertEquals(session.has("account", "delete"), true);
   });
 
   it("should pass guard checks", async () => {

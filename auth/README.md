@@ -27,7 +27,7 @@ const auth = new Auth({
     accountId: z.string(),
   }),
   permissions: {
-    user: ["create", "read", "update", "delete"],
+    account: ["create", "read", "update", "delete"],
   } as const,
   guards: [
     new Guard("account:own", {
@@ -37,5 +37,47 @@ const auth = new Auth({
       },
     }),
   ],
+}, {
+  async getRole({ accountId }) {
+    return [
+      {
+        id: "account",
+        name: "Account",
+        permissions: {
+          account: ["read", "update", "delete"]
+        }
+      }
+    ]
+  }
 });
+```
+
+### Generate a Session
+
+```ts
+import { auth } from "./auth.ts";
+
+const token = await auth.generate({ accountId: "xyz" });
+```
+
+### Resolve a Session
+
+Following example shows how to resolve a session, then use the sessions access control `.has` method, then execute a guard `.check`.
+
+```ts
+import { auth } from "./auth.ts";
+
+const session = await auth.resolve("token");
+
+if (session.valid === false) {
+  throw new Error(session.message);
+}
+
+if (session.has("account", "update") === false) {
+  throw new Error("Not allowed to update accounts");
+}
+
+if ((await auth.guard("account:own", { accountId: session.accountId })) === false) {
+  throw new Error("Not allowed to edit this account");
+}
 ```
