@@ -15,6 +15,8 @@ import { join } from "node:path";
 import { Auth, Guard } from "@valkyr/auth";
 import { z } from "zod";
 
+import { RolesProvider } from "./roles-provider.ts";
+
 const auth = new Auth({
   settings: {
     algorithm: "RS256",
@@ -38,17 +40,7 @@ const auth = new Auth({
     }),
   ],
 }, {
-  async getRole({ accountId }) {
-    return [
-      {
-        id: "account",
-        name: "Account",
-        permissions: {
-          account: ["read", "update", "delete"]
-        }
-      }
-    ]
-  }
+  roles: new RolesProvider(),
 });
 ```
 

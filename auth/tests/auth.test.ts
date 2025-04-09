@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { assertEquals, assertNotEquals } from "@std/assert";
+import { assertEquals, assertNotEquals, assertObjectMatch } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
 
 import { Auth } from "../libraries/auth.ts";
@@ -62,6 +62,19 @@ describe("Auth", () => {
 
     assertEquals(session.code, "ERR_JWT_EXPIRED");
     assertEquals(session.message, `"exp" claim timestamp check failed`);
+  });
+
+  it("should return a raw session json object", async () => {
+    const token = await auth.generate({ accountId: "account-a" });
+
+    assertNotEquals(token, undefined);
+
+    const session = await auth.resolve(token);
+    if (session.valid === false) {
+      throw new Error("Expected valid session!");
+    }
+
+    assertObjectMatch(session.toJSON(), { accountId: "account-a" });
   });
 
   it("should generate a single role access instance", async () => {

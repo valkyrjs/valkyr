@@ -196,6 +196,9 @@ export class Auth<
         valid: true,
         ...session,
         has: access.has.bind(access),
+        toJSON(): z.infer<TSession> {
+          return session;
+        },
         $meta: {
           headers: protectedHeader,
           payload,
@@ -298,6 +301,7 @@ type SessionResolution<TSession, TPermissions extends Permissions> =
     & TSession
     & {
       has: Access<TPermissions>["has"];
+      toJSON(): TSession;
     }
     & {
       $meta: {
