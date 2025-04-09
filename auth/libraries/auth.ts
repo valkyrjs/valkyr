@@ -40,7 +40,7 @@
  * ```
  */
 
-import { importPKCS8, importSPKI, JWTHeaderParameters, JWTPayload, jwtVerify, type KeyLike, SignJWT } from "jose";
+import { importPKCS8, importSPKI, JWTHeaderParameters, JWTPayload, jwtVerify, type KeyObject, SignJWT } from "jose";
 import { JOSEError } from "jose/errors";
 import z, { ZodTypeAny } from "zod";
 
@@ -66,8 +66,8 @@ export class Auth<
 
   readonly #providers: TProviders;
 
-  #secret?: KeyLike;
-  #pubkey?: KeyLike;
+  #secret?: KeyObject;
+  #pubkey?: KeyObject;
 
   declare readonly $inferPermissions: TPermissions;
   declare readonly $inferSession: z.infer<TSession>;
@@ -100,7 +100,7 @@ export class Auth<
   /**
    * Secret key used to sign new tokens.
    */
-  get secret(): Promise<KeyLike> {
+  get secret(): Promise<KeyObject> {
     return new Promise((resolve) => {
       if (this.#secret === undefined) {
         importPKCS8(this.#settings.privateKey, this.#settings.algorithm).then((key) => {
@@ -116,8 +116,8 @@ export class Auth<
   /**
    * Public key used to verify tokens.
    */
-  get pubkey(): Promise<KeyLike> {
-    return new Promise<KeyLike>((resolve) => {
+  get pubkey(): Promise<KeyObject> {
+    return new Promise<KeyObject>((resolve) => {
       if (this.#pubkey === undefined) {
         importSPKI(this.#settings.publicKey, this.#settings.algorithm).then((key) => {
           this.#pubkey = key;

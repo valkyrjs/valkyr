@@ -58,13 +58,13 @@ export default describe<Event, EventRecord>("projector.once", (getEventStore) =>
       },
     } as const;
 
-    let emailId: string | Error | undefined;
+    let emailId: string | undefined;
 
     projector.once("user:created", async () => {
       fakeEmail();
     }, {
       async onError({ error }) {
-        emailId = error as Error;
+        emailId = (error as Error).message;
       },
       async onSuccess() {},
     });
@@ -72,7 +72,7 @@ export default describe<Event, EventRecord>("projector.once", (getEventStore) =>
     await store.addEvent(event);
 
     assertObjectMatch(await store.events.getByStream(stream).then((rows) => rows[0]), event);
-    assertEquals(emailId, new Error("Failed to send email!"));
+    assertEquals(emailId, "Failed to send email!");
   });
 });
 
