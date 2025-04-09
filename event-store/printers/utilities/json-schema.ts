@@ -1,4 +1,3 @@
-import { toPascalCase } from "@std/text";
 import type { JSONSchema4, JSONSchema4Type } from "json-schema";
 
 export const jsonSchema = {
@@ -8,7 +7,7 @@ export const jsonSchema = {
 
 function compile(schema: JSONSchema4): string {
   if (schema.$ref) {
-    return toPascalCase(schema.$ref.replace("#/definitions/", ""));
+    return schema.$ref.replace("#/definitions/", "");
   }
   if (schema.anyOf !== undefined) {
     return `(${schema.anyOf.map(compile).join(" | ")})`;

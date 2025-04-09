@@ -54,7 +54,7 @@ export function getDefinitions(defs: Map<string, any>): string[] {
   const result: string[] = [];
   for (const key of Array.from(defs.keys())) {
     result.push(`
-      export type ${toPascalCase(key)} = ${jsonSchema.compile(defs.get(key))}
+      export type ${key} = ${jsonSchema.compile(defs.get(key))}
     `);
   }
   return result;
