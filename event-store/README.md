@@ -77,46 +77,9 @@ Once we have defined our configs and printed our events we create a new event st
 for `sqlite`, `postgres`, and `valkyr/db` which all works the same way. So for this example we will use the `sqlite`
 store.
 
-```ts
-import { makePostgresEventStore } from "@valkyr/event-store/postgres";
-import psql from "postgres";
-
-import { type Event, type EventRecord, events, validators } from "./generated/events.ts";
-
-export const eventStore = makePostgresEventStore<Event>({
-  database: () => psql("url"),
-  schema: "event_store",
-  events,
-  validators,
-  hooks: {
-    async onError(error) {
-      // when the event store throws unhandled errors they will end up in
-      // this location that can be further logged in the systems own logger
-      // if onError hook is not provided all unhandled errors are logged
-      // through the `console.error` method.
-    },
-  },
-});
-
-const projector = new Projector<EventRecord>();
-
-eventStore.onEventsInserted(async (records, { batch }) => {
-  // trigger event side effects here such as sending the records through
-  // an event messaging system or other projection patterns
-
-  // ### Projector
-  // The following is an example when registering event handlers with the
-  // projectors instance provided by this library.
-
-  if (batch !== undefined) {
-    await projector.pushMany(batch, records);
-  } else {
-    for (const record of records) {
-      await projector.push(record, { hydrated: false, outdated: false });
-    }
-  }
-});
-```
+ - Browser _(TODO)_
+ - Mongo _(TODO)_
+ - [Postgres](./adapters/postgres/README.md)
 
 ### Reducers
 
@@ -134,12 +97,12 @@ const reducer = makeReducer<{
   email: string;
 }, EventRecord>((state, event) => {
   switch (event.type) {
-    case "UserCreated": {
+    case "user:created": {
       state.name = `${event.data.name.given} ${event.data.name.family}`;
       state.email = event.data.email;
       break;
     }
-    case "UserEmailSet": {
+    case "user:email-set": {
       state.email = event.data.email;
       break;
     }
@@ -185,12 +148,12 @@ export class User extends AggregateRoot<EventRecord> {
 
   with(event: EventRecord) {
     switch (event.type) {
-      case "UserCreated": {
+      case "user:created": {
         this.name = event.data.name;
         this.email = event.data.email;
         break;
       }
-      case "UserEmailSet": {
+      case "user:email-set": {
         this.email = event.data.email;
         break;
       }
@@ -224,13 +187,8 @@ types of listeners, `once`, `on`, and `all`.
 ```ts
 import { projector } from "./event-store.ts";
 
-projector.on("UserCreated", async (record) => {
-  await db.insert({
-    name: `{record.data.name.given} ${record.data.name.family}`,
-    email: record.data.email,
-    createdBy: record.meta.auditor,
-    createdAt: record.created,
-  });
+projector.on("user:created", async (record) => {
+  // do something with the event record ...
 });
 ```
 
@@ -244,14 +202,14 @@ When handling events in a distributed system or during event replay operations, 
 This mechanism ensures that critical one-time operations (such as sending emails or initiating external API calls) are **not repeated** unnecessarily while still allowing stateful projections to update their read models correctly.
 
 
-#### `.once("UserCreated", (event) => Promise<void>)`
+#### `.once("user:created", (event) => Promise<void>)`
 
 This handler tells the projection that an event is only ever processed when the event is originating directly from the
 local event store. A useful pattern for when you want the event handler to submit data to a third party service such as
 sending an email or submitting third party orders. We disallow `hydrate` and `outdated` as these events represents
 events that has already been processed.
 
-#### `.on("UserCreated", (event) => Promise<void>)`
+#### `.on("user:created", (event) => Promise<void>)`
 
 This method tells the projection to allow events directly from the event store as well as events coming through
 hydration via sync, manual or automatic stream rehydration operations. This is the default pattern used for most events.
@@ -265,7 +223,7 @@ NOTE! The nature of this pattern means that outdated events are never run by thi
 `outdated` events if you have processing requirements that needs to know about every unknown events that has occurred in
 the event stream.
 
-#### `.all("UserCreated", (event) => Promise<void>)`
+#### `.all("user:created", (event) => Promise<void>)`
 
 This method is a catch all for events that does not fall under the stricter definitions of once and on patterns. This is
 a good place to deal with data that does not depend on a strict order of events.
