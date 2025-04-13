@@ -1,18 +1,18 @@
-import { and, eq, inArray, or } from "drizzle-orm";
+import type { Helper } from "postgres";
 
-import { RelationsProvider } from "~types/providers/relations.ts";
+import type { RelationsProvider } from "~types/providers/relations.ts";
 import type { Relation, RelationPayload } from "~types/relation.ts";
 
-import type { PostgresDatabase, RelationsTable, Transaction as PGTransaction } from "../types.ts";
+import type { PostgresDatabase } from "../database.ts";
 
 export class PostgresRelationsProvider implements RelationsProvider {
-  constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: RelationsTable) {}
+  constructor(readonly db: PostgresDatabase, readonly schema?: string) {}
 
-  /**
-   * Access drizzle query features for relations provider.
-   */
-  get query(): this["db"]["query"]["relations"] {
-    return this.db.query.relations;
+  get table(): Helper<string, []> {
+    if (this.schema !== undefined) {
+      return this.db.sql(`${this.schema}.relations`);
+    }
+    return this.db.sql("public.relations");
   }
 
   /**
@@ -34,7 +34,9 @@ export class PostgresRelationsProvider implements RelationsProvider {
    * @param stream - Stream to add to the key.
    */
   async insert(key: string, stream: string): Promise<void> {
-    await this.db.insert(this.schema).values({ key, stream }).onConflictDoNothing();
+    await this.db.sql`INSERT INTO ${this.table} (key, stream) VALUES (${key}, ${stream}) ON CONFLICT DO NOTHING`.catch((error) => {
+      throw new Error(`EventStore > 'relations.insert' failed with postgres error: ${error.message}`);
+    });
   }
 
   /**
@@ -44,10 +46,15 @@ export class PostgresRelationsProvider implements RelationsProvider {
    * @param batchSize - Batch size for the insert loop.
    */
   async insertMany(relations: RelationPayload[], batchSize: number = 1_000): Promise<void> {
-    await this.db.transaction(async (tx) => {
+    await this.db.sql.begin(async (sql) => {
       for (let i = 0; i < relations.length; i += batchSize) {
-        await tx.insert(this.schema).values(relations.slice(i, i + batchSize)).onConflictDoNothing();
+        const values = relations
+          .slice(i, i + batchSize)
+          .map(({ key, stream }) => [key, stream]);
+        await sql`INSERT INTO ${this.table} (key, stream) VALUES ${sql(values)} ON CONFLICT DO NOTHING`;
       }
+    }).catch((error) => {
+      throw new Error(`EventStore > 'relations.insertMany' failed with postgres error: ${error.message}`);
     });
   }
 
@@ -57,9 +64,9 @@ export class PostgresRelationsProvider implements RelationsProvider {
    * @param key - Relational key to get event streams for.
    */
   async getByKey(key: string): Promise<string[]> {
-    return this.db.select({ key: this.schema.key, stream: this.schema.stream }).from(this.schema).where(eq(this.schema.key, key)).then((rows) =>
-      rows.map(({ stream }) => stream)
-    );
+    return this.db.sql`SELECT stream FROM ${this.table} WHERE key = ${key}`.then((rows) => rows.map(({ stream }) => stream)).catch((error) => {
+      throw new Error(`EventStore > 'relations.getByKey' failed with postgres error: ${error.message}`);
+    });
   }
 
   /**
@@ -68,8 +75,10 @@ export class PostgresRelationsProvider implements RelationsProvider {
    * @param keys - Relational keys to get event streams for.
    */
   async getByKeys(keys: string[]): Promise<string[]> {
-    return this.db.selectDistinct({ stream: this.schema.stream }).from(this.schema).where(inArray(this.schema.key, keys)).then((rows) =>
-      rows.map(({ stream }) => stream)
+    return this.db.sql`SELECT DISTINCT stream FROM ${this.table} WHERE key IN ${this.db.sql(keys)}`.then((rows) => rows.map(({ stream }) => stream)).catch(
+      (error) => {
+        throw new Error(`EventStore > 'relations.getByKeys' failed with postgres error: ${error.message}`);
+      },
     );
   }
 
@@ -80,7 +89,9 @@ export class PostgresRelationsProvider implements RelationsProvider {
    * @param stream - Stream to remove from relation.
    */
   async remove(key: string, stream: string): Promise<void> {
-    await this.db.delete(this.schema).where(and(eq(this.schema.key, key), eq(this.schema.stream, stream)));
+    await this.db.sql`DELETE FROM ${this.table} WHERE key = ${key} AND stream = ${stream}`.catch((error) => {
+      throw new Error(`EventStore > 'relations.remove' failed with postgres error: ${error.message}`);
+    });
   }
 
   /**
@@ -90,12 +101,15 @@ export class PostgresRelationsProvider implements RelationsProvider {
    * @param batchSize - Batch size for the insert loop.
    */
   async removeMany(relations: RelationPayload[], batchSize: number = 1_000): Promise<void> {
-    await this.db.transaction(async (tx) => {
+    await this.db.sql.begin(async (sql) => {
       for (let i = 0; i < relations.length; i += batchSize) {
-        await tx.delete(this.schema).where(
-          or(...relations.slice(i, i + batchSize).map((relation) => and(eq(this.schema.key, relation.key), eq(this.schema.stream, relation.stream)))),
+        const conditions = relations.slice(i, i + batchSize).map(
+          ({ key, stream }) => `(key = '${key}' AND stream = '${stream}')`,
         );
+        await sql`DELETE FROM ${this.table} WHERE ${this.db.sql.unsafe(conditions.join(" OR "))}`;
       }
+    }).catch((error) => {
+      throw new Error(`EventStore > 'relations.removeMany' failed with postgres error: ${error.message}`);
     });
   }
 
@@ -105,7 +119,9 @@ export class PostgresRelationsProvider implements RelationsProvider {
    * @param keys - Relational keys to remove from the relational table.
    */
   async removeByKeys(keys: string[]): Promise<void> {
-    await this.db.delete(this.schema).where(inArray(this.schema.key, keys));
+    await this.db.sql`DELETE FROM ${this.table} WHERE key IN ${keys}`.catch((error) => {
+      throw new Error(`EventStore > 'relations.removeByKeys' failed with postgres error: ${error.message}`);
+    });
   }
 
   /**
@@ -114,6 +130,8 @@ export class PostgresRelationsProvider implements RelationsProvider {
    * @param streams - Streams to remove from the relational table.
    */
   async removeByStreams(streams: string[]): Promise<void> {
-    await this.db.delete(this.schema).where(inArray(this.schema.stream, streams));
+    await this.db.sql`DELETE FROM ${this.table} WHERE stream IN ${streams}`.catch((error) => {
+      throw new Error(`EventStore > 'relations.removeByStreams' failed with postgres error: ${error.message}`);
+    });
   }
 }

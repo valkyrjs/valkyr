@@ -1,18 +1,17 @@
-import { and, eq } from "drizzle-orm";
+import type { Helper } from "postgres";
 
-import { SnapshotsProvider } from "~types/providers/snapshots.ts";
+import type { Snapshot, SnapshotsProvider } from "~types/providers/snapshots.ts";
 
-import { takeOne } from "../database.ts";
-import type { PostgresDatabase, Snapshot, SnapshotsTable, Transaction as PGTransaction } from "../types.ts";
+import type { PostgresDatabase } from "../database.ts";
 
 export class PostgresSnapshotsProvider implements SnapshotsProvider {
-  constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: SnapshotsTable) {}
+  constructor(readonly db: PostgresDatabase, readonly schema?: string) {}
 
-  /**
-   * Access drizzle query features for snapshot provider.
-   */
-  get query(): this["db"]["query"]["snapshots"] {
-    return this.db.query.snapshots;
+  get table(): Helper<string, []> {
+    if (this.schema !== undefined) {
+      return this.db.sql(`${this.schema}.snapshots`);
+    }
+    return this.db.sql("public.snapshots");
   }
 
   /**
@@ -23,8 +22,10 @@ export class PostgresSnapshotsProvider implements SnapshotsProvider {
    * @param cursor - Cursor timestamp for the last event used in the snapshot.
    * @param state  - State of the reduced events.
    */
-  async insert(name: string, stream: string, cursor: string, state: Record<string, unknown>): Promise<void> {
-    await this.db.insert(this.schema).values({ name, stream, cursor, state });
+  async insert(name: string, stream: string, cursor: string, state: any): Promise<void> {
+    await this.db.sql`INSERT INTO ${this.table} ${this.db.sql({ name, stream, cursor, state: JSON.stringify(state) })}`.catch((error) => {
+      throw new Error(`EventStore > 'snapshots.insert' failed with postgres error: ${error.message}`);
+    });
   }
 
   /**
@@ -34,7 +35,19 @@ export class PostgresSnapshotsProvider implements SnapshotsProvider {
    * @param stream - Stream the state was reduced for.
    */
   async getByStream(name: string, stream: string): Promise<Snapshot | undefined> {
-    return this.db.select().from(this.schema).where(and(eq(this.schema.name, name), eq(this.schema.stream, stream))).then(takeOne);
+    return this.db.sql`SELECT * FROM ${this.table} WHERE name = ${name} AND stream = ${stream}`.then(([row]) =>
+      row
+        ? ({
+          id: row.id,
+          name: row.name,
+          stream: row.stream,
+          cursor: row.cursor,
+          state: JSON.parse(row.state),
+        })
+        : undefined
+    ).catch((error) => {
+      throw new Error(`EventStore > 'snapshots.getByStream' failed with postgres error: ${error.message}`);
+    });
   }
 
   /**
@@ -44,6 +57,8 @@ export class PostgresSnapshotsProvider implements SnapshotsProvider {
    * @param stream - Stream to remove from snapshots.
    */
   async remove(name: string, stream: string): Promise<void> {
-    await this.db.delete(this.schema).where(and(eq(this.schema.name, name), eq(this.schema.stream, stream)));
+    await this.db.sql`DELETE FROM ${this.table} WHERE name = ${name} AND stream = ${stream}`.catch((error) => {
+      throw new Error(`EventStore > 'snapshots.remove' failed with postgres error: ${error.message}`);
+    });
   }
 }

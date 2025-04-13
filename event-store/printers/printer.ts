@@ -1,9 +1,9 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import $RefParser from "@apidevtools/json-schema-ref-parser";
 import { ensureFile } from "@std/fs";
 import { toCamelCase, toPascalCase } from "@std/text";
-import { resolveRefs } from "json-refs";
 import { jsonSchemaToZod } from "json-schema-to-zod";
 import { format } from "prettier";
 
@@ -207,13 +207,13 @@ async function resolveLocalDefinitions(path: string, definitions: DefinitionSche
 
 async function toZodDefinition(name: string, data: any, definitions: any) {
   return jsonSchemaToZod(
-    await resolveRefs({
+    await $RefParser.dereference({
       $schema: "http://json-schema.org/draft-04/schema#",
       id: `valkyrjs/schemas/v1/${name}.json`,
       title: name,
       definitions,
       ...populateSchema(data),
-    }).then(({ resolved }) => resolved),
+    }),
   );
 }
 
@@ -234,7 +234,7 @@ async function toZodValidation(name: string, data: any, definitions: any) {
     schema.required = getRequiredKeys(data);
   }
 
-  return jsonSchemaToZod(await resolveRefs(schema).then(({ resolved }) => resolved));
+  return jsonSchemaToZod(await $RefParser.dereference(schema));
 }
 
 function populateProperties(props: any) {

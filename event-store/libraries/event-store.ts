@@ -417,6 +417,7 @@ export class EventStore<const TEvent extends Event, TEventStoreAdapter extends E
 
     const events = (stream !== undefined ? await this.getEventsByStreams([id], { ...query, cursor }) : await this.getEventsByRelations([id], { ...query, cursor }))
       .concat(pending);
+
     if (events.length === 0) {
       if (state !== undefined) {
         return reducer.from(state);

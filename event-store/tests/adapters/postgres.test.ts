@@ -1,12 +1,12 @@
 import { afterAll, afterEach, beforeAll, describe } from "@std/testing/bdd";
 import { PostgresTestContainer } from "@valkyr/testcontainers/postgres";
+import postgres from "postgres";
 
 import { Projector } from "~libraries/projector.ts";
 import type { EventStoreHooks } from "~types/event-store.ts";
 
 import { makePostgresEventStore } from "../../adapters/postgres/adapter.ts";
-import { PostgresConnection } from "../../adapters/postgres/database.ts";
-import { migrate } from "../../adapters/postgres/migrations/migrate.ts";
+import type { PostgresConnection } from "../../adapters/postgres/connection.ts";
 import { type Event, type EventRecord, events, validators } from "./mocks/events.ts";
 import testAddEvent from "./store/add-event.ts";
 import testAddManyEvents from "./store/add-many-events.ts";
@@ -24,8 +24,9 @@ import testReplayEvents from "./store/replay-events.ts";
 const DB_NAME = "sandbox";
 
 const container = await PostgresTestContainer.start("postgres:17");
+const sql = postgres(container.url(DB_NAME));
 
-const eventStoreFn = async (options: { hooks?: EventStoreHooks<EventRecord> } = {}) => getEventStore(container.url(DB_NAME), options);
+const eventStoreFn = async (options: { hooks?: EventStoreHooks<EventRecord> } = {}) => getEventStore(sql, options);
 
 /*
  |--------------------------------------------------------------------------------
@@ -35,7 +36,43 @@ const eventStoreFn = async (options: { hooks?: EventStoreHooks<EventRecord> } = 
 
 beforeAll(async () => {
   await container.create(DB_NAME);
-  await migrate(container.client(DB_NAME));
+  await sql`CREATE SCHEMA "event_store"`;
+  await sql`
+    CREATE TABLE IF NOT EXISTS "event_store"."events" (
+      "id" varchar PRIMARY KEY NOT NULL,
+      "stream" varchar NOT NULL,
+      "type" varchar NOT NULL,
+      "data" jsonb NOT NULL,
+      "meta" jsonb NOT NULL,
+      "recorded" varchar NOT NULL,
+      "created" varchar NOT NULL
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS "event_store"."relations" (
+      "id" serial PRIMARY KEY NOT NULL,
+      "key" varchar NOT NULL,
+      "stream" varchar NOT NULL,
+      UNIQUE ("key", "stream")
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS "event_store"."snapshots" (
+      "id" serial PRIMARY KEY NOT NULL,
+      "name" varchar NOT NULL,
+      "stream" varchar NOT NULL,
+      "cursor" varchar NOT NULL,
+      "state" jsonb NOT NULL,
+      UNIQUE ("name", "stream")
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS "relations_key_index" ON "event_store"."relations" USING btree ("key")`;
+  await sql`CREATE INDEX IF NOT EXISTS "relations_stream_index" ON "event_store"."relations" USING btree ("stream")`;
+  await sql`CREATE INDEX IF NOT EXISTS "events_stream_index" ON "event_store"."events" USING btree ("stream")`;
+  await sql`CREATE INDEX IF NOT EXISTS "events_type_index" ON "event_store"."events" USING btree ("type")`;
+  await sql`CREATE INDEX IF NOT EXISTS "events_recorded_index" ON "event_store"."events" USING btree ("recorded")`;
+  await sql`CREATE INDEX IF NOT EXISTS "events_created_index" ON "event_store"."events" USING btree ("created")`;
+  await sql`CREATE INDEX IF NOT EXISTS "snapshots_name_stream_cursor_index" ON "event_store"."snapshots" USING btree ("name","stream","cursor")`;
 });
 
 afterEach(async () => {

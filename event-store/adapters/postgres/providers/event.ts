@@ -1,30 +1,30 @@
-import { and, eq, gt, inArray, lt, SQL, sql } from "drizzle-orm";
+import type { Helper } from "postgres";
 
 import type { Event, EventToRecord } from "~types/event.ts";
 import type { EventReadOptions } from "~types/event-store.ts";
 import { EventsProvider } from "~types/providers/events.ts";
 
-import { takeOne } from "../database.ts";
-import type { EventsTable, PostgresDatabase, Transaction as PGTransaction } from "../types.ts";
+import type { PostgresDatabase } from "../database.ts";
 
 export class PostgresEventsProvider<TEvent extends Event> implements EventsProvider<TEvent> {
-  constructor(readonly db: PostgresDatabase | PGTransaction, readonly schema: EventsTable) {}
+  constructor(readonly db: PostgresDatabase, readonly schema?: string) {}
 
-  /**
-   * Access drizzle query features for event provider.
-   */
-  get query(): this["db"]["query"]["events"] {
-    return this.db.query.events;
+  get table(): Helper<string, []> {
+    if (this.schema !== undefined) {
+      return this.db.sql(`${this.schema}.events`);
+    }
+    return this.db.sql("public.events");
   }
 
   /**
    * Insert a new event record to the events table.
    *
    * @param record - Event record to insert.
-   * @param tx     - Transaction to insert the record within. (Optional)
    */
   async insert(record: EventToRecord<TEvent>): Promise<void> {
-    await this.db.insert(this.schema).values(record);
+    await this.db.sql`INSERT INTO ${this.table} ${this.db.sql(record as object)}`.catch((error) => {
+      throw new Error(`EventStore > 'events.insert' failed with postgres error: ${error.message}`);
+    });
   }
 
   /**
@@ -34,10 +34,12 @@ export class PostgresEventsProvider<TEvent extends Event> implements EventsProvi
    * @param batchSize - Batch size for the insert loop.
    */
   async insertMany(records: EventToRecord<TEvent>[], batchSize: number = 1_000): Promise<void> {
-    await this.db.transaction(async (tx) => {
+    await this.db.sql.begin(async (sql) => {
       for (let i = 0; i < records.length; i += batchSize) {
-        await tx.insert(this.schema).values(records.slice(i, i + batchSize));
+        await sql`INSERT INTO ${this.table} ${this.db.sql(records.slice(i, i + batchSize) as object[])}`;
       }
+    }).catch((error) => {
+      throw new Error(`EventStore > 'events.insertMany' failed with postgres error: ${error.message}`);
     });
   }
 
@@ -47,12 +49,19 @@ export class PostgresEventsProvider<TEvent extends Event> implements EventsProvi
    *
    * @param options - Find options.
    */
-  async get(options: EventReadOptions<TEvent> = {}): Promise<EventToRecord<TEvent>[]> {
-    const filters = this.#withFilters(options);
-    if (filters.length !== 0) {
-      return await this.db.select().from(this.schema).where(and(...filters)).orderBy(this.schema.created) as EventToRecord<TEvent>[];
+  async get(options: EventReadOptions<TEvent>): Promise<EventToRecord<TEvent>[]> {
+    if (options !== undefined) {
+      const { filter, cursor, direction, limit } = options;
+      return this.db.sql`
+        SELECT * FROM ${this.table} 
+        WHERE
+          ${filter?.types ? this.#withTypes(filter.types) : this.db.sql``}
+          ${cursor ? this.#withCursor(cursor, direction) : this.db.sql``}
+        ORDER BY created ASC
+        ${limit ? this.#withLimit(limit) : this.db.sql``}
+      `;
     }
-    return await this.db.select().from(this.schema).orderBy(this.schema.created) as EventToRecord<TEvent>[];
+    return this.db.sql`SELECT * FROM ${this.table} ORDER BY created ASC`;
   }
 
   /**
@@ -61,12 +70,16 @@ export class PostgresEventsProvider<TEvent extends Event> implements EventsProvi
    * @param stream  - Stream to fetch events for.
    * @param options - Read options for modifying the result.
    */
-  async getByStream(stream: string, options: EventReadOptions<TEvent> = {}): Promise<EventToRecord<TEvent>[]> {
-    const filters = this.#withFilters(options, [eq(this.schema.stream, stream)]);
-    if (filters.length > 1) {
-      return await this.db.select().from(this.schema).where(and(...filters)).orderBy(this.schema.created) as EventToRecord<TEvent>[];
-    }
-    return await this.db.select().from(this.schema).where(filters[0]).orderBy(this.schema.created) as EventToRecord<TEvent>[];
+  async getByStream(stream: string, { filter, cursor, direction, limit }: EventReadOptions<TEvent> = {}): Promise<EventToRecord<TEvent>[]> {
+    return this.db.sql`
+      SELECT * FROM ${this.table} 
+      WHERE 
+        stream = ${stream}
+        ${filter?.types ? this.#withTypes(filter.types) : this.db.sql``}
+        ${cursor ? this.#withCursor(cursor, direction) : this.db.sql``}
+      ORDER BY created ASC
+      ${limit ? this.#withLimit(limit) : this.db.sql``}
+    `;
   }
 
   /**
@@ -75,12 +88,16 @@ export class PostgresEventsProvider<TEvent extends Event> implements EventsProvi
    * @param streams - Stream to get events for.
    * @param options - Read options for modifying the result.
    */
-  async getByStreams(streams: string[], options: EventReadOptions<TEvent> = {}): Promise<EventToRecord<TEvent>[]> {
-    const filters = this.#withFilters(options, [inArray(this.schema.stream, streams)]);
-    if (filters.length > 1) {
-      return await this.db.select().from(this.schema).where(and(...filters)).orderBy(this.schema.created) as EventToRecord<TEvent>[];
-    }
-    return await this.db.select().from(this.schema).where(filters[0]).orderBy(this.schema.created) as EventToRecord<TEvent>[];
+  async getByStreams(streams: string[], { filter, cursor, direction, limit }: EventReadOptions<TEvent> = {}): Promise<EventToRecord<TEvent>[]> {
+    return this.db.sql`
+      SELECT * FROM ${this.table} 
+      WHERE 
+        stream IN ${this.db.sql(streams)}
+        ${filter?.types ? this.#withTypes(filter.types) : this.db.sql``}
+        ${cursor ? this.#withCursor(cursor, direction) : this.db.sql``}
+      ORDER BY created ASC
+      ${limit ? this.#withLimit(limit) : this.db.sql``}
+    `;
   }
 
   /**
@@ -89,18 +106,21 @@ export class PostgresEventsProvider<TEvent extends Event> implements EventsProvi
    * @param id - Event id.
    */
   async getById(id: string): Promise<EventToRecord<TEvent> | undefined> {
-    return await this.db.select().from(this.schema).where(eq(this.schema.id, id)).then(takeOne) as EventToRecord<TEvent> | undefined;
+    return this.db.sql`SELECT * FROM ${this.table} WHERE id = ${id}`.then(([row]) => row as (EventToRecord<TEvent> | undefined));
   }
 
   /**
    * Check if the given event is outdated in relation to the local event data.
    */
   async checkOutdated({ stream, type, created }: EventToRecord<TEvent>): Promise<boolean> {
-    const { count } = await this.db.select({ count: sql<number>`count(*)` }).from(this.schema).where(and(
-      eq(this.schema.stream, stream),
-      eq(this.schema.type, type),
-      gt(this.schema.created, created),
-    )).then((result: any) => result[0]);
+    const count = await await this.db.sql`
+      SELECT COUNT(*) AS count
+      FROM ${this.table}
+      WHERE
+        stream = ${stream}
+        AND type = ${type}
+        AND created > ${created}
+    `.then((result: any) => Number(result[0]));
     return count > 0;
   }
 
@@ -110,24 +130,18 @@ export class PostgresEventsProvider<TEvent extends Event> implements EventsProvi
    |--------------------------------------------------------------------------------
    */
 
-  #withFilters({ filter, cursor, direction }: EventReadOptions<TEvent>, filters: SQL<unknown>[] = []) {
-    if (filter?.types !== undefined) {
-      filters.push(this.#withTypes(filter.types));
-    }
-    if (cursor) {
-      filters.push(this.#withCursor(cursor, direction));
-    }
-    return filters;
-  }
-
   #withTypes(types: string[]) {
-    return inArray(this.schema.type, types);
+    return this.db.sql`AND type IN ${this.db.sql(types)}`;
   }
 
-  #withCursor(cursor: string, direction: 1 | -1 | "asc" | "desc" | undefined) {
+  #withCursor(cursor: string, direction?: 1 | -1 | "asc" | "desc") {
     if (direction === "desc" || direction === -1) {
-      return lt(this.schema.created, cursor);
+      return this.db.sql`AND created < ${cursor}`;
     }
-    return gt(this.schema.created, cursor);
+    return this.db.sql`AND created > ${cursor}`;
+  }
+
+  #withLimit(limit: number) {
+    return this.db.sql`LIMIT ${limit}`;
   }
 }

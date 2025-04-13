@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@apidevtools/json-schema-ref-parser": "12.0.1",
     "@db/sqlite": "npm:@jsr/db__sqlite@0.12.0",
     "@std/assert": "npm:@jsr/std__assert@1.0.12",
     "@std/async": "npm:@jsr/std__async@1.0.12",
@@ -11,10 +12,7 @@
     "@valkyr/db": "1.0.1",
     "ajv": "8.17.1",
     "dot-prop": "9.0.0",
-    "drizzle-kit": "0.30.6",
-    "drizzle-orm": "0.41.0",
     "jose": "6.0.10",
-    "json-refs": "3.0.15",
     "json-schema": "0.4.0",
     "json-schema-to-zod": "2.6.1",
     "mongodb": "6.15.0",
