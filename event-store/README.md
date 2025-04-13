@@ -79,7 +79,7 @@ store.
 
  - Browser _(TODO)_
  - Mongo _(TODO)_
- - [Postgres](./adapters/postgres/README.md)
+ - [Postgres](./adapters/postgres)
 
 ### Reducers
 
