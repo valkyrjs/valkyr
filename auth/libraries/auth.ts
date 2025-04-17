@@ -42,12 +42,14 @@
 
 import { importPKCS8, importSPKI, JWTHeaderParameters, JWTPayload, jwtVerify, type KeyObject, SignJWT } from "jose";
 import { JOSEError } from "jose/errors";
-import z, { ZodObject } from "zod";
+import z, { ZodDiscriminatedUnion, ZodObject, ZodUnion } from "zod";
 
 import { Access } from "./access.ts";
 import { Guard } from "./guard.ts";
 import type { Permissions } from "./permissions.ts";
 import { Role, type RoleData, type RolesProvider } from "./role.ts";
+
+type ZodSession = ZodObject | ZodUnion<ZodObject[]> | ZodDiscriminatedUnion<ZodObject[]>;
 
 /**
  * Provides a solution to manage user authentication and access control rights within an
@@ -55,7 +57,7 @@ import { Role, type RoleData, type RolesProvider } from "./role.ts";
  */
 export class Auth<
   TPermissions extends Permissions,
-  TZodSession extends ZodObject,
+  TZodSession extends ZodSession,
   TGuard extends Guard<any, any>,
   TSession extends z.infer<TZodSession>,
   TProviders extends Providers<TPermissions, TSession>,
@@ -277,7 +279,7 @@ export class Auth<
  |--------------------------------------------------------------------------------
  */
 
-type Config<TPermissions extends Permissions, TSession extends ZodObject, TGuard extends Guard<any, any>> = {
+type Config<TPermissions extends Permissions, TSession extends ZodSession, TGuard extends Guard<any, any>> = {
   settings: {
     algorithm: string;
     privateKey: string;

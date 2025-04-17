@@ -27,13 +27,13 @@ const auth = new Auth({
 
 describe("Auth", () => {
   it("should sign a session", async () => {
-    const token = await auth.generate({ accountId: "abc" });
+    const token = await auth.generate({ type: "user", accountId: "abc" });
 
     assertNotEquals(token, undefined);
   });
 
   it("should resolve a session", async () => {
-    const token = await auth.generate({ accountId: "abc" });
+    const token = await auth.generate({ type: "user", accountId: "abc" });
 
     assertNotEquals(token, undefined);
 
@@ -49,7 +49,7 @@ describe("Auth", () => {
   });
 
   it("should invalidate after expiry", async () => {
-    const token = await auth.generate({ accountId: "abc" }, "1 second");
+    const token = await auth.generate({ type: "user", accountId: "abc" }, "1 second");
 
     assertNotEquals(token, undefined);
 
@@ -65,7 +65,7 @@ describe("Auth", () => {
   });
 
   it("should return a raw session json object", async () => {
-    const token = await auth.generate({ accountId: "account-a" });
+    const token = await auth.generate({ type: "user", accountId: "account-a" });
 
     assertNotEquals(token, undefined);
 
@@ -74,11 +74,11 @@ describe("Auth", () => {
       throw new Error("Expected valid session!");
     }
 
-    assertObjectMatch(session.toJSON(), { accountId: "account-a" });
+    assertObjectMatch(session.toJSON(), { type: "user", accountId: "account-a" });
   });
 
   it("should generate a single role access instance", async () => {
-    const token = await auth.generate({ accountId: "account-a" });
+    const token = await auth.generate({ type: "user", accountId: "account-a" });
 
     assertNotEquals(token, undefined);
 
@@ -94,7 +94,7 @@ describe("Auth", () => {
   });
 
   it("should generate a multi role access instance", async () => {
-    const token = await auth.generate({ accountId: "account-b" });
+    const token = await auth.generate({ type: "user", accountId: "account-b" });
 
     assertNotEquals(token, undefined);
 

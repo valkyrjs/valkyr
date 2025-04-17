@@ -1,5 +1,5 @@
 import type { RpcError } from "@valkyr/json-rpc";
-import type { z, ZodAny } from "zod";
+import type { z, ZodType } from "zod";
 
 import { dedent } from "~utilities/dedent.ts";
 
@@ -18,13 +18,13 @@ import { ActionResult, Actions } from "./action.ts";
 
 export class Method<
   TActions extends Actions | undefined = undefined,
-  TParams extends ZodAny | undefined = undefined,
-  TResult extends ZodAny | undefined = undefined,
+  TParams extends ZodType | undefined = undefined,
+  TResult extends ZodType | undefined = undefined,
 > {
   readonly description: string;
   readonly notification: boolean;
   readonly actions?: TActions;
-  readonly params?: ZodAny;
+  readonly params?: ZodType;
   readonly result?: TResult;
   readonly handler: MethodHandler<TActions, TParams, TResult>;
   readonly examples?: string[];
@@ -107,8 +107,8 @@ export type AnyMethod = Method<any, any, any>;
 
 export type MethodOptions<
   TActions extends Actions | undefined = undefined,
-  TParams extends ZodAny | undefined = undefined,
-  TResult extends ZodAny | undefined = undefined,
+  TParams extends ZodType | undefined = undefined,
+  TResult extends ZodType | undefined = undefined,
 > = {
   /**
    * Describes the intent of the methods behavior used by client genreation
@@ -186,16 +186,16 @@ export type MethodOptions<
 
 type MethodHandler<
   TActions extends Actions | undefined = undefined,
-  TParams extends ZodAny | undefined = undefined,
-  TResult extends ZodAny | undefined = undefined,
+  TParams extends ZodType | undefined = undefined,
+  TResult extends ZodType | undefined = undefined,
 > = (
   context: RequestContext<TActions, TParams>,
-) => TResult extends ZodAny ? Promise<z.infer<TResult> | RpcError>
+) => TResult extends ZodType ? Promise<z.infer<TResult> | RpcError>
   : Promise<RpcError | void>;
 
 type RequestContext<
   TActions extends Actions | undefined = undefined,
-  TParams extends ZodAny | undefined = undefined,
+  TParams extends ZodType | undefined = undefined,
 > =
-  & (TParams extends ZodAny ? { params: z.infer<TParams> } : object)
+  & (TParams extends ZodType ? { params: z.infer<TParams> } : object)
   & (TActions extends Actions ? ActionResult<TActions["actions"]> : object);

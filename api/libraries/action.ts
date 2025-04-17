@@ -1,9 +1,9 @@
-import z, { ZodAny, ZodObject } from "zod";
+import z, { ZodObject, ZodType } from "zod";
 
 import { BadRequestError } from "~libraries/errors.ts";
 
 export class Action<
-  TProps extends ZodAny | undefined = undefined,
+  TProps extends ZodType | undefined = undefined,
   TOutput extends ZodObject | undefined = undefined,
 > {
   readonly name: string;
@@ -59,7 +59,7 @@ export class Actions<TActions extends Action<any, any>[] = any> {
  */
 
 type ActionOptions<
-  TProps extends ZodAny | undefined = undefined,
+  TProps extends ZodType | undefined = undefined,
   TOutput extends ZodObject | undefined = undefined,
 > = {
   name: string;
@@ -69,9 +69,9 @@ type ActionOptions<
 };
 
 type ActionHandler<
-  TProps extends ZodAny | undefined = undefined,
+  TProps extends ZodType | undefined = undefined,
   TOutput extends ZodObject | undefined = undefined,
-> = TProps extends ZodAny ? (props: TProps) => TOutput extends ZodObject ? Promise<z.infer<TOutput>>
+> = TProps extends ZodType ? (props: TProps) => TOutput extends ZodObject ? Promise<z.infer<TOutput>>
     : Promise<void>
   : () => TOutput extends ZodObject ? Promise<z.infer<TOutput>>
     : Promise<void>;
