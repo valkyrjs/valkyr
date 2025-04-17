@@ -19,7 +19,6 @@
     "npm:eslint@9.24.0": "9.24.0",
     "npm:eventemitter3@5.0.1": "5.0.1",
     "npm:fake-indexeddb@6.0.0": "6.0.0",
-    "npm:history@5.3.0": "5.3.0",
     "npm:jose@6.0.10": "6.0.10",
     "npm:json-schema-to-zod@2.6.1": "2.6.1",
     "npm:json-schema@0.4.0": "0.4.0",
@@ -28,9 +27,8 @@
     "npm:postgres@3.4.5": "3.4.5",
     "npm:prettier@3.5.3": "3.5.3",
     "npm:typescript-eslint@8.29.1": "8.29.1_eslint@9.24.0_typescript@5.8.3_@typescript-eslint+parser@8.29.1__eslint@9.24.0__typescript@5.8.3",
-    "npm:urlpattern-polyfill@10.0.0": "10.0.0",
-    "npm:zod-to-ts@1.2.0": "1.2.0_typescript@5.8.3_zod@3.24.2",
-    "npm:zod@3.24.2": "3.24.2"
+    "npm:zod-to-ts@1.2.0": "1.2.0_typescript@5.8.3_zod@4.0.0-beta.20250412T085909",
+    "npm:zod@next": "4.0.0-beta.20250412T085909"
   },
   "npm": {
     "@apidevtools/json-schema-ref-parser@12.0.1": {
@@ -39,12 +37,6 @@
         "@jsdevtools/ono",
         "@types/json-schema",
         "js-yaml"
-      ]
-    },
-    "@babel/runtime@7.27.0": {
-      "integrity": "sha512-VtPOkrdPHZsKc/clNqyi9WUA8TINkZ4cGk63UUE3u4pmB2k+ZMQRDuIOagv8UVd6j7k0T3+RRIb7beKTebNbcw==",
-      "dependencies": [
-        "regenerator-runtime"
       ]
     },
     "@eslint-community/eslint-utils@4.5.1_eslint@9.24.0": {
@@ -367,6 +359,9 @@
         "rxjs"
       ]
     },
+    "@zod/core@0.4.6": {
+      "integrity": "sha512-0IeEldTobOdkoJPyINVQgOHlgCWbpozSsDjdcd2+VcxKvf8T+SYLDVk7NKt0XJx3C0ImNXAXh3V3yIw46NJyQA=="
+    },
     "acorn-jsx@5.3.2_acorn@8.14.1": {
       "integrity": "sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==",
       "dependencies": [
@@ -654,12 +649,6 @@
     "has-flag@4.0.0": {
       "integrity": "sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ=="
     },
-    "history@5.3.0": {
-      "integrity": "sha512-ZqaKwjjrAYUYfLG+htGaIIZ4nioX2L70ZUMIFysS3xvBsSG4x/n1V6TXV3N8ZYNuFGlDirFg32T7B6WOUPDYcQ==",
-      "dependencies": [
-        "@babel/runtime"
-      ]
-    },
     "idb@7.1.1": {
       "integrity": "sha512-gchesWBzyvGHRO9W8tzUWFDycow5gwjvFKfyV9FF32Y7F50yZMp7mP+T2mJIWFx49zicqyC4uefHM17o6xKIVQ=="
     },
@@ -848,9 +837,6 @@
     "queue-microtask@1.2.3": {
       "integrity": "sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A=="
     },
-    "regenerator-runtime@0.14.1": {
-      "integrity": "sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw=="
-    },
     "require-from-string@2.0.2": {
       "integrity": "sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw=="
     },
@@ -957,9 +943,6 @@
         "punycode"
       ]
     },
-    "urlpattern-polyfill@10.0.0": {
-      "integrity": "sha512-H/A06tKD7sS1O1X2SshBVeA5FLycRpjqiBeqGKmBwBDBy28EnRjORxTNe269KSSr5un5qyWi1iL61wLxpd+ZOg=="
-    },
     "webidl-conversions@7.0.0": {
       "integrity": "sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g=="
     },
@@ -982,15 +965,18 @@
     "yocto-queue@0.1.0": {
       "integrity": "sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q=="
     },
-    "zod-to-ts@1.2.0_typescript@5.8.3_zod@3.24.2": {
+    "zod-to-ts@1.2.0_typescript@5.8.3_zod@4.0.0-beta.20250412T085909": {
       "integrity": "sha512-x30XE43V+InwGpvTySRNz9kB7qFU8DlyEy7BsSTCHPH1R0QasMmHWZDCzYm6bVXtj/9NNJAZF3jW8rzFvH5OFA==",
       "dependencies": [
         "typescript",
         "zod"
       ]
     },
-    "zod@3.24.2": {
-      "integrity": "sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ=="
+    "zod@4.0.0-beta.20250412T085909": {
+      "integrity": "sha512-W4OjoCnF5XTuljw4X6Hh3Inp45Ug7mmCWzWfFPv+RZcSIAGz7OPqBKOEDtLjfnJAvoxvY3vO0SkxH1zr0Md/Ag==",
+      "dependencies": [
+        "@zod/core"
+      ]
     }
   },
   "workspace": {
@@ -1021,19 +1007,13 @@
         "npm:prettier@3.5.3",
         "npm:typescript-eslint@8.29.1",
         "npm:zod-to-ts@1.2.0",
-        "npm:zod@3.24.2"
+        "npm:zod@next"
       ]
     },
     "members": {
       "event-emitter": {
         "dependencies": [
           "npm:eventemitter3@5.0.1"
-        ]
-      },
-      "router": {
-        "dependencies": [
-          "npm:history@5.3.0",
-          "npm:urlpattern-polyfill@10.0.0"
         ]
       }
     }

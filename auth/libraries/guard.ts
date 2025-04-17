@@ -1,4 +1,4 @@
-import type { z, ZodTypeAny } from "zod";
+import z, { ZodDiscriminatedUnion, ZodObject, ZodUnion } from "zod";
 
 /**
  * Access guards perform deterministic logical operations on provided
@@ -8,7 +8,7 @@ import type { z, ZodTypeAny } from "zod";
  * and are useful for very specific granular access requirements based on
  * given input.
  */
-export class Guard<TName extends string, TInput extends ZodTypeAny> {
+export class Guard<TName extends string, TInput extends ZodObject | ZodUnion | ZodDiscriminatedUnion> {
   /**
    * Represents the external, dynamic, and unknown input from third-party
    * sources (e.g., user actions, API requests).
@@ -50,4 +50,4 @@ export class Guard<TName extends string, TInput extends ZodTypeAny> {
   }
 }
 
-export type GuardHandler<TInput extends ZodTypeAny> = (input: z.infer<TInput>) => Promise<boolean>;
+export type GuardHandler<TInput extends ZodObject | ZodUnion | ZodDiscriminatedUnion> = (input: z.infer<TInput>) => Promise<boolean>;

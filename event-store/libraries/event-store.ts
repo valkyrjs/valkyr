@@ -34,7 +34,7 @@
  * ```
  */
 
-import type { AnyZodObject, ZodUnion } from "zod";
+import { type ZodDiscriminatedUnion, type ZodError, type ZodObject, type ZodUnion } from "zod";
 
 import type { AggregateRoot } from "~libraries/aggregate.ts";
 import { EventInsertionError, EventMissingError, EventParserError } from "~libraries/errors.ts";
@@ -540,21 +540,24 @@ export class EventStore<const TEvent extends Event, TEventStoreAdapter extends E
   async parseEventRecord(record: EventToRecord<TEvent>) {
     const { data, meta } = this.getValidator(record.type);
     if (data !== undefined || meta !== undefined) {
-      const errors = [];
+      const dataErrors: ZodError[] = [];
       if (data !== undefined) {
         const result = await data.safeParseAsync(record.data);
         if (result.success === false) {
-          errors.push(result.error.flatten().fieldErrors);
+          dataErrors.push(result.error);
         }
       }
+
+      const metaErrors: ZodError[] = [];
       if (meta !== undefined) {
         const result = await meta.safeParseAsync(record.meta);
         if (result.success === false) {
-          errors.push(result.error.flatten().fieldErrors);
+          metaErrors.push(result.error);
         }
       }
-      if (errors.length > 0) {
-        throw new EventParserError(record, errors);
+
+      if (dataErrors.length > 0 || metaErrors.length > 0) {
+        throw new EventParserError(record, dataErrors, metaErrors);
       }
     }
   }
@@ -566,8 +569,8 @@ export class EventStore<const TEvent extends Event, TEventStoreAdapter extends E
    * @param type - Event to get validator for.
    */
   getValidator(type: TEvent["type"]): {
-    data?: AnyZodObject | ZodUnion<any>;
-    meta?: AnyZodObject | ZodUnion<any>;
+    data?: ZodObject | ZodUnion | ZodDiscriminatedUnion;
+    meta?: ZodObject | ZodUnion | ZodDiscriminatedUnion;
   } {
     return {
       data: this.#validators.data.get(type),

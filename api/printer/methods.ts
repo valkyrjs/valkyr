@@ -1,5 +1,5 @@
 import { toCamelCase, toPascalCase } from "@std/text";
-import { ZodObject, type ZodTypeAny } from "zod";
+import { ZodObject } from "zod";
 
 import type { Method } from "~libraries/method.ts";
 import { getMappedMethods } from "~utilities/methods.ts";
@@ -95,9 +95,9 @@ function getMethodDoc(method: Method): string {
   const params = method.params;
   if (params !== undefined) {
     if (params instanceof ZodObject) {
-      for (const [name, value] of Object.entries<ZodTypeAny>(params.shape)) {
+      for (const [name] of Object.entries(params.shape)) {
         docs.push(
-          `* @param ${name}${pad(name.length)} - ${value.description ?? "URL parameter added to the request."}`,
+          `* @param ${name}${pad(name.length)} - ${"URL parameter added to the request."}`,
         );
       }
     }
@@ -131,7 +131,7 @@ function getLongestParam(method: Method): number {
   const schema = method.params;
   if (schema !== undefined) {
     if (schema instanceof ZodObject) {
-      for (const [name] of Object.entries<ZodTypeAny>(schema.shape)) {
+      for (const [name] of Object.entries(schema.shape)) {
         const length = name.length;
         if (length > longest) {
           longest = length;

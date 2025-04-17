@@ -7,7 +7,6 @@
     "./inverse",
     "./json-rpc",
     "./process",
-    "./router",
     "./testcontainers"
   ],
   "exclude": [

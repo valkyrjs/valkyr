@@ -42,12 +42,12 @@
 
 import { importPKCS8, importSPKI, JWTHeaderParameters, JWTPayload, jwtVerify, type KeyObject, SignJWT } from "jose";
 import { JOSEError } from "jose/errors";
-import z, { ZodTypeAny } from "zod";
+import z, { ZodObject } from "zod";
 
 import { Access } from "./access.ts";
 import { Guard } from "./guard.ts";
 import type { Permissions } from "./permissions.ts";
-import { Role, type RolesProvider } from "./role.ts";
+import { Role, type RoleData, type RolesProvider } from "./role.ts";
 
 /**
  * Provides a solution to manage user authentication and access control rights within an
@@ -55,12 +55,13 @@ import { Role, type RolesProvider } from "./role.ts";
  */
 export class Auth<
   TPermissions extends Permissions,
-  TSession extends ZodTypeAny,
+  TZodSession extends ZodObject,
   TGuard extends Guard<any, any>,
-  TProviders extends Providers<TPermissions, z.infer<TSession>>,
+  TSession extends z.infer<TZodSession>,
+  TProviders extends Providers<TPermissions, TSession>,
 > {
-  readonly #settings: Config<TPermissions, TSession, TGuard>["settings"];
-  readonly #session: TSession;
+  readonly #settings: Config<TPermissions, TZodSession, TGuard>["settings"];
+  readonly #session: TZodSession;
   readonly #permissions: TPermissions;
   readonly #guards: Map<TGuard["name"], TGuard>;
 
@@ -70,9 +71,9 @@ export class Auth<
   #pubkey?: KeyObject;
 
   declare readonly $inferPermissions: TPermissions;
-  declare readonly $inferSession: z.infer<TSession>;
+  declare readonly $inferSession: TSession;
 
-  constructor(config: Config<TPermissions, TSession, TGuard>, providers: TProviders) {
+  constructor(config: Config<TPermissions, TZodSession, TGuard>, providers: TProviders) {
     this.#settings = config.settings;
     this.#session = config.session;
     this.#permissions = config.permissions;
@@ -89,7 +90,7 @@ export class Auth<
   /**
    * Session zod object.
    */
-  get session(): TSession {
+  get session(): TZodSession {
     return this.#session;
   }
 
@@ -161,8 +162,8 @@ export class Auth<
    * @param session    - Session to sign.
    * @param expiration - Expiration date of the token. Default: 1 hour
    */
-  async generate(session: z.infer<TSession>, expiration: string | number | Date = "1 hour"): Promise<string> {
-    return new SignJWT(session)
+  async generate(session: TSession, expiration: string | number | Date = "1 hour"): Promise<string> {
+    return new SignJWT(session as JWTPayload)
       .setProtectedHeader({ alg: this.#settings.algorithm })
       .setIssuedAt()
       .setIssuer(this.#settings.issuer)
@@ -177,7 +178,7 @@ export class Auth<
    *
    * @param token - Token to resolve auth session from.
    */
-  async resolve(token: string): Promise<SessionResolution<z.infer<TSession>, TPermissions>> {
+  async resolve(token: string): Promise<SessionResolution<TSession, TPermissions>> {
     try {
       const { payload, protectedHeader } = await jwtVerify<unknown>(
         token,
@@ -188,7 +189,7 @@ export class Auth<
         },
       );
 
-      const session = await this.session.parseAsync(payload);
+      const session: TSession = await this.session.parseAsync(payload) as TSession;
       const roles = await this.#providers.roles.getBySession(session);
       const access = this.access(roles.map((data) => new Role<TPermissions>(data)));
 
@@ -196,7 +197,7 @@ export class Auth<
         valid: true,
         ...session,
         has: access.has.bind(access),
-        toJSON(): z.infer<TSession> {
+        toJSON(): TSession {
           return session;
         },
         $meta: {
@@ -276,7 +277,7 @@ export class Auth<
  |--------------------------------------------------------------------------------
  */
 
-type Config<TPermissions extends Permissions, TSession extends ZodTypeAny, TGuard extends Guard<any, any>> = {
+type Config<TPermissions extends Permissions, TSession extends ZodObject, TGuard extends Guard<any, any>> = {
   settings: {
     algorithm: string;
     privateKey: string;
@@ -307,7 +308,7 @@ type SessionResolution<TSession, TPermissions extends Permissions> =
       $meta: {
         headers: JWTHeaderParameters;
         payload: JWTPayload;
-        roles: Role<TPermissions>[];
+        roles: RoleData<TPermissions>[];
       };
     }
   )

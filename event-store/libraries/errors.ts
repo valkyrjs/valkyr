@@ -1,3 +1,7 @@
+import type { ZodError } from "zod";
+
+import { toPrettyErrorLines } from "./zod.ts";
+
 /**
  * Error thrown when an expected event is missing from the event store.
  *
@@ -26,14 +30,30 @@ export class EventMissingError extends Error {
  * This error indicates that an invalid event was provided during the
  * parsing process.
  *
- * @property type - The type of error, always `"EventParserError"`.
- * @property data - The invalid event data that caused the error.
+ * @property type - Type of error, always `"EventParserError"`.
+ * @property data - Invalid data properties found on the event.
+ * @property meta - Invalid meta properties found on the event.
  */
 export class EventParserError extends Error {
   readonly type = "EventParserError";
 
-  constructor(readonly event: any, readonly data: unknown) {
-    super(`Invalid event provided\nEvent:\n${JSON.stringify(event, null, 2)}\nIssues:\n${JSON.stringify(data, null, 2)}`);
+  constructor(readonly event: any, readonly data: ZodError[], readonly meta: ZodError[]) {
+    const lines: string[] = [
+      `✖ Failed to parse '${event.type}' event!`,
+    ];
+    if (data.length > 0) {
+      lines.push("  Data:");
+      for (const error of data) {
+        lines.push(...toPrettyErrorLines(error, 4));
+      }
+    }
+    if (meta.length > 0) {
+      lines.push("  Meta:");
+      for (const error of meta) {
+        lines.push(...toPrettyErrorLines(error, 4));
+      }
+    }
+    super(lines.join("\n"));
   }
 }
 

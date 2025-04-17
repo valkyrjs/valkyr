@@ -1,10 +1,10 @@
-import { AnyZodObject, TypeOf, ZodTypeAny } from "zod";
+import z, { ZodAny, ZodObject } from "zod";
 
 import { BadRequestError } from "~libraries/errors.ts";
 
 export class Action<
-  TProps extends ZodTypeAny | undefined = undefined,
-  TOutput extends AnyZodObject | undefined = undefined,
+  TProps extends ZodAny | undefined = undefined,
+  TOutput extends ZodObject | undefined = undefined,
 > {
   readonly name: string;
 
@@ -59,8 +59,8 @@ export class Actions<TActions extends Action<any, any>[] = any> {
  */
 
 type ActionOptions<
-  TProps extends ZodTypeAny | undefined = undefined,
-  TOutput extends AnyZodObject | undefined = undefined,
+  TProps extends ZodAny | undefined = undefined,
+  TOutput extends ZodObject | undefined = undefined,
 > = {
   name: string;
   props?: TProps;
@@ -69,16 +69,16 @@ type ActionOptions<
 };
 
 type ActionHandler<
-  TProps extends ZodTypeAny | undefined = undefined,
-  TOutput extends AnyZodObject | undefined = undefined,
-> = TProps extends ZodTypeAny ? (props: TProps) => TOutput extends AnyZodObject ? Promise<TypeOf<TOutput>>
+  TProps extends ZodAny | undefined = undefined,
+  TOutput extends ZodObject | undefined = undefined,
+> = TProps extends ZodAny ? (props: TProps) => TOutput extends ZodObject ? Promise<z.infer<TOutput>>
     : Promise<void>
-  : () => TOutput extends AnyZodObject ? Promise<TypeOf<TOutput>>
+  : () => TOutput extends ZodObject ? Promise<z.infer<TOutput>>
     : Promise<void>;
 
 export type ActionResult<TActions extends Action[]> = UnionToIntersection<GetActionProps<TActions>>;
 
-type GetActionProps<TActions extends Action[]> = TActions[number] extends Action<infer _, infer TOutput> ? TOutput extends AnyZodObject ? TypeOf<TOutput> : object
+type GetActionProps<TActions extends Action[]> = TActions[number] extends Action<infer _, infer TOutput> ? TOutput extends ZodObject ? z.infer<TOutput> : object
   : object;
 
 export type Empty = Record<string, never>;
