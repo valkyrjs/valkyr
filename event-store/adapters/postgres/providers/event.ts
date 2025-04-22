@@ -157,8 +157,8 @@ export class PostgresEventsProvider<TEvent extends Event> implements EventsProvi
 
   #fromDriver(records: PGEventRecord[]): EventToRecord<TEvent>[] {
     return records.map((record) => {
-      record.data = JSON.parse(record.data);
-      record.meta = JSON.parse(record.meta);
+      record.data = typeof record.data === "string" ? JSON.parse(record.data) : record.data;
+      record.meta = typeof record.meta === "string" ? JSON.parse(record.meta) : record.meta;
       return record as unknown as EventToRecord<TEvent>;
     });
   }

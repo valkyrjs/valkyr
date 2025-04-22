@@ -66,7 +66,7 @@ export class PostgresSnapshotsProvider implements SnapshotsProvider {
 
   #fromDriver(snapshots: PGSnapshot[]): Snapshot[] {
     return snapshots.map((snapshot) => {
-      snapshot.state = JSON.parse(snapshot.state);
+      snapshot.state = typeof snapshot.state === "string" ? JSON.parse(snapshot.state) : snapshot.state;
       return snapshot as unknown as Snapshot;
     });
   }
