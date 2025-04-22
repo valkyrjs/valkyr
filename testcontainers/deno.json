@@ -1,9 +1,0 @@
-{
-  "name": "@valkyr/testcontainers",
-  "version": "1.2.1",
-  "exports": {
-    ".": "./mod.ts",
-    "./mongodb": "./containers/mongodb.ts",
-    "./postgres": "./containers/postgres.ts"
-  }
-}

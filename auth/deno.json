@@ -1,7 +1,0 @@
-{
-  "name": "@valkyr/auth",
-  "version": "1.5.2",
-  "exports": {
-    ".": "./mod.ts"
-  }
-}
