@@ -24,7 +24,6 @@
     "npm:json-schema-to-zod@2.6.1": "2.6.1",
     "npm:json-schema@0.4.0": "0.4.0",
     "npm:mongodb@6.15.0": "6.15.0",
-    "npm:mongodb@6.16.0": "6.16.0",
     "npm:nanoid@5.1.5": "5.1.5",
     "npm:postgres@3.4.5": "3.4.5",
     "npm:prettier@3.5.3": "3.5.3",
@@ -223,7 +222,7 @@
         "@jsr/std__async",
         "@jsr/std__fs@1.0.16",
         "@jsr/std__net",
-        "mongodb@6.15.0",
+        "mongodb",
         "postgres"
       ]
     },
@@ -775,14 +774,6 @@
         "mongodb-connection-string-url"
       ]
     },
-    "mongodb@6.16.0": {
-      "integrity": "sha512-D1PNcdT0y4Grhou5Zi/qgipZOYeWrhLEpk33n3nm6LGtz61jvO88WlrWCK/bigMjpnOdAUKKQwsGIl0NtWMyYw==",
-      "dependencies": [
-        "@mongodb-js/saslprep",
-        "bson",
-        "mongodb-connection-string-url"
-      ]
-    },
     "ms@2.1.3": {
       "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA=="
     },
@@ -1010,7 +1001,7 @@
         "npm:jose@6.0.10",
         "npm:json-schema-to-zod@2.6.1",
         "npm:json-schema@0.4.0",
-        "npm:mongodb@6.16.0",
+        "npm:mongodb@6.15.0",
         "npm:nanoid@5.1.5",
         "npm:postgres@3.4.5",
         "npm:prettier@3.5.3",
