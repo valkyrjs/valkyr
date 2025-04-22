@@ -17,7 +17,7 @@ import { PostgresSnapshotsProvider } from "./providers/snapshot.ts";
  *
  * @template TEvent - The type of events managed by the event store.
  */
-export class PostgresAdapter<const TEvent extends Event> implements EventStoreAdapter<TEvent> {
+export class PostgresAdapter<const TEvent extends Event> implements EventStoreAdapter<PostgresDatabase, TEvent> {
   readonly providers: {
     readonly events: PostgresEventsProvider<TEvent>;
     readonly relations: PostgresRelationsProvider;
@@ -33,6 +33,10 @@ export class PostgresAdapter<const TEvent extends Event> implements EventStoreAd
       relations: new PostgresRelationsProvider(this.#database, options.schema),
       snapshots: new PostgresSnapshotsProvider(this.#database, options.schema),
     };
+  }
+
+  get db(): PostgresDatabase {
+    return this.#database;
   }
 }
 

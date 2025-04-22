@@ -88,10 +88,10 @@ export default describe<Event, EventRecord>(".makeReducer", (getEventStore) => {
     const post2 = makeId();
     const post3 = makeId();
 
-    await store.addEvent({ stream: post1, type: "post:created", data: { title: "Post #1", body: "Sample #1" }, meta: { auditor } });
-    await store.addEvent({ stream: post2, type: "post:created", data: { title: "Post #2", body: "Sample #2" }, meta: { auditor } });
+    await store.addEvent({ stream: post1, type: "post:created", data: { title: "Post #1", body: "Sample #1", participants: ["a", "b"] }, meta: { auditor } });
+    await store.addEvent({ stream: post2, type: "post:created", data: { title: "Post #2", body: "Sample #2", participants: ["a", "b"] }, meta: { auditor } });
     await store.addEvent({ stream: post2, type: "post:removed" });
-    await store.addEvent({ stream: post3, type: "post:created", data: { title: "Post #3", body: "Sample #3" }, meta: { auditor } });
+    await store.addEvent({ stream: post3, type: "post:created", data: { title: "Post #3", body: "Sample #3", participants: ["a", "b"] }, meta: { auditor } });
 
     const events = await store.getEventsByRelations([`user:${auditor}:posts`]);
 

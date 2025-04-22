@@ -22,7 +22,7 @@ export class PostgresEventsProvider<TEvent extends Event> implements EventsProvi
    * @param record - Event record to insert.
    */
   async insert(record: EventToRecord<TEvent>): Promise<void> {
-    await this.db.sql`INSERT INTO ${this.table} ${this.db.sql(record as object)}`.catch((error) => {
+    await this.db.sql`INSERT INTO ${this.table} ${this.db.sql([record] as object[])}`.catch((error) => {
       throw new Error(`EventStore > 'events.insert' failed with postgres error: ${error.message}`);
     });
   }

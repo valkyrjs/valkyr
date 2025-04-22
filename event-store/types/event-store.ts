@@ -6,7 +6,7 @@ import { RelationsProvider } from "./providers/relations.ts";
 import { SnapshotsProvider } from "./providers/snapshots.ts";
 import type { Reducer } from "./reducer.ts";
 
-export type EventStoreConfig<TEvent extends Event, TEventStoreAdapter extends EventStoreAdapter<TEvent>> = {
+export type EventStoreConfig<TEvent extends Event, TEventStoreAdapter extends EventStoreAdapter<any, TEvent>> = {
   adapter: TEventStoreAdapter;
   events: EventList<TEvent>;
   validators: ValidatorConfig<TEvent>;
@@ -14,7 +14,8 @@ export type EventStoreConfig<TEvent extends Event, TEventStoreAdapter extends Ev
   hooks?: EventStoreHooks<TEvent>;
 };
 
-export type EventStoreAdapter<TEvent extends Event> = {
+export type EventStoreAdapter<TDatabase, TEvent extends Event> = {
+  readonly db: TDatabase;
   readonly providers: {
     readonly events: EventsProvider<TEvent>;
     readonly relations: RelationsProvider;

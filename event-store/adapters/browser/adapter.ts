@@ -18,10 +18,10 @@ import { BrowserSnapshotsProvider } from "./providers/snapshots.ts";
  *
  * @template TEvent - The type of events managed by the event store.
  */
-export class BrowserAdapter<TEvent extends Event> implements EventStoreAdapter<TEvent> {
+export class BrowserAdapter<TEvent extends Event> implements EventStoreAdapter<IndexedDatabase<Collections>, TEvent> {
   readonly #database: IndexedDatabase<Collections>;
 
-  providers: EventStoreAdapter<TEvent>["providers"];
+  readonly providers: EventStoreAdapter<IndexedDatabase<Collections>, TEvent>["providers"];
 
   constructor(database: Adapter, name = "valkyr:event-store") {
     this.#database = getEventStoreDatabase(name, database) as IndexedDatabase<Collections>;
@@ -30,6 +30,10 @@ export class BrowserAdapter<TEvent extends Event> implements EventStoreAdapter<T
       relations: new BrowserRelationsProvider(this.#database.collection("relations")),
       snapshots: new BrowserSnapshotsProvider(this.#database.collection("snapshots")),
     };
+  }
+
+  get db(): IndexedDatabase<Collections> {
+    return this.#database;
   }
 }
 

@@ -65,7 +65,7 @@ import type { ExcludeEmptyFields } from "~types/utilities.ts";
  * Provides a common interface to interact with a event storage solution. Its built
  * on an adapter pattern to allow for multiple different storage drivers.
  */
-export class EventStore<const TEvent extends Event, TEventStoreAdapter extends EventStoreAdapter<TEvent> = EventStoreAdapter<TEvent>> {
+export class EventStore<const TEvent extends Event, TEventStoreAdapter extends EventStoreAdapter<any, TEvent> = EventStoreAdapter<any, TEvent>> {
   readonly #adapter: TEventStoreAdapter;
   readonly #events: EventList<TEvent>;
   readonly #validators: ValidatorConfig<TEvent>;
@@ -88,6 +88,10 @@ export class EventStore<const TEvent extends Event, TEventStoreAdapter extends E
 
   get eventTypes(): string[] {
     return Array.from(this.#events);
+  }
+
+  get db(): TEventStoreAdapter["db"] {
+    return this.#adapter.db;
   }
 
   get events(): TEventStoreAdapter["providers"]["events"] {

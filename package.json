@@ -15,7 +15,7 @@
     "jose": "6.0.10",
     "json-schema": "0.4.0",
     "json-schema-to-zod": "2.6.1",
-    "mongodb": "6.15.0",
+    "mongodb": "6.16.0",
     "nanoid": "5.1.5",
     "postgres": "3.4.5",
     "prettier": "3.5.3",
@@ -30,5 +30,9 @@
     "fake-indexeddb": "6.0.0",
     "prettier": "3.5.3",
     "typescript-eslint": "8.31.0"
+  },
+  "peerDependencies": {
+    "mongodb": "^6.16.0",
+    "postgres": "^3.4.5"
   }
 }

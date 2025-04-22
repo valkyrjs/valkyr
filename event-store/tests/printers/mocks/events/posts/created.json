@@ -6,6 +6,12 @@
     },
     "body": {
       "type": "string"
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "meta": {

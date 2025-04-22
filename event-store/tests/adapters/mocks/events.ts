@@ -21,7 +21,7 @@ export const events = new Set([
 export const validators = {
   data: new Map<Event["type"], AnyZodObject | ZodUnion<any>>([
     ["post:comment:added", z.object({ type: z.enum(["origin", "reply"]), body: z.string() }).strict()],
-    ["post:created", z.object({ title: z.string(), body: z.string() }).strict()],
+    ["post:created", z.object({ title: z.string(), body: z.string(), participants: z.array(z.string()) }).strict()],
     [
       "post:module:added",
       z.union([
@@ -77,7 +77,11 @@ export type Event =
 
 export type PostCommentAdded = TEvent<"post:comment:added", { type: CommentType; body: string }, { auditor: string }>;
 
-export type PostCreated = TEvent<"post:created", { title: string; body: string }, { auditor: string }>;
+export type PostCreated = TEvent<
+  "post:created",
+  { title: string; body: string; participants: string[] },
+  { auditor: string }
+>;
 
 export type PostModuleAdded = TEvent<
   "post:module:added",

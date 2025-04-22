@@ -21,20 +21,26 @@ import { getCollectionsSet } from "./utilities.ts";
  *
  * @template TEvent - The type of events managed by the event store.
  */
-export class MongoAdapter<const TEvent extends Event> implements EventStoreAdapter<TEvent> {
+export class MongoAdapter<const TEvent extends Event> implements EventStoreAdapter<DatabaseAccessor, TEvent> {
   readonly providers: {
     readonly events: MongoEventsProvider<TEvent>;
     readonly relations: MongoRelationsProvider;
     readonly snapshots: MongoSnapshotsProvider;
   };
 
+  #accessor: DatabaseAccessor;
+
   constructor(connection: MongoConnection, db: string) {
-    const accessor = getDatabaseAccessor(connection, db);
+    this.#accessor = getDatabaseAccessor(connection, db);
     this.providers = {
-      events: new MongoEventsProvider<TEvent>(accessor),
-      relations: new MongoRelationsProvider(accessor),
-      snapshots: new MongoSnapshotsProvider(accessor),
+      events: new MongoEventsProvider<TEvent>(this.#accessor),
+      relations: new MongoRelationsProvider(this.#accessor),
+      snapshots: new MongoSnapshotsProvider(this.#accessor),
     };
+  }
+
+  get db(): DatabaseAccessor {
+    return this.#accessor;
   }
 }
 
