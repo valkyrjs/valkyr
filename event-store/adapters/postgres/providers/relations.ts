@@ -119,7 +119,7 @@ export class PostgresRelationsProvider implements RelationsProvider {
    * @param keys - Relational keys to remove from the relational table.
    */
   async removeByKeys(keys: string[]): Promise<void> {
-    await this.db.sql`DELETE FROM ${this.table} WHERE key IN ${keys}`.catch((error) => {
+    await this.db.sql`DELETE FROM ${this.table} WHERE key IN ${this.db.sql(keys)}`.catch((error) => {
       throw new Error(`EventStore > 'relations.removeByKeys' failed with postgres error: ${error.message}`);
     });
   }
@@ -130,7 +130,7 @@ export class PostgresRelationsProvider implements RelationsProvider {
    * @param streams - Streams to remove from the relational table.
    */
   async removeByStreams(streams: string[]): Promise<void> {
-    await this.db.sql`DELETE FROM ${this.table} WHERE stream IN ${streams}`.catch((error) => {
+    await this.db.sql`DELETE FROM ${this.table} WHERE stream IN ${this.db.sql(streams)}`.catch((error) => {
       throw new Error(`EventStore > 'relations.removeByStreams' failed with postgres error: ${error.message}`);
     });
   }

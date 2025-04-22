@@ -4,6 +4,8 @@ import type { Snapshot, SnapshotsProvider } from "~types/providers/snapshots.ts"
 
 import type { PostgresDatabase } from "../database.ts";
 
+type PGSnapshot = Omit<Snapshot, "state"> & { state: string };
+
 export class PostgresSnapshotsProvider implements SnapshotsProvider {
   constructor(readonly db: PostgresDatabase, readonly schema?: string) {}
 
@@ -23,7 +25,8 @@ export class PostgresSnapshotsProvider implements SnapshotsProvider {
    * @param state  - State of the reduced events.
    */
   async insert(name: string, stream: string, cursor: string, state: any): Promise<void> {
-    await this.db.sql`INSERT INTO ${this.table} ${this.db.sql({ name, stream, cursor, state: JSON.stringify(state) })}`.catch((error) => {
+    await this.db.sql`
+      INSERT INTO ${this.table} ${this.db.sql(this.#toDriver({ name, stream, cursor, state }))}`.catch((error) => {
       throw new Error(`EventStore > 'snapshots.insert' failed with postgres error: ${error.message}`);
     });
   }
@@ -35,19 +38,12 @@ export class PostgresSnapshotsProvider implements SnapshotsProvider {
    * @param stream - Stream the state was reduced for.
    */
   async getByStream(name: string, stream: string): Promise<Snapshot | undefined> {
-    return this.db.sql`SELECT * FROM ${this.table} WHERE name = ${name} AND stream = ${stream}`.then(([row]) =>
-      row
-        ? ({
-          id: row.id,
-          name: row.name,
-          stream: row.stream,
-          cursor: row.cursor,
-          state: JSON.parse(row.state),
-        })
-        : undefined
-    ).catch((error) => {
-      throw new Error(`EventStore > 'snapshots.getByStream' failed with postgres error: ${error.message}`);
-    });
+    return this.db.sql<PGSnapshot[]>`SELECT * FROM ${this.table} WHERE name = ${name} AND stream = ${stream}`.then(
+      this.#fromDriver,
+    )
+      .then(([snapshot]) => snapshot).catch((error) => {
+        throw new Error(`EventStore > 'snapshots.getByStream' failed with postgres error: ${error.message}`);
+      });
   }
 
   /**
@@ -60,5 +56,25 @@ export class PostgresSnapshotsProvider implements SnapshotsProvider {
     await this.db.sql`DELETE FROM ${this.table} WHERE name = ${name} AND stream = ${stream}`.catch((error) => {
       throw new Error(`EventStore > 'snapshots.remove' failed with postgres error: ${error.message}`);
     });
+  }
+
+  /*
+   |--------------------------------------------------------------------------------
+   | Parsers
+   |--------------------------------------------------------------------------------
+   */
+
+  #fromDriver(snapshots: PGSnapshot[]): Snapshot[] {
+    return snapshots.map((snapshot) => {
+      snapshot.state = JSON.parse(snapshot.state);
+      return snapshot as unknown as Snapshot;
+    });
+  }
+
+  #toDriver(snapshot: Snapshot): object {
+    return {
+      ...snapshot,
+      state: JSON.stringify(snapshot.state),
+    };
   }
 }
