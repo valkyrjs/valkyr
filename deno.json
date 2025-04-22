@@ -1,14 +1,11 @@
 {
   "workspace": [
     "./api",
-    "./auth",
     "./event-emitter",
     "./event-store",
     "./inverse",
     "./json-rpc",
-    "./process",
-    "./router",
-    "./testcontainers"
+    "./process"
   ],
   "exclude": [
     ".vscode"
