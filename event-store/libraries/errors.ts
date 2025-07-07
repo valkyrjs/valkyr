@@ -1,3 +1,5 @@
+import { prettifyError, ZodError } from "zod/v4";
+
 /**
  * Error thrown when an expected event is missing from the event store.
  *
@@ -32,8 +34,8 @@ export class EventMissingError extends Error {
 export class EventParserError extends Error {
   readonly type = "EventParserError";
 
-  constructor(readonly event: any, readonly data: unknown) {
-    super(`Invalid event provided\nEvent:\n${JSON.stringify(event, null, 2)}\nIssues:\n${JSON.stringify(data, null, 2)}`);
+  constructor(readonly event: any, readonly errors: ZodError[]) {
+    super(`Invalid event provided\nEvent:\n${JSON.stringify(event, null, 2)}\nIssues:\n${errors.map((error) => prettifyError(error)).join("\n")}`);
   }
 }
 

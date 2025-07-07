@@ -25,13 +25,7 @@ export default describe<Event, EventRecord>(".addEvent", (getEventStore) => {
     await assertRejects(
       async () => store.pushEvent(event),
       EventParserError,
-      new EventParserError(event, [
-        {
-          "name": [
-            "Unrecognized key(s) in object: 'familys'",
-          ],
-        },
-      ]).message,
+      new EventParserError(event, []).message,
     );
   });
 

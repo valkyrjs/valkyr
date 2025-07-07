@@ -2,7 +2,7 @@
 // deno-fmt-ignore-file
 
 import { type Empty, type Event as TEvent, type EventToRecord } from "@valkyr/event-store";
-import { type AnyZodObject, z, type ZodUnion } from "zod";
+import { z, type ZodObject, type ZodUnion } from "zod/v4";
 
 export const events = new Set([
   "post:comment:added",
@@ -19,7 +19,7 @@ export const events = new Set([
 ] as const);
 
 export const validators = {
-  data: new Map<Event["type"], AnyZodObject | ZodUnion<any>>([
+  data: new Map<Event["type"], ZodObject | ZodUnion<any>>([
     ["post:comment:added", z.object({ type: z.enum(["origin", "reply"]), body: z.string() }).strict()],
     ["post:created", z.object({ title: z.string(), body: z.string(), participants: z.array(z.string()) }).strict()],
     [
@@ -48,7 +48,7 @@ export const validators = {
     ["user:name:family-set", z.object({ family: z.string() }).strict()],
     ["user:name:given-set", z.object({ given: z.string() }).strict()],
   ]),
-  meta: new Map<Event["type"], AnyZodObject>([
+  meta: new Map<Event["type"], ZodObject>([
     ["post:comment:added", z.object({ auditor: z.string() }).strict()],
     ["post:created", z.object({ auditor: z.string() }).strict()],
     ["post:module:added", z.object({ auditor: z.string() }).strict()],

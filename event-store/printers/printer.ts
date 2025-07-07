@@ -43,15 +43,15 @@ export async function printEvents({ inputs, outputs }: Options) {
       // deno-fmt-ignore-file
       
       import { type Empty, type Event as TEvent, type EventToRecord } from "@valkyr/event-store";
-      import { type AnyZodObject, z, type ZodUnion } from "zod";
+      import { z, type ZodObject, type ZodUnion } from "zod/v4";
   
       export const events = new Set([${names.sort().map((event) => `"${event}"`).join(",")}] as const);
 
       export const validators = {
-        data: new Map<Event["type"], AnyZodObject | ZodUnion<any>>([
+        data: new Map<Event["type"], ZodObject | ZodUnion<any>>([
           ${Array.from(validators.data.entries()).sort(([a], [b]) => a > b ? 1 : -1).map(([key, value]) => `["${key}", ${value}]`).join(",")}
         ]),
-        meta: new Map<Event["type"], AnyZodObject>([
+        meta: new Map<Event["type"], ZodObject>([
           ${Array.from(validators.meta.entries()).sort(([a], [b]) => a > b ? 1 : -1).map(([key, value]) => `["${key}", ${value}]`).join(",")}
         ]),
       }

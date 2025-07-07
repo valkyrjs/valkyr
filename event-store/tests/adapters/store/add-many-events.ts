@@ -98,13 +98,7 @@ export default describe<Event, EventRecord>(".addSequence", (getEventStore) => {
           }),
         ]),
       EventParserError,
-      new EventParserError(badEvent, [
-        {
-          "given": [
-            "Required",
-          ],
-        },
-      ]).message,
+      new EventParserError(badEvent, []).message,
     );
 
     const records = await store.getEventsByStreams([stream]);

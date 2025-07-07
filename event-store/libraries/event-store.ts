@@ -7,7 +7,7 @@
  * @example
  * ```ts
  * import { EventStore } from "@valkyr/event-store";
- * import { z } from "zod";
+ * import { z } from "zod/v4";
  *
  * const eventStore = new EventStore<Event>({
  *   adapter: {
@@ -34,7 +34,7 @@
  * ```
  */
 
-import type { AnyZodObject, ZodUnion } from "zod";
+import type { ZodObject, ZodUnion } from "zod/v4";
 
 import type { AggregateRoot } from "~libraries/aggregate.ts";
 import { EventInsertionError, EventMissingError, EventParserError } from "~libraries/errors.ts";
@@ -548,13 +548,13 @@ export class EventStore<const TEvent extends Event, TEventStoreAdapter extends E
       if (data !== undefined) {
         const result = await data.safeParseAsync(record.data);
         if (result.success === false) {
-          errors.push(result.error.flatten().fieldErrors);
+          errors.push(result.error);
         }
       }
       if (meta !== undefined) {
         const result = await meta.safeParseAsync(record.meta);
         if (result.success === false) {
-          errors.push(result.error.flatten().fieldErrors);
+          errors.push(result.error);
         }
       }
       if (errors.length > 0) {
@@ -570,8 +570,8 @@ export class EventStore<const TEvent extends Event, TEventStoreAdapter extends E
    * @param type - Event to get validator for.
    */
   getValidator(type: TEvent["type"]): {
-    data?: AnyZodObject | ZodUnion<any>;
-    meta?: AnyZodObject | ZodUnion<any>;
+    data?: ZodObject | ZodUnion<any>;
+    meta?: ZodObject | ZodUnion<any>;
   } {
     return {
       data: this.#validators.data.get(type),
