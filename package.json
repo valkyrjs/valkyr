@@ -1,38 +1,39 @@
 {
   "dependencies": {
-    "@apidevtools/json-schema-ref-parser": "12.0.1",
+    "@apidevtools/json-schema-ref-parser": "14.1.0",
     "@db/sqlite": "npm:@jsr/db__sqlite@0.12.0",
-    "@std/assert": "npm:@jsr/std__assert@1.0.12",
-    "@std/async": "npm:@jsr/std__async@1.0.12",
-    "@std/fs": "npm:@jsr/std__fs@1.0.16",
+    "@std/assert": "npm:@jsr/std__assert@1.0.13",
+    "@std/async": "npm:@jsr/std__async@1.0.13",
+    "@std/fs": "npm:@jsr/std__fs@1.0.19",
     "@std/net": "npm:@jsr/std__net@1.0.4",
-    "@std/path": "npm:@jsr/std__path@1.0.8",
-    "@std/testing": "npm:@jsr/std__testing@1.0.11",
-    "@std/text": "npm:@jsr/std__text@1.0.12",
+    "@std/path": "npm:@jsr/std__path@1.1.1",
+    "@std/testing": "npm:@jsr/std__testing@1.0.14",
+    "@std/text": "npm:@jsr/std__text@1.0.15",
     "@valkyr/db": "1.0.1",
     "ajv": "8.17.1",
     "dot-prop": "9.0.0",
-    "jose": "6.0.10",
+    "jose": "6.0.11",
     "json-schema": "0.4.0",
     "json-schema-to-zod": "2.6.1",
-    "mongodb": "6.15.0",
-    "nanoid": "5.1.5",
-    "postgres": "3.4.5",
-    "prettier": "3.5.3",
-    "zod": "3.24.3",
-    "zod-to-ts": "1.2.0"
+    "nanoid": "5.1.5"
   },
   "devDependencies": {
-    "@faker-js/faker": "9.7.0",
-    "@valkyr/testcontainers": "npm:@jsr/valkyr__testcontainers@2.0.0",
-    "eslint": "9.25.1",
+    "@faker-js/faker": "9.9.0",
+    "@valkyr/testcontainers": "npm:@jsr/valkyr__testcontainers@2.0.1",
+    "eslint": "9.30.1",
     "eslint-plugin-simple-import-sort": "12.1.1",
-    "fake-indexeddb": "6.0.0",
-    "prettier": "3.5.3",
-    "typescript-eslint": "8.31.0"
+    "fake-indexeddb": "6.0.1",
+    "mongodb": "6.17.0",
+    "postgres": "3.4.7",
+    "prettier": "3.6.2",
+    "typescript-eslint": "8.35.1",
+    "zod": "3.25.75",
+    "zod-to-ts": "1.2.0"
   },
   "peerDependencies": {
     "mongodb": "^6.15.0",
-    "postgres": "^3.4.5"
+    "postgres": "^3.4.5",
+    "prettier": "^3.5.3",
+    "zod": "^3.25.0"
   }
 }
