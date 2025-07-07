@@ -12,24 +12,23 @@
     "npm:@jsr/std__testing@1.0.14": "1.0.14",
     "npm:@jsr/std__text@1.0.15": "1.0.15",
     "npm:@jsr/valkyr__testcontainers@2.0.1": "2.0.1",
-    "npm:@types/node@*": "22.15.15",
     "npm:@valkyr/db@1.0.1": "1.0.1",
-    "npm:ajv@8.17.1": "8.17.1",
-    "npm:dot-prop@9.0.0": "9.0.0",
+    "npm:ajv@8": "8.17.1",
+    "npm:dot-prop@9": "9.0.0",
     "npm:eslint-plugin-simple-import-sort@12.1.1": "12.1.1_eslint@9.30.1",
     "npm:eslint@9.30.1": "9.30.1",
     "npm:eventemitter3@5.0.1": "5.0.1",
     "npm:fake-indexeddb@6.0.1": "6.0.1",
-    "npm:jose@6.0.11": "6.0.11",
-    "npm:json-schema-to-zod@2.6.1": "2.6.1",
+    "npm:jose@6": "6.0.11",
+    "npm:json-schema-to-zod@2.6": "2.6.1",
     "npm:json-schema@0.4.0": "0.4.0",
-    "npm:mongodb@6.17.0": "6.17.0",
-    "npm:nanoid@5.1.5": "5.1.5",
-    "npm:postgres@3.4.7": "3.4.7",
-    "npm:prettier@3.6.2": "3.6.2",
+    "npm:mongodb@6": "6.17.0",
+    "npm:nanoid@5": "5.1.5",
+    "npm:postgres@3": "3.4.7",
+    "npm:prettier@3": "3.6.2",
     "npm:typescript-eslint@8.35.1": "8.35.1_eslint@9.30.1_typescript@5.8.3_@typescript-eslint+parser@8.35.1__eslint@9.30.1__typescript@5.8.3",
-    "npm:zod-to-ts@1.2.0": "1.2.0_typescript@5.8.3_zod@3.25.75",
-    "npm:zod@3.25.75": "3.25.75"
+    "npm:zod-to-ts@1": "1.2.0_typescript@5.8.3_zod@3.25.75",
+    "npm:zod@3.25": "3.25.75"
   },
   "npm": {
     "@apidevtools/json-schema-ref-parser@14.1.0": {
@@ -258,12 +257,6 @@
     },
     "@types/json-schema@7.0.15": {
       "integrity": "sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA=="
-    },
-    "@types/node@22.15.15": {
-      "integrity": "sha512-R5muMcZob3/Jjchn5LcO8jdKwSCbzqmPB6ruBxMcf9kbxtniZHP327s6C37iOfuw8mbKK3cAQa7sEl7afLrQ8A==",
-      "dependencies": [
-        "undici-types"
-      ]
     },
     "@types/webidl-conversions@7.0.3": {
       "integrity": "sha512-CiJJvcRtIgzadHCYXw7dqEnMNRjhGZlYK05Mj9OyktqV8uVT8fD2BFOB7S1uwBE3Kj2Z+4UyPmFw/Ixgw/LAlA=="
@@ -969,9 +962,6 @@
       "integrity": "sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==",
       "bin": true
     },
-    "undici-types@6.21.0": {
-      "integrity": "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="
-    },
     "uri-js@4.4.1": {
       "integrity": "sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==",
       "dependencies": [
@@ -1027,21 +1017,21 @@
         "npm:@jsr/std__text@1.0.15",
         "npm:@jsr/valkyr__testcontainers@2.0.1",
         "npm:@valkyr/db@1.0.1",
-        "npm:ajv@8.17.1",
-        "npm:dot-prop@9.0.0",
+        "npm:ajv@8",
+        "npm:dot-prop@9",
         "npm:eslint-plugin-simple-import-sort@12.1.1",
         "npm:eslint@9.30.1",
         "npm:fake-indexeddb@6.0.1",
-        "npm:jose@6.0.11",
-        "npm:json-schema-to-zod@2.6.1",
+        "npm:jose@6",
+        "npm:json-schema-to-zod@2.6",
         "npm:json-schema@0.4.0",
-        "npm:mongodb@6.17.0",
-        "npm:nanoid@5.1.5",
-        "npm:postgres@3.4.7",
-        "npm:prettier@3.6.2",
+        "npm:mongodb@6",
+        "npm:nanoid@5",
+        "npm:postgres@3",
+        "npm:prettier@3",
         "npm:typescript-eslint@8.35.1",
-        "npm:zod-to-ts@1.2.0",
-        "npm:zod@3.25.75"
+        "npm:zod-to-ts@1",
+        "npm:zod@3.25"
       ]
     },
     "members": {
